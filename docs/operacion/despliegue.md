@@ -46,6 +46,6 @@ primera semana.
 
 ## Volver atrás
 
-Se despliega la etiqueta anterior con la ejecución manual del flujo; no hace falta reconstruir. Los
+Se despliega la versión anterior (`X.Y.Z`) con la ejecución manual del flujo; no hace falta reconstruir. Los
 pasos exactos están en la sección «Cómo volver atrás» de
 [infra/dokploy/README.md](../../infra/dokploy/README.md#cómo-volver-atrás).

@@ -13,10 +13,11 @@ despliegue.
 ## Decisión
 
 - **Imágenes por commit:** cada push a `main` publica `clasificador-web` y `clasificador-worker`
-  (linux/arm64, en un runner arm64 nativo) con la etiqueta del sha corto, que es también la
-  `APP_VERSION` horneada. `latest` existe solo como referencia y nunca se despliega.
+  (linux/arm64, en un runner arm64 nativo) con la etiqueta del sha corto, una sola vez por commit. Al publicar una versión, esa misma imagen
+  recibe la etiqueta `X.Y.Z` sin reconstruirse. La imagen lleva horneadas la versión (`APP_VERSION`)
+  y el commit (`APP_COMMIT`). `latest` existe solo como referencia y nunca se despliega.
 - **Versión exacta, no `:latest`:** el despliegue fija en cada aplicación la imagen
-  `:<etiqueta>` (`application.saveDockerProvider`) y después despliega (`application.deploy`).
+  `:X.Y.Z` (`application.saveDockerProvider`) y después despliega (`application.deploy`).
 - **El despliegue solo se lanza desde el flujo** (una etiqueta de versión o una ejecución manual) y
   solo si existe el secreto `DOKPLOY_API_KEY`. Las aplicaciones se localizan por nombre, sin un
   secreto con identificadores.
