@@ -1,6 +1,6 @@
 {
   "name": "@clasificador/worker",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
   "description": "Worker del clasificador: migraciones, sincronización con el buzón y limpieza.",
   "type": "module",

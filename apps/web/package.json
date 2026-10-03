@@ -1,6 +1,6 @@
 {
   "name": "@clasificador/web",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
   "description": "Panel de métricas y configuración del clasificador.",
   "scripts": {

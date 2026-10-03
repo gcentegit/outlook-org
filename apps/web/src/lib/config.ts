@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
 const configSchema = z.object({
-  /** Versión desplegada (sha corto de la imagen); la fija el Dockerfile. */
+  /** Versión del producto (X.Y.Z, la del package.json raíz); la fija el Dockerfile. */
   APP_VERSION: z.string().min(1).default('dev'),
+  /** Commit (sha corto) con el que se construyó la imagen; lo fija el Dockerfile. */
+  APP_COMMIT: z.string().min(1).default('dev'),
 });
 
 export type WebConfig = z.infer<typeof configSchema>;

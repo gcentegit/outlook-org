@@ -4,6 +4,8 @@ export interface HealthReport {
   /** `disabled`: la sincronización no está en marcha (p. ej. faltan las credenciales de Graph). */
   status: 'ok' | 'stale' | 'error' | 'disabled';
   version: string;
+  /** Commit (sha corto) con el que se construyó la imagen. */
+  commit: string;
   lastSyncAt: string | null;
   mode?: string;
   /** Modo por categoría fijado en el panel (informativo: el worker sigue en sombra). */
@@ -53,6 +55,7 @@ export function evaluateLoopLiveness(
 
 export interface HealthServerOptions {
   version: string;
+  commit: string;
   staleMs: number;
   /** Última sincronización correcta con el buzón (SyncState en la base de datos). */
   getLastSyncAt: () => Promise<Date | null>;
@@ -81,6 +84,7 @@ export function createHealthServer(opts: HealthServerOptions): Server {
           JSON.stringify({
             status: liveness.ok ? 'alive' : 'unavailable',
             version: opts.version,
+            commit: opts.commit,
             ...(liveness.reason ? { reason: liveness.reason } : {}),
           }),
         );
@@ -98,6 +102,7 @@ export function createHealthServer(opts: HealthServerOptions): Server {
       }
       const base = {
         version: opts.version,
+        commit: opts.commit,
         ...(opts.mode ? { mode: opts.mode } : {}),
         ...(categoryModes ? { categoryModes } : {}),
       };

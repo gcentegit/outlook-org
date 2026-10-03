@@ -231,6 +231,7 @@ describe('variables de entorno', () => {
     expect(env.GRAPH_CERT_PATH).toBe(CERT_MOUNT_PATH);
     expect(env.ANTHROPIC_API_KEY).toBe('sk-ant-secreta');
     expect(env).not.toHaveProperty('APP_VERSION');
+    expect(env).not.toHaveProperty('APP_COMMIT');
   });
 
   it('la web no recibe ninguna credencial de Graph ni el buzón; el worker sí', () => {
@@ -289,6 +290,7 @@ describe('variables de entorno', () => {
     // Se fijan en la imagen o en el compose, o solo valen en desarrollo: Dokploy no las gestiona.
     const unmanaged = new Set([
       'APP_VERSION',
+      'APP_COMMIT',
       'AUTH_DEV_BYPASS',
       'POSTGRES_USER',
       'POSTGRES_PASSWORD',

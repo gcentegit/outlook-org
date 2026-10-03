@@ -35,6 +35,7 @@ describe('createHealthServer', () => {
   ): Promise<string> {
     const server = createHealthServer({
       version: 'abc123',
+      commit: 'c0ffee1',
       staleMs: FIVE_MIN,
       getLastSyncAt,
       now: () => now,
@@ -51,6 +52,7 @@ describe('createHealthServer', () => {
     expect(await res.json()).toEqual({
       status: 'stale',
       version: 'abc123',
+      commit: 'c0ffee1',
       lastSyncAt: null,
       reason: 'todavía no hay ninguna sincronización correcta',
     });
@@ -85,6 +87,7 @@ describe('createHealthServer', () => {
     expect(await res.json()).toEqual({
       status: 'disabled',
       version: 'abc123',
+      commit: 'c0ffee1',
       mode: 'shadow',
       lastSyncAt: null,
       reason: 'sin credenciales de Graph (faltan: MAILBOX)',
@@ -109,6 +112,7 @@ describe('createHealthServer', () => {
     expect(await res.json()).toEqual({
       status: 'ok',
       version: 'abc123',
+      commit: 'c0ffee1',
       mode: 'shadow',
       lastSyncAt: '2026-10-02T11:59:00.000Z',
     });
@@ -144,7 +148,7 @@ describe('createHealthServer', () => {
     expect((await fetch(`${base}/health`)).status).toBe(503);
     const live = await fetch(`${base}/livez`);
     expect(live.status).toBe(200);
-    expect(await live.json()).toEqual({ status: 'alive', version: 'abc123' });
+    expect(await live.json()).toEqual({ status: 'alive', version: 'abc123', commit: 'c0ffee1' });
   });
 
   it('/livez no consulta la base de datos', async () => {
@@ -163,6 +167,7 @@ describe('createHealthServer', () => {
     expect(await res.json()).toEqual({
       status: 'unavailable',
       version: 'abc123',
+      commit: 'c0ffee1',
       reason: 'aplicando migraciones',
     });
   });
