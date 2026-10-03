@@ -55,7 +55,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - Correos dudosos: se dejan sin categoría y se registran.
 - Hilos: una respuesta hereda FOOD BOX/LATERAL/ARCOBETA de un correo anterior de la misma conversación (con las categorías finales del equipo); si no hay, se analiza. Una regla fuerte (CIF o razón social) del propio correo gana a la herencia (decisión del 2026-10-02).
 - Los correos se quedan en la Bandeja de entrada al llegar: solo se sigue esa carpeta.
-- Texto extraído de adjuntos: se conserva 90 días. Las decisiones se conservan siempre.
+- Texto extraído de adjuntos: se conserva 90 días. Remitentes, asuntos y decisiones: 12 meses (decisión del 2026-10-03; el borrado automático se implementa en la fase 10; hasta entonces no se borran).
 - Repositorio de GitHub público (imágenes en GHCR públicas; runner arm64 gratuito).
 - La prueba mensual de restauración de copias se programa en el mismo servidor de Dokploy.
 - Nada se sube a Dokploy hasta que el usuario lo autorice: desarrollo y pruebas en local.
@@ -73,7 +73,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 
 - [ ] Generar el certificado (`infra/scripts/generate-cert.sh`) y seguir la [guía de Entra ID y RBAC](../../docs/guias/entra-id-rbac.md) (fase 1). Aplazado por el usuario el 2026-10-02; bloquea todo lo que lee el buzón real (fases 9 a 11) y el login del panel, no el desarrollo en local.
 - [ ] Revisar a mano la muestra de ~200 correos (fase 9) y decidir con los datos la cobertura mínima por categoría.
-- [ ] Decidir el plazo de conservación de remitentes, asuntos y decisiones (propuesta: 24 meses) y anotarlo en el registro de actividades de tratamiento de la empresa.
+- [ ] Anotar en el registro de actividades de tratamiento de la empresa el plazo de conservación decidido (12 meses para remitentes, asuntos y decisiones; 90 días para el texto de adjuntos).
 - [ ] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11.
 - [ ] Designar quién atiende los avisos de Uptime Kuma y acordar cómo y cuándo se informa al equipo de Proveedores (fase 11).
 - [ ] Autorizar el alta y el despliegue en Dokploy (fase 11).

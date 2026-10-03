@@ -54,7 +54,7 @@ Riesgos de operación que tocan código:
 
 - [ ] Aviso de caducidad del certificado y del secreto de login: días restantes en `/health` y aviso con 30 días
 - [ ] Tope de gasto diario del LLM: al superarlo, los correos quedan como dudosos y se avisa
-- [ ] Plazo de conservación de remitentes, asuntos y decisiones: lo decide el usuario (propuesta: 24 meses); después implementar el borrado y anotarlo en el registro de actividades de tratamiento de la empresa
+- [ ] Implementar el borrado automático de remitentes, asuntos y decisiones con más de 12 meses (plazo decidido el 2026-10-03), con copia de seguridad previa en la primera ejecución
 - [ ] Adjuntos `.eml` y `.msg`: soportarlos o descartarlos de forma informada, según lo medido en la fase 9
 - [ ] Pruebas de navegador del panel en el repositorio, y pruebas de integración (PostgreSQL y docling) en CI
 - [ ] Reducir la imagen del worker (hoy unos 2 GB): compilar el worker y separar las migraciones
