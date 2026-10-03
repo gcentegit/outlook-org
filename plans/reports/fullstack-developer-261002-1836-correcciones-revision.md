@@ -50,7 +50,7 @@ $ ss -ltnp | grep -E ":(3110|8080|8180)\b"
 $ docker ps -a
 clasificador-dev-postgres-1  Up (healthy)  127.0.0.1:5442->5432/tcp
 clasificador-dev-docling-1   Up (healthy)  8080/tcp, 127.0.0.1:5101->5001/tcp
-beszel-agent, cpa-cloudflared, cpa-redis, cpa-postgres, cpa-mailpit   (ajenos, sin tocar)
+(otros contenedores de la máquina, ajenos, sin tocar)
 $ pgrep (web, worker, tsx, vitest de este repositorio)
 (ninguno)
 ```

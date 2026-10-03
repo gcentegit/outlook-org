@@ -12,9 +12,9 @@ describe('semilla de sociedades', () => {
     for (const cif of cifs) expect(normalizeCif(cif)).toBe(cif);
   });
 
-  it('coincide con la tabla de docs/sociedades-categorias.md', () => {
+  it('coincide con la tabla de docs/referencia/sociedades-categorias.md', () => {
     const doc = readFileSync(
-      resolve(import.meta.dirname, '../../../docs/sociedades-categorias.md'),
+      resolve(import.meta.dirname, '../../../docs/referencia/sociedades-categorias.md'),
       'utf8',
     );
     for (const s of SOCIEDADES) {

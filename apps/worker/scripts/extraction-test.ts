@@ -2,7 +2,7 @@
  * Prueba de extracción sobre una carpeta de ficheros locales.
  *
  * Para cada PDF/imagen mide el tiempo de docling, el método (texto/OCR) y si aparece alguno de
- * los siete CIF de docs/sociedades-categorias.md. Imprime una tabla y escribe un informe en
+ * los siete CIF de docs/referencia/sociedades-categorias.md. Imprime una tabla y escribe un informe en
  * HISTORY_DATA_DIR (por defecto data/history/, ignorado por git): lista los nombres de los ficheros
  * probados, que pueden ser facturas reales de terceros.
  *
@@ -34,7 +34,7 @@ function arg(name: string): string | undefined {
 
 /** Los siete CIF de la tabla "Sociedad → categoría" (columna 2). */
 async function loadCifs(): Promise<Map<string, string>> {
-  const md = await readFile(join(repoRoot, 'docs/sociedades-categorias.md'), 'utf8');
+  const md = await readFile(join(repoRoot, 'docs/referencia/sociedades-categorias.md'), 'utf8');
   const cifs = new Map<string, string>();
   for (const m of md.matchAll(/^\|\s*([^|]+?)\s*\|\s*([A-Z]\d{8})\s*\|/gm)) cifs.set(m[2]!, m[1]!);
   if (cifs.size !== 7)

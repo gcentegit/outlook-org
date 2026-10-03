@@ -1,10 +1,22 @@
 ---
 title: "Phase 5: Clasificador: reglas + LLM configurable"
-status: in-progress
+status: done
 effort: 2d
 ---
 
 # Phase 5: Clasificador: reglas + LLM configurable
+
+## Estado
+
+**Hecha en código**, probada con un modelo simulado. Se construyeron el esquema de la decisión, la
+herencia del hilo, el motor de reglas, los proveedores de LLM (Anthropic, OpenRouter, compatible con
+OpenAI y Google), las decisiones degradadas por fallo técnico y el evaluador (`apps/worker/scripts/evaluate.ts`).
+Orden y motivos: [ADR 0002](../../docs/adr/0002-orden-de-decision-del-clasificador.md) y
+[ADR 0003](../../docs/adr/0003-llm-configurable-y-privacidad.md).
+
+**Validación con datos reales: movida a la fase 10.** El evaluador no se ha ejecutado con una
+muestra real ni con claves de LLM; el criterio de precisión se mide contra la muestra revisada a mano
+de la fase 9.
 
 ## Overview
 
@@ -54,23 +66,30 @@ Crear: `apps/worker/src/classify/rules.ts`, `apps/worker/src/classify/thread.ts`
 2. Herencia por hilo.
 3. Motor de reglas leyendo de `Rule`: CIF (normalizado, con y sin `ES`), razón social, remitente/dominio, palabra clave.
 4. Fábrica de proveedores a partir de `LlmSetting`; claves de API en variables de entorno, nunca en la base de datos.
-5. Prompt con la descripción de las tres categorías y sus sociedades a partir de `docs/sociedades-categorias.md`.
+5. Prompt con la descripción de las tres categorías y sus sociedades a partir de `docs/referencia/sociedades-categorias.md`.
 6. `evaluate.ts`: matriz de confusión por categoría y por modelo, porcentaje que pasa por el LLM y coste.
-7. Tests unitarios con casos reales anonimizados.
+7. Tests unitarios con casos anonimizados.
 
 ## Todo
 
 - [x] Esquema y herencia por hilo
 - [x] Motor de reglas
 - [x] Proveedores LLM (Anthropic, OpenRouter, compatible OpenAI, Gemini), probados con modelo simulado
-- [x] Evaluador (falta ejecutarlo con el conjunto real de la fase 4 y con claves de LLM)
+- [x] Evaluador (código y pruebas)
 - [x] Tests
 - [x] Correcciones de la revisión: CIF por delante del hilo, herencia con categorías finales del equipo, firma interna sin regla fuerte, decisiones degradadas por fallo técnico del LLM
 
+## Movido a otras fases
+
+- Ejecutar el evaluador con la muestra revisada a mano y con claves de LLM, con y sin LLM: fase 10.
+- Informe comparativo de al menos dos modelos: fase 10.
+- Tope de gasto diario del LLM (no existe hoy): fase 10.
+
 ## Success Criteria
 
-En el conjunto de prueba: precisión ≥ 95 % por categoría con el modelo por
-defecto; informe comparativo de al menos dos modelos.
+Se medirán en la fase 10: precisión ≥ 95 % por categoría con el modelo por defecto contra la
+muestra revisada a mano, más la cobertura mínima que se fije en la fase 9, e informe comparativo de
+al menos dos modelos.
 
 ## Risk Assessment
 

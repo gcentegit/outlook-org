@@ -42,7 +42,7 @@ Fecha: 2026-10-02. Estado: completada. No se ha hecho ningún commit, push, ni s
 
 ## Desviaciones y avisos
 
-- **El puerto 3100 del host ya estaba ocupado** por un `next dev` de `/home/ubuntu/proyectos/CPA-caracteristicas` (no es mío, no se ha tocado). El compose publica la web en `${WEB_HOST_PORT:-3100}`; para probar usé 3110 en mi `.env` local (ignorado por git). El `.env.example` deja 3100.
+- **El puerto 3100 del host ya estaba ocupado** por un `next dev` de otro proyecto de la máquina (no es mío, no se ha tocado). El compose publica la web en `${WEB_HOST_PORT:-3100}`; para probar usé 3110 en mi `.env` local (ignorado por git). El `.env.example` deja 3100.
 - El 3100 por defecto fallará mientras ese proceso siga vivo; hay que cambiar `WEB_HOST_PORT` o pararlo (decisión del usuario).
 - La imagen del worker es grande (1,86 GB) porque `prisma` (CLI) es dependencia de producción para ejecutar `migrate deploy` al arrancar. Se puede reducir más adelante.
 - No pude usar Context7 (la herramienta no estaba disponible en esta sesión); la API de Prisma 7 se validó empíricamente con generate, migrate y el build de Docker.
