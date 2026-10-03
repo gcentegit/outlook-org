@@ -23,8 +23,8 @@ sanos.
     responde, faltan credenciales (`status: "disabled"`) o espera el bloqueo. Incluye `version`,
     `mode`, `lastSyncAt`, `categoryModes` y, si no está sano, `reason`.
 - La web usa `GET /api/health`, con `version`.
-- `version` es la `APP_VERSION` horneada en la imagen; no se introduce una variable `IMAGE_TAG`
-  aparte porque la web y el Dockerfile ya usan `APP_VERSION`.
+- `version` es la versión SemVer horneada en la imagen (`APP_VERSION`) y `commit`, el sha corto
+  (`APP_COMMIT`); las dos comprobaciones de salud devuelven ambos.
 - **Heartbeat:** `UPTIME_KUMA_PUSH_URL` opcional; `status=up` tras cada ronda correcta y
   `status=down` con el error si falla. Nunca interrumpe la sincronización.
 - **Puertos de desarrollo:** PostgreSQL 5442, docling 5101 y web 3110 (`WEB_HOST_PORT`); el 3000,

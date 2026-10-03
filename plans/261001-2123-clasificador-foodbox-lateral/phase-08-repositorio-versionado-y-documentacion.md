@@ -38,7 +38,8 @@ Documentación: `README.md`, `CLAUDE.md`, `AGENTS.md`, `docs/`, `plans/`. Versio
 
 Pull request de documentación y plan (esta rama):
 
-- [x] Informe con detalles de otro proyecto fuera del repositorio y de su historial (ya hecho al rehacer el primer commit)
+- [x] Informe con detalles de otro proyecto fuera de `main` y de su historial (ignorado en git; `main` se rehízo con un primer commit limpio)
+- [ ] Borrar la rama antigua `feat/clasificador-foodbox-lateral` del remoto, que aún contiene ese informe (pendiente de que el usuario lo autorice)
 - [x] Informes versionados revisados con el criterio de repositorio público: quitados los nombres de servicios y rutas de otro proyecto
 - [x] `docs/README.md`, `docs/arquitectura.md` y `docs/adr/` (el antiguo `DECISIONS.md` queda dividido por tema y desaparece)
 - [x] Guía de Entra ID y tabla de sociedades movidas a `docs/guias/` y `docs/referencia/`
@@ -49,13 +50,13 @@ Pull request de documentación y plan (esta rama):
 
 Pull request de versionado y flujo de GitHub (otro agente; sin marcar hasta que se fusione):
 
-- [ ] `main` protegida: solo pull request con la CI en verde
+- [x] `main` protegida: solo pull request con la CI en verde
 - [x] Commits convencionales validados en los pull requests
-- [ ] release-please con una única versión para todo el producto (serie `0.x`)
-- [ ] `CHANGELOG.md` y Release de GitHub con las notas de cada versión
-- [ ] Etiqueta de imagen `X.Y.Z` sin reconstruir, y versión (`X.Y.Z` y sha) visible en `/health` y en el panel
+- [x] release-please con una única versión para todo el producto (serie `0.x`)
+- [x] `CHANGELOG.md` y Release de GitHub con las notas de cada versión
+- [x] Etiqueta de imagen `X.Y.Z` sin reconstruir, y versión (`X.Y.Z` y sha) visible en `/health` y en el panel
 - [x] `docs/operacion/versiones-y-releases.md`
-- [ ] Dependabot, plantilla de pull request y alertas de secretos con bloqueo en la subida
+- [x] Dependabot, plantilla de pull request y alertas de secretos con bloqueo en la subida
 
 ## Success Criteria
 

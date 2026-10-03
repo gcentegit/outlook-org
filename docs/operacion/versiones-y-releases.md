@@ -105,24 +105,25 @@ Si una ejecución falla a medias (por ejemplo, la construcción de la imagen de 
 failed jobs»: conserva los outputs de release-please. Volver a lanzar todo el workflow no recrea la
 Release, porque ya existe.
 
-## Si el PR de versión no arranca la CI
+## Si el PR de versión se queda bloqueado
 
-Los PR y los pushes hechos con `GITHUB_TOKEN` no lanzan `pull_request` ni `push`, así que el PR de
-versión no recibiría los checks obligatorios y no se podría fusionar. Para evitarlo sin un token
-personal, el job de release-please lanza `ci.yml` por `workflow_dispatch` (que sí está permitido con
-`GITHUB_TOKEN`, con `actions: write`) sobre la rama del PR después de crearlo o actualizarlo. Los checks
-quedan asociados al commit del PR con los mismos nombres que los obligatorios.
+GitHub crea las ejecuciones de la CI de un PR abierto por Actions, pero las deja en espera de
+aprobación. Sin ellas el PR de versión no cumple los checks obligatorios y aparece como bloqueado
+(así ocurrió con la `v0.1.0`). El job de release-please intenta aprobarlas después de crear o
+actualizar el PR.
 
-Si aun así el PR de versión muestra los checks pendientes:
+Si el PR de versión sigue bloqueado:
 
-1. Mira si el job «Lanzar la CI sobre la rama del PR de versión» de `release.yml` se ejecutó y qué dijo.
-2. Lanza la CI a mano: Actions > CI > Run workflow, rama `release-please--branches--main`.
-3. Si el job de release-please falla con «GitHub Actions is not permitted to create or approve pull
+1. Abre el PR y pulsa **Approve workflows to run**, o aprueba las ejecuciones en espera desde la
+   pestaña Actions. La CI arranca y, al pasar, el PR se puede fusionar.
+2. Si el job de release-please falla con «GitHub Actions is not permitted to create or approve pull
    requests», activa Settings > Actions > General > Workflow permissions > **Allow GitHub Actions to
    create and approve pull requests**.
+3. Si la aprobación automática deja un aviso en cada versión, la alternativa es que release-please use
+   un token personal de grano fino o una GitHub App: los PR creados así lanzan la CI sin aprobación.
 
-El PR de versión tampoco dispara `pr-title.yml`; su título ya es válido. Por eso ese check **no** debe
-ser obligatorio.
+El título del PR de versión (`chore(main): release X.Y.Z`) ya es válido; aun así, el check del título
+**no** debe ser obligatorio, para que un fallo de aprobación no bloquee una versión.
 
 Solución alternativa, si GitHub dejase de permitir este lanzamiento: un token personal de grano fino (o
 una GitHub App) con permisos de contenido y de pull requests, guardado como secreto y pasado a la acción

@@ -122,10 +122,11 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Los PR y pushes hechos con GITHUB_TOKEN no lanzan `pull_request` ni `push`, pero sí
-      # `workflow_dispatch`. Sin esto el PR de versión se quedaría sin los checks obligatorios.
-      # Se lanza en cada ejecución que crea o actualiza el PR (cada actualización cambia su commit).
-      - name: Lanzar la CI sobre la rama del PR de versión
+      # GitHub crea las ejecuciones `pull_request` de un PR abierto por Actions, pero las deja en
+      # espera de aprobación (`action_required`), y sin ellas el PR de versión no se puede fusionar.
+      # Aquí se aprueban. Si GitHub no lo permite con este token, queda un aviso: se aprueban a mano
+      # con el botón «Approve workflows to run» del propio PR.
+      - name: Aprobar la CI en espera del PR de versión
         if: steps.rp.outputs.prs_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -135,8 +136,23 @@ jobs:
           set -euo pipefail
           while IFS= read -r branch; do
             [ -n "$branch" ] || continue
-            echo "Lanzando ci.yml sobre $branch"
-            gh workflow run ci.yml --ref "$branch"
+            ids=''
+            for _ in $(seq 1 12); do
+              ids="$(gh run list --branch "$branch" --status action_required --json databaseId --jq '.[].databaseId')"
+              [ -n "$ids" ] && break
+              sleep 5
+            done
+            if [ -z "$ids" ]; then
+              echo "::notice::No hay ejecuciones en espera en $branch."
+              continue
+            fi
+            for id in $ids; do
+              if gh api -X POST "repos/$GH_REPO/actions/runs/$id/approve" >/dev/null; then
+                echo "Aprobada la ejecución $id de $branch"
+              else
+                echo "::warning::No se pudo aprobar la ejecución $id: apruébala en el PR de versión («Approve workflows to run»)."
+              fi
+            done
           done < <(jq -r '.[].headBranchName' <<<"$PRS")
 
   promote:
