@@ -32,3 +32,6 @@ docs/privado/
 
 # Informe interno sobre otro proyecto (repositorio privado): no se versiona aquí
 plans/reports/dokploy-261002-1549-mejoras-despliegue-cpa.md
+
+# Worktrees de los agentes
+.claude/worktrees/
