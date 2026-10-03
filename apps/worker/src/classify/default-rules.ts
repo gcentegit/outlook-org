@@ -2,7 +2,7 @@ import { SOCIEDADES, normalizeCif } from '@clasificador/shared';
 
 import type { RuleRecord } from './rules';
 
-/** Reglas fuertes por defecto: CIF y razón social de las siete sociedades (docs/sociedades-categorias.md). */
+/** Reglas fuertes por defecto: CIF y razón social de las siete sociedades (docs/referencia/sociedades-categorias.md). */
 export function defaultRules(): RuleRecord[] {
   return SOCIEDADES.flatMap((s) => [
     {

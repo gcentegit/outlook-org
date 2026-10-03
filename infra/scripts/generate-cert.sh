@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Genera el certificado autofirmado con el que la app del buzón se autentica en Entra ID.
-# Guía de uso: docs/guia-entra-id-rbac.md (Parte A).
+# Guía de uso: docs/guias/entra-id-rbac.md (Parte A).
 set -euo pipefail
 
 NOMBRE="clasificador-proveedores"

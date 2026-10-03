@@ -6,6 +6,14 @@ effort: 0.5d
 
 # Phase 1: Acceso a Microsoft 365 y cuentas
 
+## Estado
+
+**Pendiente del usuario.** Está escrita la guía ([docs/guias/entra-id-rbac.md](../../docs/guias/entra-id-rbac.md))
+y el script de certificado (`infra/scripts/generate-cert.sh`); el usuario aplazó el certificado y la
+configuración en Entra ID y Exchange. Bloquea todo lo que toca el buzón real (fases 9 a 11) y el login
+del panel. El certificado que genera el script dura 730 días: véase
+[credenciales y caducidades](../../docs/operacion/credenciales-y-caducidades.md).
+
 ## Overview
 
 Registrar una app en Entra ID que pueda leer y modificar categorías **solo** en
@@ -42,7 +50,7 @@ siguiendo una guía que se escribe en esta fase.
    - Igual con `Application MailboxSettings.ReadWrite`.
 4. Verificar con `Test-ServicePrincipalAuthorization -Identity <appId> -Resource <buzon>` (InScope = True) y con otro buzón (InScope = False).
 5. Script de humo en TS: token por certificado, `GET /users/<buzon>/outlook/masterCategories` y `GET .../mailFolders/inbox/messages?$top=1`.
-6. Escribir la guía en `docs/guia-entra-id-rbac.md`.
+6. Escribir la guía en `docs/guias/entra-id-rbac.md`.
 7. Crear la cuenta de empresa en la Console de Anthropic (acepta los Commercial Terms, que incluyen el DPA) y una clave de API solo para este servicio. Si se usará OpenRouter, crear la cuenta y activar "no entrenar con los datos" y ZDR.
 
 ## Todo
@@ -52,7 +60,7 @@ siguiendo una guía que se escribe en esta fase.
 - [ ] Ámbito y asignaciones de rol creados
 - [ ] Prueba InScope positiva y negativa
 - [ ] Script de humo lee categorías e Inbox
-- [x] Guía escrita (`docs/guia-entra-id-rbac.md`) y script de certificado (`infra/scripts/generate-cert.sh`)
+- [x] Guía escrita (`docs/guias/entra-id-rbac.md`) y script de certificado (`infra/scripts/generate-cert.sh`)
 - [ ] Cuenta de Anthropic y clave de API
 - [ ] Cuenta de OpenRouter con privacidad configurada (si se usa)
 

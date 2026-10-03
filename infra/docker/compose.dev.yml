@@ -1,5 +1,5 @@
 # Infraestructura SOLO para desarrollo local. En Dokploy cada pieza es un servicio
-# independiente (sin Compose); ver docs/DECISIONS.md.
+# independiente (sin Compose); ver docs/adr/README.md.
 #
 # Uso: pnpm services:up  (equivale a: docker compose -p clasificador-dev --env-file .env -f infra/docker/compose.dev.yml up -d)
 #

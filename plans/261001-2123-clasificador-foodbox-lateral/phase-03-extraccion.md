@@ -1,10 +1,20 @@
 ---
 title: "Phase 3: Extracción de correo y adjuntos"
-status: in-progress
+status: done
 effort: 1.5d
 ---
 
 # Phase 3: Extracción de correo y adjuntos
+
+## Estado
+
+**Hecha en código**, probada con respuestas simuladas de Graph y con docling real en local (prueba
+sintética 5/5, `plans/reports/extraction-test-261002-1713.md`). Se construyó el cliente de Graph, la
+lectura de mensajes y adjuntos, la integración con docling-serve y la caché por hash
+([ADR 0012](../../docs/adr/0012-adjuntos-y-extraccion.md)).
+
+**Validación con datos reales: movida a la fase 10** (no se ha probado contra el buzón real ni con
+facturas reales).
 
 ## Overview
 
@@ -37,27 +47,35 @@ Crear: `src/graph/client.ts`, `src/graph/messages.ts`, `src/extract/docling.ts`,
 2. Cuerpo HTML a texto plano.
 3. Envío del adjunto a docling-serve (`/v1/convert/file`, salida Markdown, OCR RapidOCR).
 4. Caché por hash en `attachments_text`, registrando si hubo OCR y el tiempo.
-5. Prueba de extracción con 10 facturas digitales y 10 escaneadas de FOOD BOX, LATERAL y ARCOBETA: ¿sale el CIF del cliente, la razón social y el total? Tiempo por documento en arm64.
-6. Informe en `plans/reports/`.
+5. Prueba de extracción con facturas reales (ahora en la fase 10): ¿sale el CIF del cliente, la razón social y el total? Tiempo por documento en arm64.
+6. Informe de la prueba, con datos de terceros en `data/history/` y no en `plans/reports/`.
 
 ## Todo
 
-- [x] Cliente Graph (probado con respuestas simuladas; falta validarlo contra el buzón real)
+- [x] Cliente Graph (probado con respuestas simuladas)
 - [x] Integración con docling-serve
 - [x] Caché por hash
-- [ ] Prueba de 20 documentos reales e informe (bloqueada por el certificado; prueba sintética 5/5 en `plans/reports/extraction-test-261002-1713.md`)
+- [x] Script de prueba de extracción (`apps/worker/scripts/extraction-test.ts`) y prueba sintética
+
+## Movido a otras fases
+
+- Validar el cliente de Graph contra el buzón real: fase 10.
+- Prueba de extracción con 20 facturas reales (CIF del cliente en ≥ 19 de 20; tiempo medio en el
+  servidor arm64) e informe: fase 10.
+- Contar cuántos adjuntos son `.eml` o `.msg` (no soportados hoy): fase 9; soportarlos o descartarlos
+  de forma informada: fase 10.
 
 ## Success Criteria
 
-El CIF del cliente aparece en el Markdown en ≥ 19 de 20 documentos; tiempo
-medio por documento medido en el servidor arm64.
+Se cumplirán en la fase 10: el CIF del cliente aparece en el Markdown en ≥ 19 de 20 documentos
+reales; tiempo medio por documento medido en el servidor arm64.
 
 ## Risk Assessment
 
 Si los escaneos dan mal resultado con RapidOCR, probar PP-OCRv5 mobile como
-alternativa (registrado en DECISIONS).
+alternativa (anotado en el ADR 0012).
 
 ## Security Considerations
 
 Los Markdown contienen datos de terceros: se guardan solo en PostgreSQL interno
-y con una política de retención definida.
+y con una política de retención definida (90 días, [ADR 0010](../../docs/adr/0010-retencion-y-datos-de-terceros.md)).

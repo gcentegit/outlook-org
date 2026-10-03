@@ -1,7 +1,7 @@
 import type { Category } from './categories';
 
 /**
- * Las siete sociedades del grupo y su categoría. Fuente: docs/sociedades-categorias.md (hoja
+ * Las siete sociedades del grupo y su categoría. Fuente: docs/referencia/sociedades-categorias.md (hoja
  * "Resumen" de datos-fiscales.xlsx). Solo cuentan estos CIF: en la factura también aparece el del
  * proveedor, que nunca debe contar. La dirección fiscal es común a las siete y no sirve de señal.
  *
