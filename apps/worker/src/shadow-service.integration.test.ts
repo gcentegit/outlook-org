@@ -1,9 +1,14 @@
 /**
  * Prueba de integración del servicio completo en modo sombra: worker real (migraciones, bloqueo,
  * pg-boss, extracción con docling, clasificador, repositorios Prisma) contra un buzón de Graph
- * simulado que se inyecta como `fetch` del cliente. Necesita PostgreSQL y docling levantados:
+ * simulado que se inyecta como `fetch` del cliente.
  *
- *   RUN_INTEGRATION=1 pnpm --filter @clasificador/worker exec vitest run src/shadow-service.integration.test.ts
+ * Dos variables de entorno eligen qué se ejecuta (sin ellas, todo se salta):
+ *   - `RUN_INTEGRATION=1`: las pruebas que solo necesitan PostgreSQL (son las que corre la CI).
+ *   - `RUN_DOCLING_INTEGRATION=1` (además de la anterior): las que también necesitan docling
+ *     levantado (extracción de adjuntos); la imagen pesa 7 GB y no se usa en la CI.
+ *
+ *   RUN_INTEGRATION=1 RUN_DOCLING_INTEGRATION=1 pnpm --filter @clasificador/worker exec vitest run src/shadow-service.integration.test.ts
  *
  * Usa `DATABASE_URL` y `DOCLING_URL` del entorno (con `--env-file`, los de `.env`) y borra al
  * terminar todo lo que crea (filas con id `it-*`, el estado de sincronización y el esquema de pg-boss).
@@ -26,6 +31,7 @@ import { startWorker, type RunningWorker } from './index';
 import { tryAcquireInstanceLock } from './sync/instance-lock';
 
 const enabled = process.env.RUN_INTEGRATION === '1';
+const withDocling = enabled && process.env.RUN_DOCLING_INTEGRATION === '1';
 const MAILBOX = 'buzon@ejemplo.com';
 const GRAPH = `https://graph.test/v1.0/users/${encodeURIComponent(MAILBOX)}`;
 
@@ -169,7 +175,7 @@ async function waitFor<T>(
   }
 }
 
-describe.skipIf(!enabled)('servicio en modo sombra (integración)', () => {
+describe.skipIf(!withDocling)('servicio en modo sombra con docling (integración)', () => {
   const mailbox = new FakeMailbox();
   let db: PrismaClient;
   let worker: RunningWorker;
@@ -219,6 +225,7 @@ describe.skipIf(!enabled)('servicio en modo sombra (integración)', () => {
         DOCLING_URL: process.env.DOCLING_URL ?? 'http://127.0.0.1:5101',
         MODE: 'shadow',
         APP_VERSION: 'it-test',
+        APP_COMMIT: 'it-commit',
         GRAPH_TENANT_ID: 'tenant',
         GRAPH_CLIENT_ID: 'client',
         GRAPH_CERT_PATH: '/no/se/usa.pem',
@@ -251,7 +258,7 @@ describe.skipIf(!enabled)('servicio en modo sombra (integración)', () => {
   it('guarda Message, AttachmentText y Decision en modo sombra y registra la corrección', async () => {
     const health = await fetch(`http://127.0.0.1:${worker.healthPort}/health`);
     expect(health.headers.get('content-type')).toContain('json');
-    expect(((await health.json()) as { version: string }).version).toBe('it-test');
+    expect(await health.json()).toMatchObject({ version: 'it-test', commit: 'it-commit' });
 
     const decisions = await waitFor('3 decisiones', async () => {
       const rows = await db.decision.findMany({

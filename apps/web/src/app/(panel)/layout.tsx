@@ -4,6 +4,7 @@ import { NavLinks } from '@/components/nav-links';
 import { SignOutButton } from '@/components/sign-out-button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Notice } from '@/components/ui';
+import { loadConfig } from '@/lib/config';
 import { requireUser } from '@/lib/session';
 
 // Todo el panel depende de la sesión y de la base de datos: nada se prerenderiza al compilar.
@@ -12,6 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   // Sin sesión redirige a /login; con sesión no autorizada, a /login con el motivo.
   const user = await requireUser();
+  const { APP_VERSION, APP_COMMIT } = loadConfig();
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
@@ -37,6 +39,9 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       <main id="contenido" tabIndex={-1}>
         {children}
       </main>
+      <footer className="mt-10 border-t border-border pt-3 text-xs text-muted">
+        Versión {APP_VERSION} · commit <code>{APP_COMMIT}</code>
+      </footer>
     </div>
   );
 }

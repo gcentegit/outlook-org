@@ -50,11 +50,11 @@ Pull request de documentación y plan (esta rama):
 Pull request de versionado y flujo de GitHub (otro agente; sin marcar hasta que se fusione):
 
 - [ ] `main` protegida: solo pull request con la CI en verde
-- [ ] Commits convencionales validados en los pull requests
+- [x] Commits convencionales validados en los pull requests
 - [ ] release-please con una única versión para todo el producto (serie `0.x`)
 - [ ] `CHANGELOG.md` y Release de GitHub con las notas de cada versión
 - [ ] Etiqueta de imagen `X.Y.Z` sin reconstruir, y versión (`X.Y.Z` y sha) visible en `/health` y en el panel
-- [ ] `docs/operacion/versiones-y-releases.md`
+- [x] `docs/operacion/versiones-y-releases.md`
 - [ ] Dependabot, plantilla de pull request y alertas de secretos con bloqueo en la subida
 
 ## Success Criteria

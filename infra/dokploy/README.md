@@ -1,6 +1,6 @@
 # Despliegue en Dokploy
 
-Cuatro servicios independientes en el proyecto `clasificador.arcofood`, entorno `production`, sin Compose (como `cpa.arcofood`). `infra/docker/compose.dev.yml` es solo para desarrollo local.
+Cuatro servicios independientes en el proyecto `clasificador.arcofood`, entorno `production`, sin Compose (como otro proyecto del mismo servidor). `infra/docker/compose.dev.yml` es solo para desarrollo local.
 
 Todo lo que se describe aquí lo crea y comprueba [`provision.ts`](provision.ts). La configuración real (límites, comprobaciones de salud, dominio, copias) no vive solo en la interfaz de Dokploy: está en este directorio y se puede volver a aplicar.
 
@@ -8,8 +8,8 @@ Todo lo que se describe aquí lo crea y comprueba [`provision.ts`](provision.ts)
 
 | Servicio | Tipo | Imagen | Puerto interno | Dominio | Memoria (reserva / límite) | Comprobación de salud |
 | --- | --- | --- | --- | --- | --- | --- |
-| `clasificador-web` | Application | `ghcr.io/<propietario>/clasificador-web:<sha corto>` | 3000 | `clasificador.arcofood.com` (Let's Encrypt) | 256 MiB / 512 MiB | `GET /api/health` |
-| `clasificador-worker` | Application | `ghcr.io/<propietario>/clasificador-worker:<sha corto>` | 8080 (solo interno) | ninguno | 256 MiB / 1 GiB | `GET /livez` (arrancado y con el bucle avanzando) |
+| `clasificador-web` | Application | `ghcr.io/<propietario>/clasificador-web:<X.Y.Z>` | 3000 | `clasificador.arcofood.com` (Let's Encrypt) | 256 MiB / 512 MiB | `GET /api/health` |
+| `clasificador-worker` | Application | `ghcr.io/<propietario>/clasificador-worker:<X.Y.Z>` | 8080 (solo interno) | ninguno | 256 MiB / 1 GiB | `GET /livez` (arrancado y con el bucle avanzando) |
 | `clasificador-docling` | Application | `ghcr.io/docling-project/docling-serve-cpu:v1.36.0` | 5001 (solo interno) | ninguno | 1,5 GiB / 4 GiB | `GET /health` (curl) |
 | `clasificador-db` | PostgreSQL nativo | `postgres:16-alpine` | 5432 (sin puerto publicado) | ninguno | 256 MiB / 1 GiB | `pg_isready -U clasificador -d clasificador` |
 
@@ -21,7 +21,7 @@ Todo lo que se describe aquí lo crea y comprueba [`provision.ts`](provision.ts)
 
 ## Variables de entorno
 
-`provision.ts` solo escribe las claves que se indican; las demás que añadas a mano en Dokploy se respetan. `APP_VERSION` no se define: la fija la imagen (sha corto) y es lo que devuelven `/health` y `/api/health`.
+`provision.ts` solo escribe las claves que se indican; las demás que añadas a mano en Dokploy se respetan. `APP_VERSION` y `APP_COMMIT` no se definen: los fija la imagen (versión `X.Y.Z` y sha corto del commit) y es lo que devuelven `/health`, `/livez` y `/api/health` en los campos `version` y `commit`.
 
 ### `clasificador-worker`
 
@@ -109,7 +109,7 @@ Variables opcionales del entorno del script:
 | `GRAPH_CERT_PEM_FILE` | Ruta al PEM del certificado de Graph (solo se monta en el worker) |
 | `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `INTERNAL_EMAIL_DOMAINS`, claves de LLM, `UPTIME_KUMA_PUSH_URL` | Se copian al worker solo si están definidas |
 | `MS_*`, `BETTER_AUTH_SECRET` | Se copian a la web solo si están definidas |
-| `WEB_IMAGE`, `WORKER_IMAGE` | Imagen inicial al crear cada aplicación (por defecto `ghcr.io/$GHCR_OWNER/clasificador-<app>:latest`); después la fija el workflow de publicación y el script no la toca |
+| `WEB_IMAGE`, `WORKER_IMAGE` | Imagen inicial al crear cada aplicación (por defecto `ghcr.io/$GHCR_OWNER/clasificador-<app>:latest`); después la fija el flujo de despliegue y el script no la toca |
 | `GHCR_USERNAME`, `GHCR_TOKEN` | Credenciales de descarga de GHCR si las imágenes son privadas (token con `read:packages`) |
 
 Qué hace y qué no:
@@ -123,28 +123,29 @@ Antes del primer despliegue, activa las métricas: monitorización de Dokploy (S
 
 ## Publicación y despliegue
 
-[`.github/workflows/release.yml`](../../.github/workflows/release.yml):
+Versiones, PR de versión y reglas SemVer: [versiones y releases](../../docs/operacion/versiones-y-releases.md). Aquí, lo que toca a Dokploy.
 
-1. Cada push a `main` construye y publica `clasificador-web` y `clasificador-worker` para `linux/arm64` en GHCR con la etiqueta del commit (sha corto, 7 caracteres) y `latest` (solo como referencia; nunca se despliega).
-2. Un tag `vX.Y.Z` construye lo mismo y, solo si existe el secreto `DOKPLOY_API_KEY`, despliega: busca las aplicaciones por nombre, fija la imagen exacta con `application.saveDockerProvider` y llama a `application.deploy` **primero para el worker**. Antes de tocar la web, [`infra/scripts/wait-dokploy-app.sh`](../scripts/wait-dokploy-app.sh) espera (hasta 10 minutos) a que el despliegue del worker termine bien (`deployment.all`: `done`; `error` o `cancelled` detienen el flujo) y a que su contenedor lleve la imagen nueva y esté `(healthy)`, es decir, con las migraciones ya aplicadas (el `HEALTHCHECK` `/livez` no responde 200 hasta entonces). Solo entonces se despliega la web, se espera hasta 5 minutos a que `https://clasificador.arcofood.com/api/health` devuelva esa versión y se vuelve a comprobar el worker. Si el worker falla, el flujo termina en rojo y la web no se despliega. Limitación: la consulta de contenedores (`docker.getContainersByAppNameMatch`) no se ha podido probar contra un Dokploy real; si Dokploy no la ofrece (HTTP 4xx) el script avisa y se queda con el estado del despliegue.
+- [`release.yml`](../../.github/workflows/release.yml), en cada push a `main`: construye y publica `clasificador-web` y `clasificador-worker` para `linux/arm64` en GHCR **una sola vez por commit** (etiqueta = sha corto de 7 caracteres, más `latest` solo como referencia; nunca se despliega) con la versión del `package.json` raíz y el commit horneados. Mantiene el PR de versión de release-please. **No despliega.**
+- Al fusionar el PR de versión, release-please crea la etiqueta `vX.Y.Z` y la Release de GitHub. En esa misma ejecución, el job de promoción añade la etiqueta `X.Y.Z` a la imagen ya construida de ese commit (`docker buildx imagetools create`, mismo digest, sin reconstruir) y llama a [`deploy.yml`](../../.github/workflows/deploy.yml).
+- [`deploy.yml`](../../.github/workflows/deploy.yml) despliega la versión `X.Y.Z` solo si existen los secretos `DOKPLOY_API_URL` y `DOKPLOY_API_KEY` (si no, avisa y termina sin error). Comprueba que existen las dos imágenes, busca las aplicaciones por nombre, fija la imagen exacta con `application.saveDockerProvider` y llama a `application.deploy` **primero para el worker**. Antes de tocar la web, [`infra/scripts/wait-dokploy-app.sh`](../scripts/wait-dokploy-app.sh) espera (hasta 10 minutos) a que el despliegue del worker termine bien (`deployment.all`: `done`; `error` o `cancelled` detienen el flujo) y a que su contenedor lleve la imagen nueva y esté `(healthy)`, es decir, con las migraciones ya aplicadas (el `HEALTHCHECK` `/livez` no responde 200 hasta entonces). Solo entonces se despliega la web, se espera hasta 5 minutos a que `https://clasificador.arcofood.com/api/health` devuelva esa versión y se vuelve a comprobar el worker. Si el worker falla, el flujo termina en rojo y la web no se despliega. Limitación: la consulta de contenedores (`docker.getContainersByAppNameMatch`) no se ha podido probar contra un Dokploy real; si Dokploy no la ofrece (HTTP 4xx) el script avisa y se queda con el estado del despliegue.
 
 Secretos del repositorio: `DOKPLOY_API_URL`, `DOKPLOY_API_KEY` y, con imágenes privadas, `GHCR_PULL_USERNAME` y `GHCR_PULL_TOKEN`. Variable opcional: `WEB_URL`.
 
 ## Cómo volver atrás
 
-Despliega la etiqueta anterior; no hace falta reconstruir nada:
+Despliega la versión anterior; no hace falta reconstruir nada, porque su imagen ya está en GHCR con la etiqueta `X.Y.Z`:
 
-1. Elige el sha corto de la versión buena (en Dokploy, el historial de despliegues muestra el título `Release vX.Y.Z (<sha>)`; en GHCR, las etiquetas del paquete).
-2. GitHub > Actions > "Release — imágenes arm64 y despliegue" > Run workflow, con `tag` = ese sha. Fija la imagen, despliega el worker, espera a que esté sano, despliega la web y espera a que devuelva esa versión.
-3. Comprueba `GET /api/health` (web) y, desde el contenedor, `GET /livez` y `GET /health` (worker): todos devuelven la versión (`/health` responde 503 mientras no haya una sincronización reciente, aunque la versión sea la correcta).
+1. Elige la versión buena en la lista de Releases de GitHub (en Dokploy, el historial de despliegues muestra el título `Release vX.Y.Z`).
+2. GitHub > Actions > "Desplegar en Dokploy" > Run workflow, con `version` = `X.Y.Z` (sin la `v`). Comprueba que existe la imagen, fija la imagen, despliega el worker, espera a que esté sano, despliega la web y espera a que devuelva esa versión.
+3. Comprueba `GET /api/health` (web) y, desde el contenedor, `GET /livez` y `GET /health` (worker): todos devuelven la versión y el commit (`/health` responde 503 mientras no haya una sincronización reciente, aunque la versión sea la correcta).
 
-Si hay que hacerlo sin GitHub: en la aplicación de Dokploy, Provider > Docker, cambia la etiqueta de la imagen y pulsa Deploy.
+Si hay que hacerlo sin GitHub: en la aplicación de Dokploy, Provider > Docker, cambia la etiqueta de la imagen a `X.Y.Z` y pulsa Deploy.
 
 Las migraciones de Prisma solo avanzan: una versión anterior de la imagen con un esquema posterior debe ser compatible, o se restaura la copia de seguridad.
 
 ## Copias de seguridad
 
-Dokploy hace la copia diaria; [`infra/scripts/restore-check.sh`](../scripts/restore-check.sh) comprueba una vez al mes que se puede restaurar:
+Dokploy hace la copia diaria; [`infra/scripts/restore-check.sh`](../scripts/restore-check.sh) comprueba que se puede restaurar. Está pendiente de programar en el servidor (cron mensual); hasta entonces se ejecuta a mano:
 
 ```bash
 MINIO_ENDPOINT=https://<minio> MINIO_ACCESS_KEY=... MINIO_SECRET_KEY=... \

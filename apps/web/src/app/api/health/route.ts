@@ -6,5 +6,6 @@ import { loadConfig } from '@/lib/config';
 export const dynamic = 'force-dynamic';
 
 export function GET(): NextResponse {
-  return NextResponse.json({ status: 'ok', version: loadConfig().APP_VERSION });
+  const { APP_VERSION, APP_COMMIT } = loadConfig();
+  return NextResponse.json({ status: 'ok', version: APP_VERSION, commit: APP_COMMIT });
 }

@@ -56,6 +56,7 @@ services:
       dockerfile: apps/worker/Dockerfile
       args:
         APP_VERSION: ${APP_VERSION:-dev}
+        APP_COMMIT: ${APP_COMMIT:-dev}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -78,6 +79,7 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         APP_VERSION: ${APP_VERSION:-dev}
+        APP_COMMIT: ${APP_COMMIT:-dev}
     restart: unless-stopped
     environment:
       TZ: Europe/Madrid

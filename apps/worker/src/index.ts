@@ -76,6 +76,7 @@ export async function startWorker(
   const db = prisma();
   const server = createHealthServer({
     version: config.APP_VERSION,
+    commit: config.APP_COMMIT,
     mode: config.MODE,
     staleMs: config.SYNC_STALE_SECONDS * 1000,
     getCategoryModes: () => readCategoryModes(db),
@@ -95,7 +96,7 @@ export async function startWorker(
   await new Promise<void>((resolve) => server.listen(config.HEALTH_PORT, '0.0.0.0', resolve));
   const healthPort = (server.address() as AddressInfo).port;
   console.log(
-    `Worker ${config.APP_VERSION} (MODE=${config.MODE}) en marcha; /health en el puerto ${healthPort}.`,
+    `Worker ${config.APP_VERSION} (${config.APP_COMMIT}, MODE=${config.MODE}) en marcha; /health en el puerto ${healthPort}.`,
   );
 
   // Una sola instancia: la anterior (p. ej. en un redespliegue) suelta el bloqueo al terminar.

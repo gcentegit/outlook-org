@@ -8,6 +8,7 @@ describe('loadConfig', () => {
     expect(c.HEALTH_PORT).toBe(8080);
     expect(c.SYNC_STALE_SECONDS).toBe(300);
     expect(c.APP_VERSION).toBe('dev');
+    expect(c.APP_COMMIT).toBe('dev');
   });
 
   it('falla si falta DATABASE_URL o no es una URL', () => {

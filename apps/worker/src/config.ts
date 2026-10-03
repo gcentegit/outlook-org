@@ -12,8 +12,10 @@ const csv = z
 
 const configSchema = z.object({
   DATABASE_URL: z.url(),
-  /** Versión desplegada (sha corto de la imagen); la fija el Dockerfile. */
+  /** Versión del producto (X.Y.Z, la del package.json raíz); la fija el Dockerfile. */
   APP_VERSION: z.string().min(1).default('dev'),
+  /** Commit (sha corto) con el que se construyó la imagen; lo fija el Dockerfile. */
+  APP_COMMIT: z.string().min(1).default('dev'),
   /** Puerto interno del endpoint /health. */
   HEALTH_PORT: z.coerce.number().int().min(1).max(65535).default(8080),
   /** Segundos sin sincronizar a partir de los cuales /health devuelve 503. */

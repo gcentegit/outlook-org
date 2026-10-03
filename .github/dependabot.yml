@@ -1,0 +1,44 @@
+version: 2
+
+# Actualizaciones semanales (los lunes, hora de Madrid). Los títulos de los PR siguen Conventional
+# Commits (`build(deps): ...`, `ci(deps): ...`): son tipos que no generan versión por sí solos, así que
+# una actualización de dependencias sale con la siguiente versión. Si una es urgente (seguridad), cambia
+# el título del PR a `fix(deps): ...` antes de fusionarlo y saldrá una versión de corrección.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Madrid
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Madrid
+    groups:
+      github-actions:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: ci
+      include: scope
+
+  - package-ecosystem: docker
+    directories:
+      - /apps/web
+      - /apps/worker
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Madrid
+    commit-message:
+      prefix: build
+      include: scope

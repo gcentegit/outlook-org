@@ -1,0 +1,39 @@
+name: Título del PR
+
+# Los PR se fusionan con «squash» y el TÍTULO pasa a ser el mensaje del commit en main, que es lo que
+# lee release-please para calcular la versión y el CHANGELOG. Por eso se valida el título (no los
+# commits de la rama, que se aplastan). Formato: `tipo(ámbito opcional): descripción`; un cambio
+# incompatible lleva `!` tras el tipo (`feat!: ...`). Reglas: docs/operacion/versiones-y-releases.md.
+#
+# El PR de versión lo crea release-please con GITHUB_TOKEN y este workflow no se lanza en él (su título,
+# `chore: release X.Y.Z`, ya es válido). Por eso este check no debe marcarse como obligatorio.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-title:
+    name: Título del PR (Conventional Commits)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            test
+            build
+            ci
+            chore
+            revert

@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1.7
 # Worker del clasificador. Imagen linux/arm64 (también construye en amd64).
-#   docker build -f apps/worker/Dockerfile --build-arg APP_VERSION=$(git rev-parse --short HEAD) -t clasificador-worker .
+#   docker build -f apps/worker/Dockerfile \
+#     --build-arg APP_VERSION=$(node -p "require('./package.json').version") \
+#     --build-arg APP_COMMIT=$(git rev-parse --short=7 HEAD) -t clasificador-worker .
+# APP_VERSION es la versión del producto (X.Y.Z, la del package.json raíz) y APP_COMMIT el commit; los
+# devuelven /health y /livez. Se declaran al final para no invalidar la caché de las capas pesadas.
 ARG NODE_VERSION=22
 ARG PNPM_VERSION=11.22.0
 
@@ -17,9 +21,7 @@ RUN pnpm --filter @clasificador/db generate
 # ── Runtime: solo dependencias de producción ─────────────────────────────────
 FROM node:${NODE_VERSION}-bookworm-slim AS runner
 ARG PNPM_VERSION
-ARG APP_VERSION=dev
 ENV NODE_ENV=production \
-    APP_VERSION=${APP_VERSION} \
     HEALTH_PORT=8080
 # openssl: lo necesita el motor de migraciones de Prisma.
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
@@ -41,6 +43,10 @@ COPY --from=builder /repo/packages/db/prisma ./packages/db/prisma
 COPY --from=builder /repo/packages/db/prisma.config.ts ./packages/db/
 COPY --from=builder /repo/packages/shared/src ./packages/shared/src
 RUN chown -R node:node /app
+ARG APP_VERSION=dev
+ARG APP_COMMIT=dev
+ENV APP_VERSION=${APP_VERSION} \
+    APP_COMMIT=${APP_COMMIT}
 USER node
 WORKDIR /app/apps/worker
 EXPOSE 8080

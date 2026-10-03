@@ -6,12 +6,13 @@
 # Uso:
 #   DOKPLOY_API_URL=https://dokploy.example.com DOKPLOY_API_KEY=... \
 #     bash infra/scripts/wait-dokploy-app.sh --app-id <applicationId> --app-name <appName> \
-#       --tag <sha corto> [--since <AAAA-MM-DDTHH:MM:SS en UTC>] [--timeout 600] [--interval 5]
+#       --tag <versión X.Y.Z> [--since <AAAA-MM-DDTHH:MM:SS en UTC>] [--timeout 600] [--interval 5]
 #
 # Pasos (cualquier fallo sale con código 1):
 #   1. Espera a que exista un despliegue de la aplicación posterior a --since y a que termine:
 #      `done` sigue; `error` o `cancelled` falla. (Sin --since vale cualquiera: comprobación final.)
-#   2. Espera a que algún contenedor de la aplicación lleve la imagen con la etiqueta --tag y esté
+#   2. Espera a que algún contenedor de la aplicación lleve la imagen con la etiqueta --tag (la versión,
+#      sin «v», que es la etiqueta con la que el flujo de publicación despliega) y esté
 #      `(healthy)`. Un contenedor con esa imagen que se reinicia o sale falla al terminar el tiempo.
 #      Si Dokploy no ofrece la consulta de contenedores (HTTP 4xx), avisa y se queda con el paso 1.
 #
@@ -32,7 +33,7 @@ while [[ $# -gt 0 ]]; do
 done
 : "${DOKPLOY_API_URL:?falta DOKPLOY_API_URL}"; : "${DOKPLOY_API_KEY:?falta DOKPLOY_API_KEY}"
 [[ -n "$APP_ID" && -n "$APP_NAME" && -n "$TAG" ]] || { echo "Faltan --app-id, --app-name o --tag" >&2; exit 2; }
-[[ "$TAG" =~ ^[0-9a-f]{7,40}$ ]] || { echo "Etiqueta no válida: '$TAG'" >&2; exit 2; }
+[[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Etiqueta no válida: '$TAG' (se espera X.Y.Z)" >&2; exit 2; }
 [[ "$APP_NAME" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "appName no válido: '$APP_NAME'" >&2; exit 2; }
 [[ "$TIMEOUT" =~ ^[0-9]+$ && "$INTERVAL" =~ ^[0-9]+$ ]] || { echo "--timeout y --interval deben ser enteros" >&2; exit 2; }
 
