@@ -1,0 +1,34 @@
+{
+  "name": "@clasificador/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Capa de datos: esquema Prisma, migraciones, semilla y cliente compartido.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./migrate": "./src/migrate.ts",
+    "./seed": "./src/seed.ts"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "tsx --env-file-if-exists=../../.env prisma/seed.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clasificador/shared": "workspace:*",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "pg": "^8.16.3",
+    "prisma": "7.10.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0",
+    "tsx": "^4.19.2",
+    "vitest": "^3.2.4"
+  }
+}

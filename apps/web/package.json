@@ -1,0 +1,34 @@
+{
+  "name": "@clasificador/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Panel de métricas y configuración del clasificador.",
+  "scripts": {
+    "dev": "next dev --turbopack -p 3110",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clasificador/db": "workspace:*",
+    "@clasificador/shared": "workspace:*",
+    "@prisma/client": "7.10.0",
+    "better-auth": "^1.7.7",
+    "lucide-react": "^1.49.0",
+    "next": "~15.5.0",
+    "pg": "^8.23.1",
+    "pg-boss": "^12.35.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.3.3",
+    "vitest": "^3.2.4"
+  }
+}

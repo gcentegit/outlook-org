@@ -1,0 +1,95 @@
+# Infraestructura SOLO para desarrollo local. En Dokploy cada pieza es un servicio
+# independiente (sin Compose); ver docs/DECISIONS.md.
+#
+# Uso: pnpm services:up  (equivale a: docker compose -p clasificador-dev --env-file .env -f infra/docker/compose.dev.yml up -d)
+#
+# Puertos del host: 3000, 3001 y 5432 los usan otros proyectos de esta máquina, así que
+# aquí se usan 5442 (PostgreSQL), 3110 (web, configurable con WEB_HOST_PORT) y 5101 (docling).
+name: clasificador-dev
+
+volumes:
+  clasificador_pg_data:
+  clasificador_ollama_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-clasificador}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambia-esta-clave}
+      POSTGRES_DB: ${POSTGRES_DB:-clasificador}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Europe/Madrid
+    # Solo log_timezone: el GUC `timezone` se queda en UTC a propósito (es funcional).
+    command: postgres -c log_timezone=Europe/Madrid
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5442}:5432"
+    volumes:
+      - clasificador_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clasificador} -d ${POSTGRES_DB:-clasificador}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  docling:
+    image: ghcr.io/docling-project/docling-serve-cpu:latest
+    restart: unless-stopped
+    mem_limit: 4g
+    environment:
+      TZ: Europe/Madrid
+    # Solo para pruebas desde el host; el worker lo alcanza por la red de compose (docling:5001).
+    ports:
+      - "127.0.0.1:${DOCLING_HOST_PORT:-5101}:5001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: apps/worker/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TZ: Europe/Madrid
+      DATABASE_URL: postgresql://${POSTGRES_USER:-clasificador}:${POSTGRES_PASSWORD:-cambia-esta-clave}@postgres:5432/${POSTGRES_DB:-clasificador}
+      DOCLING_URL: http://docling:5001
+      HEALTH_PORT: "8080"
+      SYNC_STALE_SECONDS: ${SYNC_STALE_SECONDS:-300}
+      # Direcciones reales solo desde el .env local (sin valor por defecto en el repositorio).
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      MAILBOX: ${MAILBOX:-}
+      INTERNAL_EMAIL_DOMAINS: ${INTERNAL_EMAIL_DOMAINS:-}
+    # Sin puertos publicados: /health (8080) es interno.
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Madrid
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3110}:3000"
+
+  # Opcional: docker compose -p clasificador-dev --profile ollama up -d ollama
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [ollama]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - clasificador_ollama_data:/root/.ollama

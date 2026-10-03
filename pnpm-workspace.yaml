@@ -1,0 +1,11 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'infra/dokploy'
+
+# pnpm 10+ no ejecuta scripts de instalación salvo los aprobados aquí.
+# Prisma descarga su motor de migraciones (binario) en el postinstall.
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true
+  esbuild: true

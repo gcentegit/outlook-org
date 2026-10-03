@@ -1,0 +1,186 @@
+// Esquema del clasificador del buzón de Proveedores.
+// Las categorías se guardan como texto (la lista maestra del buzón es dinámica); la validación
+// de FOOD BOX | LATERAL | ARCOBETA vive en @clasificador/shared.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RuleType {
+  cif
+  razon_social
+  remitente
+  dominio
+  palabra_clave
+}
+
+enum RuleWeight {
+  fuerte
+  medio
+}
+
+enum ExtractionMethod {
+  texto
+  ocr
+}
+
+enum DecisionMode {
+  shadow
+  live
+}
+
+/// Estado de procesado de un correo detectado en la Bandeja de entrada.
+enum MessageStatus {
+  pending
+  processed
+  failed
+}
+
+/// Estado de la sincronización incremental con el buzón (una fila por carpeta seguida, `inbox`).
+model SyncState {
+  id         String    @id
+  deltaLink  String?
+  lastSyncAt DateTime?
+  updatedAt  DateTime  @updatedAt
+}
+
+/// El correo se crea al detectarlo (con remitente y asunto vacíos hasta que se procesa).
+model Message {
+  /// Id del mensaje en Microsoft Graph.
+  id             String        @id
+  conversationId String
+  sender         String
+  subject        String
+  receivedAt     DateTime
+  /// Categorías que el correo tiene en Outlook la última vez que se leyó (incluye las de personas).
+  seenCategories String[]
+  status         MessageStatus @default(pending)
+  /// La última decisión se tomó con un fallo técnico (docling, LLM) o el trabajo agotó los reintentos:
+  /// hay que volver a procesarlo. Se limpia al guardar una decisión válida.
+  needsReprocess Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  decisions   Decision[]
+  corrections Correction[]
+
+  @@index([conversationId])
+  @@index([receivedAt])
+  @@index([status])
+  @@index([needsReprocess])
+}
+
+/// Texto extraído de un adjunto, único por hash del fichero. Se borra al caducar (90 días).
+model AttachmentText {
+  id        String           @id @default(cuid())
+  hash      String           @unique
+  markdown  String
+  method    ExtractionMethod
+  createdAt DateTime         @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+model Rule {
+  id         String     @id @default(cuid())
+  type       RuleType
+  /// Valor ya normalizado (el CIF en mayúsculas y sin espacios ni guiones).
+  value      String
+  category   String
+  weight     RuleWeight
+  active     Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([type, value, category])
+  @@index([active])
+}
+
+model Decision {
+  id           String       @id @default(cuid())
+  messageId    String
+  message      Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  /// JSON completo validado con decisionSchema.
+  decision     Json
+  /// Copia de decision.categories para contar y filtrar sin abrir el JSON.
+  categories   String[]
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  costUsd      Decimal?     @db.Decimal(10, 6)
+  /// Milisegundos de la llamada al LLM (null si no hubo llamada).
+  latencyMs    Int?
+  mode         DecisionMode
+  /// Decisión tomada con un fallo técnico (docling o LLM caído): no cuenta como decisión válida
+  /// y el correo se vuelve a procesar.
+  degraded     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+
+  corrections Correction[]
+
+  @@index([messageId])
+  @@index([createdAt])
+}
+
+/// Diferencia entre lo propuesto por el clasificador y lo que una persona dejó en Outlook.
+model Correction {
+  id         String    @id @default(cuid())
+  messageId  String
+  message    Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  decisionId String?
+  decision   Decision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  proposed   String[]
+  final      String[]
+  createdAt  DateTime  @default(now())
+
+  @@index([messageId])
+  @@index([createdAt])
+}
+
+/// Proveedor y modelo de LLM activos; el worker lo lee en cada trabajo.
+model LlmSetting {
+  id        String   @id @default(cuid())
+  provider  String
+  model     String
+  active    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([provider, model])
+}
+
+/// Modo sombra/live por categoría. Sin fila, la categoría está en sombra.
+model CategorySetting {
+  category  String       @id
+  mode      DecisionMode @default(shadow)
+  updatedAt DateTime     @updatedAt
+  updatedBy String?
+}
+
+model AllowedUser {
+  id        String   @id @default(cuid())
+  /// En minúsculas. El alta se hace por email.
+  email     String   @unique
+  /// Identificador de objeto (`oid`) de la cuenta de Microsoft Entra. Se guarda en el primer acceso
+  /// válido y desde entonces se exige que coincida: el email por sí solo no identifica a nadie.
+  oid       String?  @unique
+  createdAt DateTime @default(now())
+}
+
+/// Quién creó qué categoría en la lista maestra del buzón y cuándo.
+model CategoryAudit {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

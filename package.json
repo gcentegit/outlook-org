@@ -1,0 +1,36 @@
+{
+  "name": "clasificador-proveedores",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clasificador del buzón de Proveedores: FOOD BOX, LATERAL y ARCOBETA.",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "pnpm db:generate && pnpm -r --if-present build",
+    "lint": "eslint .",
+    "typecheck": "pnpm db:generate && pnpm -r --if-present typecheck",
+    "test": "pnpm db:generate && pnpm -r --if-present test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @clasificador/db generate",
+    "db:migrate:dev": "pnpm --filter @clasificador/db migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @clasificador/db migrate:deploy",
+    "db:seed": "pnpm --filter @clasificador/db seed",
+    "services:up": "docker compose -p clasificador-dev --env-file .env -f infra/docker/compose.dev.yml up -d",
+    "services:down": "docker compose -p clasificador-dev --env-file .env -f infra/docker/compose.dev.yml --profile ollama down"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@next/eslint-plugin-next": "^15.5.0",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^10.1.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.18.2"
+  }
+}

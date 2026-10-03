@@ -1,0 +1,34 @@
+node_modules/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secretos y entorno
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.pfx
+*.key
+
+# Cliente de Prisma generado
+packages/db/src/generated/
+
+# Varios
+.DS_Store
+*.log
+
+# Histórico del buzón (correos de terceros): nunca se sube
+data/history/
+
+# Herramientas de agentes (estado local)
+.agentkit/
+
+# Documentos internos (datos de terceros y del negocio): nunca al repositorio público
+docs/privado/
+
+# Informe interno sobre otro proyecto (repositorio privado): no se versiona aquí
+plans/reports/dokploy-261002-1549-mejoras-despliegue-cpa.md
