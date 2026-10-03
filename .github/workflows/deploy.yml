@@ -1,0 +1,173 @@
+name: Desplegar en Dokploy
+
+# Despliega en Dokploy la imagen EXACTA `clasificador-{web,worker}:X.Y.Z` ya publicada en GHCR: fija la
+# imagen (`application.saveDockerProvider`) y llama a `application.deploy`, el worker primero. No
+# construye nada y nunca despliega `latest`.
+#
+# Dos formas de lanzarlo:
+#   - release.yml lo llama al crearse una Release (workflow_call).
+#   - A mano, para volver atrás: Actions > «Desplegar en Dokploy» > Run workflow con la versión X.Y.Z.
+#
+# Secretos del repositorio (el despliegue se omite, sin error, si faltan DOKPLOY_API_URL o DOKPLOY_API_KEY):
+#   DOKPLOY_API_URL      URL del panel de Dokploy, p. ej. https://admin.example.com
+#   DOKPLOY_API_KEY      clave de la API (cabecera x-api-key)
+#   GHCR_PULL_USERNAME   (solo con imágenes privadas) usuario que descarga de GHCR
+#   GHCR_PULL_TOKEN      (solo con imágenes privadas) token con permiso read:packages
+# Variable opcional del repositorio: WEB_URL (por defecto https://clasificador.arcofood.com).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Versión X.Y.Z a desplegar.'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión X.Y.Z a desplegar (p. ej. para volver atrás). La imagen debe existir en GHCR; no construye nada.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  DOKPLOY_PROJECT: clasificador.arcofood
+  DOKPLOY_ENVIRONMENT: production
+
+jobs:
+  deploy:
+    name: Deploy to Dokploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Un solo despliegue a la vez: dos a la vez se pisarían al fijar la imagen.
+    concurrency:
+      group: deploy-dokploy
+      cancel-in-progress: false
+    env:
+      DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL }}
+      DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+      PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
+      PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+      WEB_URL: ${{ vars.WEB_URL || 'https://clasificador.arcofood.com' }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      # Solo para el script de espera (infra/scripts); no se construye nada aquí.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: infra/scripts
+
+      - name: Comprobar la versión y que hay clave de Dokploy
+        id: gate
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Versión no válida: '$VERSION' (se espera X.Y.Z, sin la «v»)."; exit 1; }
+          if [ -z "$DOKPLOY_API_KEY" ] || [ -z "$DOKPLOY_API_URL" ]; then
+            echo "::notice::Sin DOKPLOY_API_KEY/DOKPLOY_API_URL: las imágenes están publicadas, pero no se despliega nada."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to GHCR
+        if: steps.gate.outputs.enabled == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Si la versión no existe (errata al volver atrás), se falla antes de tocar Dokploy.
+      - name: Comprobar que las imágenes de esa versión existen
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          OWNER_LC="$(tr '[:upper:]' '[:lower:]' <<<"$OWNER")"
+          for app in web worker; do
+            IMAGE="$REGISTRY/$OWNER_LC/clasificador-$app:$VERSION"
+            docker buildx imagetools inspect "$IMAGE" >/dev/null 2>&1 \
+              || { echo "::error::No existe la imagen $IMAGE. Comprueba la versión en la lista de Releases."; exit 1; }
+          done
+
+      # El worker aplica las migraciones al arrancar: la web solo se despliega cuando el worker ya
+      # está sano con la imagen nueva. Si el despliegue del worker falla o el contenedor no queda
+      # sano, el flujo se detiene antes de tocar la web.
+      - name: Fijar la imagen exacta y desplegar (el worker primero; la web, cuando el worker esté sano)
+        id: deploy
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          API="${DOKPLOY_API_URL%/}"; API="${API%/api}/api"
+          OWNER_LC="$(tr '[:upper:]' '[:lower:]' <<<"$OWNER")"
+
+          # Los applicationId se buscan por nombre; así no hay que mantener otro secreto.
+          PROJECTS="$(curl -fsS "$API/project.all" -H "x-api-key: $DOKPLOY_API_KEY")"
+          app_field() { # <campo> <nombre de la aplicación>
+            jq -er --arg p "$DOKPLOY_PROJECT" --arg e "$DOKPLOY_ENVIRONMENT" --arg n "$2" --arg f "$1" '
+              [ .[] | select(.name == $p) | (.environments // [])[] | select(.name == $e)
+                | (.applications // [])[] | select(.name == $n) | .[$f] ] | first' <<<"$PROJECTS"
+          }
+          app_id() { app_field applicationId "$1"; }
+
+          deploy_app() {
+            local app="$1" id image
+            id="$(app_id "clasificador-$app")" || { echo "::error::No existe clasificador-$app en $DOKPLOY_PROJECT/$DOKPLOY_ENVIRONMENT"; exit 1; }
+            image="$REGISTRY/$OWNER_LC/clasificador-$app:$VERSION"
+            echo "→ $app: $image"
+            jq -nc --arg id "$id" --arg img "$image" --arg u "$PULL_USERNAME" --arg p "$PULL_TOKEN" --arg r "$REGISTRY" '
+              {applicationId: $id, dockerImage: $img,
+               username: (if $u == "" then null else $u end),
+               password: (if $p == "" then null else $p end),
+               registryUrl: (if $u == "" then null else $r end)}' \
+              | curl -fsS -X POST "$API/application.saveDockerProvider" \
+                  -H "x-api-key: $DOKPLOY_API_KEY" -H 'Content-Type: application/json' --data @- >/dev/null
+            jq -nc --arg id "$id" --arg t "Release v$VERSION" --arg d "$app · imagen $image" \
+              '{applicationId: $id, title: $t, description: $d}' \
+              | curl -fsS -X POST "$API/application.deploy" \
+                  -H "x-api-key: $DOKPLOY_API_KEY" -H 'Content-Type: application/json' --data @- >/dev/null
+          }
+
+          # Instante (UTC) anterior al despliegue del worker, con un minuto de margen por el desfase
+          # de reloj: el script de espera solo mira despliegues posteriores.
+          SINCE="$(date -u -d '-60 seconds' +%Y-%m-%dT%H:%M:%S)"
+          WORKER_ID="$(app_id clasificador-worker)"
+          WORKER_NAME="$(app_field appName clasificador-worker)"
+          echo "worker_id=$WORKER_ID" >> "$GITHUB_OUTPUT"
+          echo "worker_name=$WORKER_NAME" >> "$GITHUB_OUTPUT"
+
+          deploy_app worker
+          echo "Esperando a que el worker termine de desplegar, migre y esté sano antes de desplegar la web..."
+          bash infra/scripts/wait-dokploy-app.sh \
+            --app-id "$WORKER_ID" --app-name "$WORKER_NAME" --tag "$VERSION" --since "$SINCE" --timeout 600
+          deploy_app web
+
+      # Dokploy despliega de forma asíncrona y el contenedor viejo sigue respondiendo mientras tanto:
+      # por eso la condición de salida es la versión, no solo `status: ok`.
+      - name: Esperar a que la web sirva la versión desplegada y comprobar de nuevo el worker
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          WORKER_ID: ${{ steps.deploy.outputs.worker_id }}
+          WORKER_NAME: ${{ steps.deploy.outputs.worker_name }}
+        run: |
+          echo "Esperando a que $WEB_URL/api/health devuelva la versión '$VERSION' (hasta 5 min)..."
+          GOT=''
+          for i in $(seq 1 60); do
+            BODY="$(curl -fsS --max-time 10 "$WEB_URL/api/health" 2>/dev/null || echo '')"
+            STATUS="$(jq -r '.status // empty' <<<"$BODY" 2>/dev/null || echo '')"
+            GOT="$(jq -r '.version // empty' <<<"$BODY" 2>/dev/null || echo '')"
+            echo "Intento $i: status='${STATUS:-sin-respuesta}' version='${GOT:-?}'"
+            if [ "$STATUS" = "ok" ] && [ "$GOT" = "$VERSION" ]; then
+              echo "$BODY" | jq .
+              # El worker debe seguir sano con la versión esperada (si cae tras el despliegue, falla aquí).
+              bash infra/scripts/wait-dokploy-app.sh \
+                --app-id "$WORKER_ID" --app-name "$WORKER_NAME" --tag "$VERSION" --timeout 120
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::La web no sirve la versión '$VERSION' tras 5 min (última: '${GOT:-sin-respuesta}'). Para volver atrás, lanza «Desplegar en Dokploy» a mano con la versión anterior."
+          exit 1
