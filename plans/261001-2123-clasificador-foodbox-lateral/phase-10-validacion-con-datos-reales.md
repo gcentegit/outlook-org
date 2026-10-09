@@ -59,6 +59,17 @@ Riesgos de operación que tocan código:
 - [ ] Pruebas de navegador del panel en el repositorio, y pruebas de integración (PostgreSQL y docling) en CI
 - [ ] Reducir la imagen del worker (hoy unos 2 GB): compilar el worker y separar las migraciones
 
+Velocidad de la extracción (decisión del 2026-10-09). En la fase 9, docling en CPU tardó unos 20 s
+por correo y pasó por OCR 62 de 68 adjuntos, casi siempre por logos y sellos. Cada cambio se mide
+contra la muestra: tiempo por correo y que no se pierda ningún CIF ni razón social.
+
+- [ ] Leer primero la capa de texto del PDF con un lector ligero y enviar a docling solo los PDF sin texto (escaneados o fotos)
+- [ ] Desactivar la estructura de tablas (`do_table_structure=false`; o, si hiciera falta, `table_mode=fast`): para el CIF y la razón social basta el texto
+- [ ] Medir las opciones de docling que reducen trabajo: `images_scale` menor (hoy 2,0), `ocr_lang=es` y el backend `pypdfium2`
+- [ ] Medir si basta la primera página (`page_range` 1-1) sin perder la sociedad facturada
+- [ ] No convertir las imágenes pequeñas que llegan como adjunto normal (logos de firma tipo `image001.png`); las incrustadas ya se saltan
+- [ ] Decidir con el usuario cómo sabe el equipo que un correo se leyó y quedó sin clasificar, con el volumen de dudosos medido aquí
+
 ## Success Criteria
 
 - Precisión ≥ 95 % por categoría contra la muestra revisada a mano y cobertura mínima por categoría
