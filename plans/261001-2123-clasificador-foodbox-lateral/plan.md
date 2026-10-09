@@ -61,6 +61,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - Nada se sube a Dokploy hasta que el usuario lo autorice: desarrollo y pruebas en local.
 - En Dokploy, cada pieza es un servicio independiente (web, worker, docling y PostgreSQL nativo), sin Compose, como en otro proyecto del mismo servidor. Compose solo para desarrollo local.
 - Categorías: el panel permite ver la lista maestra del buzón y crear categorías nuevas (nombre y color) con confirmación, a través del worker (la web no tiene el certificado de Graph). No renombra ni borra.
+- Entorno de desarrollo (decisión del 2026-10-09): el panel de desarrollo se publica con un túnel de Cloudflare en un dominio propio del usuario, fuera del repositorio. Solo es para desarrollo; el panel definitivo se publica en Dokploy en la fase 11.
 - Panel en `https://clasificador.arcofood.com`, con SSO de Microsoft y una lista de usuarios autorizados (al principio solo `<ADMIN_EMAIL>`); el acceso se ata al `oid` y al `tid` de Microsoft, no solo al email.
 - Métrica de acierto: solo cuentan los correos que el equipo ha revisado; los demás se muestran aparte como pendientes de revisar.
 - Candidatas de reglas: nunca de dominio entero para correo público ni para dominios del grupo (decisión del 2026-10-02).
@@ -71,7 +72,8 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 
 ## Pendiente del usuario
 
-- [ ] Generar el certificado (`infra/scripts/generate-cert.sh`; hecho el 2026-10-03) y seguir la [guía de Entra ID y RBAC](../../docs/guias/entra-id-rbac.md) (fase 1). Aplazado por el usuario el 2026-10-02; bloquea todo lo que lee el buzón real (fases 9 a 11) y el login del panel, no el desarrollo en local.
+- [x] Generar el certificado y seguir la [guía de Entra ID y RBAC](../../docs/guias/entra-id-rbac.md) (fase 1). Hecho el 2026-10-09.
+- [ ] Crear la cuenta de Anthropic y su clave de API (aplazada por el usuario a la fase 10).
 - [ ] Revisar a mano la muestra de ~200 correos (fase 9) y decidir con los datos la cobertura mínima por categoría.
 - [ ] Anotar en el registro de actividades de tratamiento de la empresa el plazo de conservación decidido (12 meses para remitentes, asuntos y decisiones; 90 días para el texto de adjuntos).
 - [x] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11. Creada el 2026-10-09.
@@ -83,7 +85,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 
 | # | Phase | Status | Effort | Depende de |
 |---|-------|--------|--------|------------|
-| 1 | [Acceso a Microsoft 365 y cuentas](./phase-01-acceso-microsoft-365.md) | Pending (user: certificate postponed) | 0.5d | Nada |
+| 1 | [Acceso a Microsoft 365 y cuentas](./phase-01-acceso-microsoft-365.md) | Done (LLM accounts deferred to phase 10) | 0.5d | Nada |
 | 2 | [Base del proyecto e infraestructura](./phase-02-base-proyecto.md) | Done | 1.5d | Nada |
 | 3 | [Extracción de correo y adjuntos](./phase-03-extraccion.md) | Done in code (real validation in phase 10) | 1.5d | 2 |
 | 4 | [Análisis del histórico y reglas iniciales](./phase-04-historico-reglas.md) | Done in code (real validation in phases 9 and 10) | 1.5d | 2, 3 |
@@ -101,7 +103,7 @@ semanas de observación).
 
 ## Dependencies
 
-- La fase 1 (usuario) bloquea todo lo que lee el buzón real: 9, 10 y 11, y el login real del panel.
+- La fase 1 (usuario) bloqueaba todo lo que lee el buzón real y el login del panel: está hecha, así que la fase 9 puede empezar.
 - La fase 2 es independiente de la 1; las fases 3 a 7 se construyeron en local sin ella.
 - La fase 8 (repositorio, versionado y documentación) no dependía del buzón y está hecha.
 - La fase 9 va primero al tener el certificado y es de solo lectura; sus números fijan los umbrales.
@@ -112,7 +114,7 @@ semanas de observación).
 
 ## Success Criteria
 
-- [ ] La app solo puede leer el buzón de Proveedores (comprobado con `Test-ServicePrincipalAuthorization`).
+- [x] La app solo puede leer el buzón de Proveedores (comprobado con `Test-ServicePrincipalAuthorization`).
 - [ ] Informe de descubrimiento y muestra de ~200 correos revisada a mano, con la cobertura mínima por categoría decidida.
 - [ ] Informe de evaluación contra la muestra con precisión y cobertura por categoría, con y sin LLM.
 - [ ] Servicio desplegado en Dokploy, en modo sombra, con heartbeat en Uptime Kuma.

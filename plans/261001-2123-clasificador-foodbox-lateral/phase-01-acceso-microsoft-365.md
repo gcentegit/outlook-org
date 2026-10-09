@@ -1,6 +1,6 @@
 ---
 title: "Phase 1: Acceso a Microsoft 365 y cuentas"
-status: todo
+status: done
 effort: 0.5d
 ---
 
@@ -8,12 +8,19 @@ effort: 0.5d
 
 ## Estado
 
-**Pendiente del usuario.** Está escrita la guía ([docs/guias/entra-id-rbac.md](../../docs/guias/entra-id-rbac.md))
-y el script de certificado (`infra/scripts/generate-cert.sh`); el usuario aplazó el certificado y la
-configuración en Entra ID y Exchange. El certificado ya está generado en `secrets/` (2026-10-03,
-caduca el 2028-10-02); falta subirlo a Entra ID y el resto de la configuración. Bloquea todo lo que toca el buzón real (fases 9 a 11) y el login
-del panel. El certificado que genera el script dura 730 días: véase
-[credenciales y caducidades](../../docs/operacion/credenciales-y-caducidades.md).
+**Hecha** (2026-10-09), salvo las cuentas de LLM, que se aplazan a la fase 10 por decisión del
+usuario: la fase 9 no usa el LLM. El usuario configuró las dos apps en Entra ID y el ámbito en
+Exchange siguiendo la [guía](../../docs/guias/entra-id-rbac.md). Comprobado:
+
+- `Test-ServicePrincipalAuthorization` da `InScope = True` con el buzón de Proveedores y `False` con
+  otro buzón.
+- Con el certificado, la app lee la lista maestra de categorías (FOOD BOX, LATERAL y ARCOBETA
+  existen) y la Bandeja de entrada del buzón, y recibe 403 con otro buzón. Prueba de humo puntual
+  con el cliente de Graph del worker, de solo lectura; no queda como script en el repositorio.
+- El login del panel con Microsoft funciona y el administrador queda atado a su `oid`.
+
+Las fechas de caducidad del certificado y del secreto del panel están en el calendario del equipo,
+no en este repositorio ([credenciales y caducidades](../../docs/operacion/credenciales-y-caducidades.md)).
 
 ## Overview
 
@@ -56,15 +63,14 @@ siguiendo una guía que se escribe en esta fase.
 
 ## Todo
 
-- [x] Certificado generado (2026-10-03)
-- [ ] Certificado subido a Entra ID
-- [ ] App registrada y service principal creado en Exchange
-- [ ] Ámbito y asignaciones de rol creados
-- [ ] Prueba InScope positiva y negativa
-- [ ] Script de humo lee categorías e Inbox
+- [x] Certificado generado y subido a Entra ID
+- [x] App registrada y service principal creado en Exchange
+- [x] Ámbito y asignaciones de rol creados
+- [x] Prueba InScope positiva y negativa
+- [x] Prueba de humo: lee categorías e Inbox, y 403 con otro buzón
 - [x] Guía escrita (`docs/guias/entra-id-rbac.md`) y script de certificado (`infra/scripts/generate-cert.sh`)
-- [ ] Cuenta de Anthropic y clave de API
-- [ ] Cuenta de OpenRouter con privacidad configurada (si se usa)
+- [ ] Cuenta de Anthropic y clave de API (aplazada a la fase 10)
+- [ ] Cuenta de OpenRouter con privacidad configurada, si se usa (aplazada a la fase 10)
 
 ## Success Criteria
 
