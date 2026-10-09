@@ -15,7 +15,7 @@ generador de reglas candidatas ([ADR 0011](../../docs/adr/0011-candidatas-de-reg
 
 **Validación con datos reales: movida a las fases 9 y 10.** La ejecución real sigue bloqueada por el
 certificado (fase 1). Además ha cambiado el enfoque: el histórico **no es la verdad de referencia**,
-porque el equipo solo a veces pone FOOD BOX y LATERAL (y ARCOBETA no existe). Sirve para sacar reglas
+porque el equipo solo a veces pone FOOD BOX y LATERAL (y ARCOBETA no existió hasta el 2026-10-09). Sirve para sacar reglas
 candidatas y discrepancias; la verdad es una muestra de unos 200 correos revisada a mano (fase 9).
 
 ## Overview

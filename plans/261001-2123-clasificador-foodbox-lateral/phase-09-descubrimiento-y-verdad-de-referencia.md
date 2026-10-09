@@ -10,7 +10,7 @@ effort: 1d
 
 Lo primero que se ejecuta al tener el certificado (fase 1), **de solo lectura**: medir cómo es
 realmente el buzón y construir la verdad contra la que se medirá el acierto. Hoy el equipo pone las
-etiquetas FOOD BOX y LATERAL solo a veces y ARCOBETA no existe, así que el histórico tal cual no vale
+etiquetas FOOD BOX y LATERAL solo a veces y ARCOBETA no existió hasta el 2026-10-09, así que el histórico no vale
 como verdad.
 
 ## Key Insights

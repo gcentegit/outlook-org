@@ -10,7 +10,8 @@ effort: 0.5d
 
 **Pendiente del usuario.** Está escrita la guía ([docs/guias/entra-id-rbac.md](../../docs/guias/entra-id-rbac.md))
 y el script de certificado (`infra/scripts/generate-cert.sh`); el usuario aplazó el certificado y la
-configuración en Entra ID y Exchange. Bloquea todo lo que toca el buzón real (fases 9 a 11) y el login
+configuración en Entra ID y Exchange. El certificado ya está generado en `secrets/` (2026-10-03,
+caduca el 2028-10-02); falta subirlo a Entra ID y el resto de la configuración. Bloquea todo lo que toca el buzón real (fases 9 a 11) y el login
 del panel. El certificado que genera el script dura 730 días: véase
 [credenciales y caducidades](../../docs/operacion/credenciales-y-caducidades.md).
 
@@ -55,7 +56,8 @@ siguiendo una guía que se escribe en esta fase.
 
 ## Todo
 
-- [ ] Certificado generado y subido
+- [x] Certificado generado (2026-10-03)
+- [ ] Certificado subido a Entra ID
 - [ ] App registrada y service principal creado en Exchange
 - [ ] Ámbito y asignaciones de rol creados
 - [ ] Prueba InScope positiva y negativa

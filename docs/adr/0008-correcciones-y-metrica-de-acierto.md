@@ -6,7 +6,7 @@
 
 El servicio necesita saber cuándo el equipo discrepa de lo que propone, y el acierto tiene que
 medirse de forma honesta. Hoy el equipo pone las etiquetas FOOD BOX y LATERAL solo a veces, y
-ARCOBETA no existe todavía, así que el histórico no es una verdad completa. Código:
+ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verdad completa. Código:
 `apps/worker/src/corrections.ts` y `apps/web/src/server/metrics.ts`.
 
 ## Decisión

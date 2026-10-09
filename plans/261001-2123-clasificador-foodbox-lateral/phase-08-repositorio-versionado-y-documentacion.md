@@ -1,6 +1,6 @@
 ---
 title: "Phase 8: Repositorio, versionado y documentación"
-status: in-progress
+status: done
 effort: 1d
 ---
 
@@ -39,7 +39,7 @@ Documentación: `README.md`, `CLAUDE.md`, `AGENTS.md`, `docs/`, `plans/`. Versio
 Pull request de documentación y plan (esta rama):
 
 - [x] Informe con detalles de otro proyecto fuera de `main` y de su historial (ignorado en git; `main` se rehízo con un primer commit limpio)
-- [ ] Borrar la rama antigua `feat/clasificador-foodbox-lateral` del remoto, que aún contiene ese informe (pendiente de que el usuario lo autorice)
+- [x] Borrar la rama antigua `feat/clasificador-foodbox-lateral` del remoto, que aún contenía ese informe (comprobado el 2026-10-09: ya no existe en el remoto)
 - [x] Informes versionados revisados con el criterio de repositorio público: quitados los nombres de servicios y rutas de otro proyecto
 - [x] `docs/README.md`, `docs/arquitectura.md` y `docs/adr/` (el antiguo `DECISIONS.md` queda dividido por tema y desaparece)
 - [x] Guía de Entra ID y tabla de sociedades movidas a `docs/guias/` y `docs/referencia/`

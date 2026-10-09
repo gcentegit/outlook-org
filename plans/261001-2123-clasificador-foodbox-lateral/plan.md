@@ -71,11 +71,12 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 
 ## Pendiente del usuario
 
-- [ ] Generar el certificado (`infra/scripts/generate-cert.sh`) y seguir la [guía de Entra ID y RBAC](../../docs/guias/entra-id-rbac.md) (fase 1). Aplazado por el usuario el 2026-10-02; bloquea todo lo que lee el buzón real (fases 9 a 11) y el login del panel, no el desarrollo en local.
+- [ ] Generar el certificado (`infra/scripts/generate-cert.sh`; hecho el 2026-10-03) y seguir la [guía de Entra ID y RBAC](../../docs/guias/entra-id-rbac.md) (fase 1). Aplazado por el usuario el 2026-10-02; bloquea todo lo que lee el buzón real (fases 9 a 11) y el login del panel, no el desarrollo en local.
 - [ ] Revisar a mano la muestra de ~200 correos (fase 9) y decidir con los datos la cobertura mínima por categoría.
 - [ ] Anotar en el registro de actividades de tratamiento de la empresa el plazo de conservación decidido (12 meses para remitentes, asuntos y decisiones; 90 días para el texto de adjuntos).
-- [ ] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11.
-- [ ] Designar quién atiende los avisos de Uptime Kuma y acordar cómo y cuándo se informa al equipo de Proveedores (fase 11).
+- [x] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11. Creada el 2026-10-09.
+- [x] Designar quién atiende los avisos de Uptime Kuma: el administrador (decidido el 2026-10-09).
+- [ ] Acordar cómo y cuándo se informa al equipo de Proveedores (fase 11).
 - [ ] Autorizar el alta y el despliegue en Dokploy (fase 11).
 
 ## Phases
@@ -89,25 +90,25 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 | 5 | [Clasificador: reglas + LLM configurable](./phase-05-clasificador.md) | Done in code (real validation in phase 10) | 2d | 3 |
 | 6 | [Servicio en modo sombra y despliegue](./phase-06-servicio-sombra.md) | Done in code (deployment in phase 11) | 1.5d | 3, 5 |
 | 7 | [Panel de métricas y configuración](./phase-07-panel.md) | Done in code (real validation in phases 10 and 11) | 2.5d | 5, 6 |
-| 8 | [Repositorio, versionado y documentación](./phase-08-repositorio-versionado-y-documentacion.md) | In progress | 1d | Nada |
+| 8 | [Repositorio, versionado y documentación](./phase-08-repositorio-versionado-y-documentacion.md) | Done | 1d | Nada |
 | 9 | [Descubrimiento y verdad de referencia](./phase-09-descubrimiento-y-verdad-de-referencia.md) | Pending | 1d | 1 |
 | 10 | [Validación con datos reales](./phase-10-validacion-con-datos-reales.md) | Pending | 4d | 1, 9 |
 | 11 | [Despliegue en sombra y observación](./phase-11-despliegue-en-sombra-y-observacion.md) | Pending | 1d + 2 semanas | 10 |
 | 12 | [Activación real (1.0.0)](./phase-12-activacion-real.md) | Pending | 1d + 1 semana por categoría | 11 |
 
-Esfuerzo total estimado: 19 días de trabajo (10,5 ya construidos; unos 8,5 pendientes, más las
+Esfuerzo total estimado: 19 días de trabajo (11,5 ya construidos; unos 7,5 pendientes, más las
 semanas de observación).
 
 ## Dependencies
 
 - La fase 1 (usuario) bloquea todo lo que lee el buzón real: 9, 10 y 11, y el login real del panel.
 - La fase 2 es independiente de la 1; las fases 3 a 7 se construyeron en local sin ella.
-- La fase 8 (repositorio, versionado y documentación) no depende del buzón y se puede hacer ya.
+- La fase 8 (repositorio, versionado y documentación) no dependía del buzón y está hecha.
 - La fase 9 va primero al tener el certificado y es de solo lectura; sus números fijan los umbrales.
 - La fase 10 necesita la 9 (muestra revisada a mano) y es la primera que puede añadir funcionalidad.
 - La fase 11 necesita la 10 y la autorización del usuario; la 12 necesita el informe de sombra aprobado.
 - Datos fiscales: solo la hoja "Resumen" de `docs/privado/datos-fiscales.xlsx` (fuera del repositorio; resumen público en [docs/referencia/sociedades-categorias.md](../../docs/referencia/sociedades-categorias.md)) (7 sociedades con CIF); sin códigos de pedido. Palabras clave a partir del histórico.
-- La categoría ARCOBETA debe existir en la lista maestra del buzón antes de la fase 11. Se puede crear desde el panel o a mano en Outlook; el clasificador nunca crea categorías por su cuenta.
+- La categoría ARCOBETA debía existir en la lista maestra del buzón antes de la fase 11: el usuario la creó el 2026-10-09. El clasificador nunca crea categorías por su cuenta.
 
 ## Success Criteria
 
