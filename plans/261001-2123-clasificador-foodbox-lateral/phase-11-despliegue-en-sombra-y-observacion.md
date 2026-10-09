@@ -24,8 +24,9 @@ equipo. Nada se despliega sin autorización del usuario.
 
 - Depende de la fase 10.
 - Autorización expresa del usuario para el alta y el despliegue.
-- La categoría ARCOBETA existe en la lista maestra del buzón (hoy no existe).
-- Alguien atiende los avisos de Uptime Kuma, con nombre y plazo de respuesta.
+- La categoría ARCOBETA existe en la lista maestra del buzón (creada por el usuario el 2026-10-09).
+- Alguien atiende los avisos de Uptime Kuma, con nombre y plazo de respuesta. Los atiende el
+  administrador (`<ADMIN_EMAIL>`), decidido el 2026-10-09; falta fijar el plazo de respuesta.
 
 ## Implementation Steps
 
@@ -44,12 +45,13 @@ equipo. Nada se despliega sin autorización del usuario.
 ## Todo
 
 - [ ] Autorización del usuario para desplegar
-- [ ] Categoría ARCOBETA creada en el buzón
+- [x] Categoría ARCOBETA creada en el buzón
 - [ ] Alta en Dokploy, primero en simulación y después aplicando
 - [ ] Registro DNS, dominio y HTTPS del panel
 - [ ] Métricas del servidor activadas y límites de memoria revisados tras la primera semana
 - [ ] Despliegue del worker y la web en sombra; comprobaciones de salud en verde
-- [ ] Monitor de Uptime Kuma y heartbeat; persona responsable de los avisos
+- [x] Persona responsable de los avisos de Uptime Kuma: el administrador
+- [ ] Monitor de Uptime Kuma y heartbeat
 - [ ] Prueba mensual de restauración programada (hoy no está en ningún cron ni workflow) y primera ejecución con datos reales
 - [ ] Procedimiento de restauración sobre producción escrito y ensayado
 - [ ] Comunicación al equipo de Proveedores: qué verán, cómo corregir una etiqueta y a quién avisar
