@@ -105,6 +105,7 @@ Variables opcionales del entorno del script:
 | Variable | Para qué |
 | --- | --- |
 | `CLASIFICADOR_DB_PASSWORD` | Contraseña de PostgreSQL (mínimo 16 caracteres, solo letras y números, para que la URL de conexión no necesite escapes). Obligatoria al crear la base de datos y para escribir `DATABASE_URL`. Ej.: `openssl rand -hex 24` |
+| `PANEL_DOMAIN` | Dominio público del panel (por defecto `clasificador.arcofood.com`). Cambia el dominio de la web y su `BETTER_AUTH_URL`; la URI de retorno de la app de login en Entra ID debe coincidir |
 | `BACKUP_DESTINATION_NAME` | Nombre del destino de copias en Dokploy (por defecto `S3 Minio Dokploy Proyectos`; debe existir) |
 | `GRAPH_CERT_PEM_FILE` | Ruta al PEM del certificado de Graph (solo se monta en el worker) |
 | `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `INTERNAL_EMAIL_DOMAINS`, claves de LLM, `UPTIME_KUMA_PUSH_URL` | Se copian al worker solo si están definidas |
@@ -117,7 +118,7 @@ Qué hace y qué no:
 - Es idempotente: una segunda ejecución no escribe nada. Solo corrige los campos que difieren (memoria, comprobación de salud, `autoDeploy`, réplicas, puerto de PostgreSQL no publicado, dominio, copia de seguridad, variables y certificado). No borra nada.
 - Primera vez: arranca PostgreSQL y docling, que no dependen de ninguna versión. **No despliega web ni worker**: los despliega el workflow de publicación con la etiqueta exacta.
 - Si cambia la configuración de un servicio ya desplegado, el script lo avisa: el cambio surte efecto en el siguiente despliegue (en web y worker, desplegando de nuevo la etiqueta actual).
-- Avisa de dominios no previstos (la web tiene solo `clasificador.arcofood.com`; el resto, ninguno).
+- Avisa de dominios no previstos (la web tiene solo el de `PANEL_DOMAIN`; el resto, ninguno). Al cambiar de dominio, el anterior queda como no gestionado: bórralo a mano en Dokploy.
 
 Antes del primer despliegue, activa las métricas: monitorización de Dokploy (Settings > Monitoring) o vigila los contenedores con Beszel, para poder ajustar los límites tras la primera semana.
 
