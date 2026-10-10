@@ -19,6 +19,7 @@ import { pathToFileURL } from 'node:url';
 
 export const PROJECT_NAME = 'clasificador.arcofood';
 export const ENVIRONMENT_NAME = 'production';
+/** Dominio del panel por defecto; `PANEL_DOMAIN` lo cambia (por ejemplo, uno temporal). */
 export const DOMAIN_HOST = 'clasificador.arcofood.com';
 export const DEFAULT_BACKUP_DESTINATION = 'S3 Minio Dokploy Proyectos';
 export const CERT_MOUNT_PATH = '/run/secrets/graph-cert.pem';
@@ -142,6 +143,8 @@ export interface ProvisionConfig {
   /** Contraseña de PostgreSQL; solo hace falta al crearlo o para escribir `DATABASE_URL`. */
   dbPassword?: string;
   backupDestinationName: string;
+  /** Dominio público del panel; por defecto `DOMAIN_HOST`. */
+  domainHost?: string;
   /** Contenido PEM del certificado de la app de Entra; si falta no se toca el montaje. */
   certPem?: string;
   /** Variables de entorno del proceso: de aquí salen los secretos que se copian a Dokploy. */
@@ -239,7 +242,7 @@ export function buildEnv(
     );
   }
   if (key === 'web') {
-    entries.push(plain('BETTER_AUTH_URL', `https://${DOMAIN_HOST}`));
+    entries.push(plain('BETTER_AUTH_URL', `https://${config.domainHost ?? DOMAIN_HOST}`));
   }
   for (const { key: name, secret } of PASSTHROUGH[key]) {
     const value = config.processEnv[name];
@@ -777,14 +780,15 @@ export async function reconcile(options: ReconcileOptions): Promise<ReconcileRes
 
     // Dominio solo en la web.
     if (key === 'web') {
+      const host = config.domainHost ?? DOMAIN_HOST;
       const domains =
         live && !fresh ? await api!.get<DomainInfo[]>('domain.byApplicationId', { applicationId: appId }) : [];
-      const domain = domains.find((d) => d.host === DOMAIN_HOST);
+      const domain = domains.find((d) => d.host === host);
       if (!domain) {
         await write(
           'domain.create',
           {
-            host: DOMAIN_HOST,
+            host,
             path: '/',
             port: spec.port,
             https: true,
@@ -792,22 +796,22 @@ export async function reconcile(options: ReconcileOptions): Promise<ReconcileRes
             applicationId: appId,
             domainType: 'application',
           },
-          `dominio ${DOMAIN_HOST} → puerto ${spec.port} con Let's Encrypt`,
+          `dominio ${host} → puerto ${spec.port} con Let's Encrypt`,
           null,
         );
       } else {
         const domainChanges = diffDomain(spec.port, domain);
-        if (domainChanges.length === 0) unchanged(`dominio ${DOMAIN_HOST} correcto`);
+        if (domainChanges.length === 0) unchanged(`dominio ${host} correcto`);
         else {
           await write(
             'domain.update',
-            { domainId: domain.domainId, host: DOMAIN_HOST, path: '/', port: spec.port, https: true, certificateType: 'letsencrypt' },
-            `dominio ${DOMAIN_HOST}: ${describeChanges(domainChanges)}`,
+            { domainId: domain.domainId, host, path: '/', port: spec.port, https: true, certificateType: 'letsencrypt' },
+            `dominio ${host}: ${describeChanges(domainChanges)}`,
             null,
           );
         }
       }
-      const others = domains.filter((d) => d.host !== DOMAIN_HOST);
+      const others = domains.filter((d) => d.host !== host);
       if (others.length > 0) {
         result.warnings.push(`${spec.name} tiene dominios no gestionados: ${others.map((d) => d.host).join(', ')}.`);
       }
@@ -902,6 +906,10 @@ export function configFromEnv(env: Record<string, string | undefined>): Provisio
   if (dbPassword !== undefined && !/^[A-Za-z0-9]{16,}$/.test(dbPassword)) {
     throw new Error('CLASIFICADOR_DB_PASSWORD debe tener al menos 16 caracteres, solo letras y números.');
   }
+  const panelDomain = env.PANEL_DOMAIN?.trim().toLowerCase();
+  if (panelDomain && !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(panelDomain)) {
+    throw new Error('PANEL_DOMAIN debe ser un nombre de dominio, sin https:// ni ruta (p. ej. panel.ejemplo.com).');
+  }
   return {
     ghcrOwner: env.GHCR_OWNER || '<GHCR_OWNER>',
     ...(env.WEB_IMAGE ? { webImage: env.WEB_IMAGE } : {}),
@@ -910,6 +918,7 @@ export function configFromEnv(env: Record<string, string | undefined>): Provisio
     ...(env.GHCR_TOKEN ? { registryPassword: env.GHCR_TOKEN } : {}),
     ...(dbPassword ? { dbPassword } : {}),
     backupDestinationName: env.BACKUP_DESTINATION_NAME || DEFAULT_BACKUP_DESTINATION,
+    ...(panelDomain ? { domainHost: panelDomain } : {}),
     ...(pemFile ? { certPem: readFileSync(pemFile, 'utf8') } : {}),
     processEnv: env,
   };
