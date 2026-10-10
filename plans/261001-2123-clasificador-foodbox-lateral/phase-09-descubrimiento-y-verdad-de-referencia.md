@@ -1,10 +1,17 @@
 ---
 title: "Phase 9: Descubrimiento y verdad de referencia"
-status: todo
+status: done
 effort: 1d
 ---
 
 # Phase 9: Descubrimiento y verdad de referencia
+
+## Estado
+
+**Hecha** (2026-10-10). Resultados y decisiones en el
+[informe de descubrimiento](../reports/descubrimiento-261010-0900-fase-9-buzon-real.md). La
+verdad de referencia pasa a ser la carpeta donde el equipo archiva cada correo, más una revisión
+corta de los dudosos; la revisión a mano fue parcial.
 
 ## Overview
 
@@ -55,15 +62,15 @@ añade funcionalidad a la aplicación.
 
 ## Todo
 
-- [ ] Importación del histórico en solo lectura
-- [ ] Correos al día
-- [ ] Porcentaje con adjuntos
-- [ ] Porcentaje con alguna de las tres categorías
-- [ ] Porcentaje con un CIF del grupo en el adjunto
-- [ ] Recuento de adjuntos `.eml` y `.msg`
-- [ ] Muestra de ~200 correos revisada a mano con el usuario
-- [ ] Informe (datos de terceros en `data/history/`, resumen sin datos personales en `plans/reports/`)
-- [ ] Decisión de los umbrales (cobertura mínima por categoría) con el usuario
+- [x] Importación del histórico en solo lectura
+- [x] Correos al día
+- [x] Porcentaje con adjuntos
+- [x] Porcentaje con alguna de las tres categorías
+- [x] Porcentaje con un CIF del grupo en el adjunto
+- [x] Recuento de adjuntos `.eml` y `.msg`
+- [x] Muestra revisada con el usuario: la carpeta como verdad y 80 dudosos, revisados en parte (decisión del 2026-10-09)
+- [x] Informe (datos de terceros en `data/history/`, resumen sin datos personales en `plans/reports/`)
+- [x] Decisión de los umbrales: cobertura ≥ 90 % para FOOD BOX y LATERAL; ARCOBETA sin mínimo por ahora
 
 ## Success Criteria
 

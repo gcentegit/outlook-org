@@ -48,6 +48,8 @@ Validación:
 - [ ] Evaluación contra la muestra, con y sin LLM, y comparativa de al menos dos modelos
 - [ ] Validación del cliente de Graph contra el buzón real
 - [ ] Validación del login con Microsoft real y de la lista de usuarios
+- [ ] Medir el acierto contra la carpeta donde se archiva cada correo: hoy el panel mide contra las etiquetas y el worker solo sigue la Bandeja de entrada ([ADR 0008](../../docs/adr/0008-correcciones-y-metrica-de-acierto.md))
+- [ ] Riesgo: si el worker está parado más tiempo del que tarda el equipo en mover un correo a su carpeta, ese correo no se procesa
 - [ ] Ajuste de reglas y del umbral de confianza (el 0,8 acordado solo cambia con datos y con el usuario)
 
 Riesgos de operación que tocan código:
