@@ -73,6 +73,8 @@ export interface AppSpec {
   healthCheck: HealthCheck;
   /** Puerto interno del contenedor (el dominio de la web apunta a él). */
   port: number;
+  /** Cómo sustituye Swarm el contenedor al desplegar; sin valor, el de Dokploy. */
+  updateConfig?: { Parallelism: number; Order: 'stop-first' | 'start-first'; FailureAction: string };
 }
 
 export const APPS: Record<ServiceKey, AppSpec> = {
@@ -93,6 +95,9 @@ export const APPS: Record<ServiceKey, AppSpec> = {
     // (eso es /health, para Uptime Kuma), así que una caída de Graph no reinicia el contenedor en bucle.
     healthCheck: healthCheck(nodeFetchProbe(8080, '/livez'), 30, 5, 120, 3),
     port: 8080,
+    // Instancia única por bloqueo: con `start-first` (lo que hace Dokploy por defecto) el nuevo nunca
+    // queda sano mientras el viejo tiene el bloqueo, y Swarm vuelve al viejo.
+    updateConfig: { Parallelism: 1, Order: 'stop-first', FailureAction: 'rollback' },
   },
   docling: {
     key: 'docling',
@@ -329,6 +334,7 @@ export interface ApplicationInfo {
   memoryLimit?: string | null;
   memoryReservation?: string | null;
   healthCheckSwarm?: unknown;
+  updateConfigSwarm?: unknown;
   applicationStatus?: string | null;
 }
 
@@ -342,6 +348,7 @@ export function diffApplication(spec: AppSpec, actual: ApplicationInfo): FieldCh
       memoryReservation: String(spec.memoryReservation),
       memoryLimit: String(spec.memoryLimit),
       healthCheckSwarm: spec.healthCheck,
+      ...(spec.updateConfig ? { updateConfigSwarm: spec.updateConfig } : {}),
     },
     actual as unknown as Record<string, unknown>,
   );
@@ -350,6 +357,7 @@ export function diffApplication(spec: AppSpec, actual: ApplicationInfo): FieldCh
 export interface PostgresInfo {
   postgresId: string;
   appName: string;
+  name?: string;
   dockerImage?: string | null;
   memoryLimit?: string | null;
   memoryReservation?: string | null;
@@ -466,7 +474,8 @@ interface ProjectSummary {
     environmentId: string;
     name: string;
     applications?: { applicationId: string; name: string }[];
-    postgres?: { postgresId: string; name: string }[];
+    /** Algunas versiones de Dokploy solo devuelven aquí el `postgresId`, sin el nombre. */
+    postgres?: { postgresId: string; name?: string }[];
   }[];
 }
 
@@ -560,10 +569,14 @@ export async function reconcile(options: ReconcileOptions): Promise<ReconcileRes
 
   // 2. PostgreSQL nativo
   log(`\nPostgreSQL ${POSTGRES_SPEC.name}${mode}`);
-  const existingPg = environment?.postgres?.find((p) => p.name === POSTGRES_SPEC.name);
   let pg: PostgresInfo | null = null;
-  if (existingPg && api) {
-    pg = await api.get<PostgresInfo>('postgres.one', { postgresId: existingPg.postgresId });
+  for (const candidate of environment?.postgres ?? []) {
+    if (!api || (candidate.name !== undefined && candidate.name !== POSTGRES_SPEC.name)) continue;
+    const info = await api.get<PostgresInfo>('postgres.one', { postgresId: candidate.postgresId });
+    if ((candidate.name ?? info.name) === POSTGRES_SPEC.name) {
+      pg = info;
+      break;
+    }
   }
   let pgId = pg?.postgresId ?? PLACEHOLDER_ID;
   let pgApp = pg?.appName ?? `<appName de ${POSTGRES_SPEC.name}>`;

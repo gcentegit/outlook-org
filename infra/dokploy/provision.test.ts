@@ -61,6 +61,8 @@ class FakeDokploy implements Api {
   mounts = new Map<string, Rec[]>();
   destinations = [{ destinationId: 'dest1', name: 'S3 Minio Dokploy Proyectos' }];
   writes: { endpoint: string; body: Record<string, unknown> }[] = [];
+  /** Como algunas versiones de Dokploy: `project.all` lista las bases de datos sin su nombre. */
+  postgresWithoutNames = false;
   private seq = 0;
   private id = (prefix: string): string => `${prefix}${++this.seq}`;
 
@@ -75,7 +77,9 @@ class FakeDokploy implements Api {
               environmentId: p.environmentId,
               name: 'production',
               applications: [...this.apps.values()].map((a) => ({ applicationId: a.applicationId, name: a.name })),
-              postgres: [...this.databases.values()].map((d) => ({ postgresId: d.postgresId, name: d.name })),
+              postgres: [...this.databases.values()].map((d) =>
+                this.postgresWithoutNames ? { postgresId: d.postgresId } : { postgresId: d.postgresId, name: d.name },
+              ),
             },
           ],
         })) as T;
@@ -195,6 +199,17 @@ describe('funciones de diferencias', () => {
     expect(diffApplication(APPS.web, defaults).map((c) => c.field).sort()).toEqual(
       ['autoDeploy', 'healthCheckSwarm', 'memoryLimit', 'memoryReservation', 'replicas', 'sourceType'],
     );
+  });
+
+  it('diffApplication exige que el worker se sustituya parando antes el contenedor anterior', () => {
+    const worker = {
+      applicationId: 'a', appName: 'x', sourceType: 'docker', autoDeploy: false, replicas: 1,
+      memoryReservation: String(APPS.worker.memoryReservation), memoryLimit: String(APPS.worker.memoryLimit),
+      healthCheckSwarm: APPS.worker.healthCheck,
+    };
+    expect(diffApplication(APPS.worker, worker).map((c) => c.field)).toEqual(['updateConfigSwarm']);
+    const stopFirst = { Order: 'stop-first', FailureAction: 'rollback', Parallelism: 1 };
+    expect(diffApplication(APPS.worker, { ...worker, updateConfigSwarm: stopFirst })).toEqual([]);
   });
 
   it('diffPostgres exige puerto no publicado, memoria y comprobación de salud', () => {
@@ -430,6 +445,18 @@ describe('reconcile', () => {
     expect(api.writes).toEqual([]);
     expect(second.result.changes).toBe(0);
     expect(second.result.needsRedeploy).toEqual([]);
+  });
+
+  it('reconoce la base de datos existente aunque project.all no devuelva su nombre', async () => {
+    const api = new FakeDokploy();
+    await run(api, true);
+    for (const app of api.apps.values()) if (app.name !== 'clasificador-docling') app.applicationStatus = 'running';
+    api.postgresWithoutNames = true;
+    api.writes.length = 0;
+    const second = await run(api, true);
+    expect(api.writes).toEqual([]);
+    expect(second.result.changes).toBe(0);
+    expect(api.databases.size).toBe(1);
   });
 
   it('--dry-run contra un estado con deriva solo cuenta y describe, sin escribir', async () => {

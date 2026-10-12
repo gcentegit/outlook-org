@@ -12,8 +12,8 @@
 #   1. Espera a que exista un despliegue de la aplicación posterior a --since y a que termine:
 #      `done` sigue; `error` o `cancelled` falla. (Sin --since vale cualquiera: comprobación final.)
 #   2. Espera a que algún contenedor de la aplicación lleve la imagen con la etiqueta --tag (la versión,
-#      sin «v», que es la etiqueta con la que el flujo de publicación despliega) y esté
-#      `(healthy)`. Un contenedor con esa imagen que se reinicia o sale falla al terminar el tiempo.
+#      sin «v», que es la etiqueta con la que el flujo de publicación despliega), esté `(healthy)` y,
+#      con --since, se haya creado después. Un contenedor con esa imagen que se reinicia o sale falla al terminar el tiempo.
 #      Si Dokploy no ofrece la consulta de contenedores (HTTP 4xx), avisa y se queda con el paso 1.
 #
 # Solo hace lecturas (GET) contra la API de Dokploy. Nunca imprime la clave.
@@ -81,10 +81,22 @@ while :; do
     exit 0
   fi
   if [[ "$CODE" == 2* ]]; then
-    HEALTHY="$(jq -r --arg tag ":$TAG" '[ .[]? | select((.image // "") | endswith($tag)) | select((.status // "") | test("\\(healthy\\)")) ] | length' <<<"$BODY" 2>/dev/null || echo 0)"
-    LAST="$(jq -r --arg tag ":$TAG" '[ .[]? | select((.image // "") | endswith($tag)) | "\(.name): \(.state) \(.status)" ] | join("; ")' <<<"$BODY" 2>/dev/null || true)"
+    HEALTHY=0; LAST=""
+    # Algunas versiones de Dokploy no devuelven `image` en esta lista: la imagen y la fecha de creación
+    # se leen del contenedor. Con --since solo cuenta un contenedor creado después: si Swarm vuelve al
+    # contenedor anterior (misma etiqueta), no se da por bueno.
+    while IFS=$'\t' read -r CID CNAME CSTATE CSTATUS; do
+      [[ -n "$CID" ]] || continue
+      get -G "$API/docker.getConfig" --data-urlencode "containerId=$CID"
+      [[ "$CODE" == 2* ]] || continue
+      read -r IMAGE CREATED < <(jq -r '"\(.Config.Image // "") \((.Created // "")[0:19])"' <<<"$BODY" 2>/dev/null || echo "")
+      [[ "${IMAGE%@*}" == *":$TAG" ]] || continue
+      [[ -z "$SINCE" || "$CREATED" > "$SINCE" || "$CREATED" == "$SINCE" ]] || continue
+      LAST="${LAST:+$LAST; }$CNAME: $CSTATE $CSTATUS"
+      [[ "$CSTATUS" == *"(healthy)"* ]] && HEALTHY=$((HEALTHY + 1))
+    done < <(jq -r '.[]? | [.containerId, .name, .state, .status] | @tsv' <<<"$BODY" 2>/dev/null || true)
     if (( HEALTHY > 0 )); then log "Contenedor sano: $LAST"; exit 0; fi
-    log "Aún no está sano: ${LAST:-ningún contenedor con :$TAG todavía}"
+    log "Aún no está sano: ${LAST:-ningún contenedor con :$TAG${SINCE:+ creado después de $SINCE} todavía}"
   else
     log "docker.getContainersByAppNameMatch respondió HTTP $CODE"
   fi
