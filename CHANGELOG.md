@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/gcentegit/outlook-org/compare/v0.6.0...v0.6.1) (2026-10-12)
+
+
+### 🔧 Correcciones
+
+* **worker:** 🏷️ la razón social no cuenta dentro de una dirección de correo o una web ([#43](https://github.com/gcentegit/outlook-org/issues/43)) ([00a4561](https://github.com/gcentegit/outlook-org/commit/00a45611cf77ee1a41dd89fcb69173e595e40e7f))
+
 ## [0.6.0](https://github.com/gcentegit/outlook-org/compare/v0.5.0...v0.6.0) (2026-10-12)
 
 
