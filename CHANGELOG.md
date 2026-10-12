@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/gcentegit/outlook-org/compare/v0.3.0...v0.4.0) (2026-10-12)
+
+
+### 🚀 Novedades
+
+* aceptar «FOOD BOX, S.A.» y «ARCOBETA, S.L.» como razón social ([#35](https://github.com/gcentegit/outlook-org/issues/35)) ([d9f0768](https://github.com/gcentegit/outlook-org/commit/d9f0768fd86eea2d81898f2cde1d8b6fe613b12a))
+* **worker:** la razón social vale sin forma societaria ([#37](https://github.com/gcentegit/outlook-org/issues/37)) ([e3f9cf9](https://github.com/gcentegit/outlook-org/commit/e3f9cf9fdf223cea5a7ffd3dc9621f8932675f1e))
+
 ## [0.3.0](https://github.com/gcentegit/outlook-org/compare/v0.2.0...v0.3.0) (2026-10-12)
 
 
