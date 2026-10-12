@@ -65,6 +65,10 @@ esta lista:
 5. **Modelo de lenguaje (LLM).** Solo para lo que siga en duda.
 6. **Duda.** Si nada responde, la categoría queda sin decidir.
 
+Un correo puede quedar con **varias categorías**. Si un adjunto es una factura a FOODBOX y otro a
+LATERAL IBERIA (o una está en el cuerpo y otra en un adjunto), las dos tienen su regla fuerte y el
+correo queda con FOOD BOX y LATERAL; ARCOBETA se descarta porque no aparece.
+
 Nunca se quita una categoría que haya puesto una persona.
 
 ## Paso 4. Qué pasa con el resultado
