@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/gcentegit/outlook-org/compare/v0.2.0...v0.3.0) (2026-10-12)
+
+
+### 🚀 Novedades
+
+* **web:** 🔔 aviso de reproceso con la causa de cada grupo de correos ([e70c011](https://github.com/gcentegit/outlook-org/commit/e70c0119915b8f1ab16bedaab24ad77fd8380455))
+
 ## [0.2.0](https://github.com/gcentegit/outlook-org/compare/v0.1.3...v0.2.0) (2026-10-12)
 
 
