@@ -54,6 +54,12 @@ Validación:
     2. la guarda en la base de datos (migración pequeña, con copia previa);
     3. el panel usa como verdad el árbol Foodbox → FOOD BOX y el árbol Lateral → LATERAL, además de las etiquetas del equipo;
     4. los correos de otras carpetas y ARCOBETA quedan fuera de la medida o para revisión.
+- [x] Correos recibidos desde el 2026-10-09, antes de arrancar la sombra, recuperados reiniciando la sincronización (74 correos, con copia previa)
+- [x] Reglas del negocio del 2026-10-12 en la razón social ([sociedades y categorías](../../docs/referencia/sociedades-categorias.md)): «FOOD BOX» vale por FOODBOX y «ARCOBETA» por ARCO BETA, y la forma societaria (S.A., S.L.) no se exige (0.4.0). 9 correos más decididos al reprocesar, revisados por el usuario
+- [x] Fallo de la 0.4.0 corregido en la 0.6.1: sin forma societaria, «FOODBOX» dentro de `…@foodbox.es` o `www.foodbox.es` contaba como razón social. Ahora las direcciones de correo y las webs no cuentan. 11 correos afectados, revisados por el usuario: uno pierde FOOD BOX (factura a ARCOBETA), otro queda en duda y otro gana LATERAL y ARCOBETA por una decisión anterior a la 0.4.0
+- [x] «Reprocesar» vuelve a decidir también los correos ya decididos que estén marcados (0.6.2). Para aplicar una corrección de reglas a correos ya decididos: copia de seguridad, marcar `needsReprocess` en los afectados con SQL y pulsar «Reprocesar»
+- [x] Panel: aviso de reproceso agrupado por causa (0.3.0), «Ver motivo» solo con lo que se cumple (0.5.0) y anchos fijos en «Correos» (0.6.0)
+- [ ] Reglas nuevas para los 32 correos pendientes (remitentes y dominios propuestos el 2026-10-12) y LLM: aplazados por el usuario hasta hablarlo con el equipo de Proveedores, por la privacidad de correos y facturas. Alternativa sin sacar datos: un modelo local por `OPENAI_COMPATIBLE_BASE_URL`
 - [ ] Riesgo: si el worker está parado más tiempo del que tarda el equipo en mover un correo a su carpeta, ese correo no se procesa
 - [ ] Ajuste de reglas y del umbral de confianza (el 0,8 acordado solo cambia con datos y con el usuario)
 
