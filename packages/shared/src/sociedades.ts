@@ -9,7 +9,7 @@ import type { Category } from './categories';
  * y las reglas por defecto del evaluador.
  *
  * `variantes`: otras formas en que las facturas escriben la razón social (regla del negocio): cada
- * una es una regla fuerte más, con la forma societaria igual de obligatoria.
+ * una es una regla fuerte más. La forma societaria no se exige en el texto.
  */
 export const SOCIEDADES: ReadonlyArray<{
   razonSocial: string;
