@@ -25,7 +25,7 @@ Empieza por [docs/README.md](docs/README.md). Los enlaces principales:
 
 | Ruta              | Contenido                                                                                                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`        | Panel (Next.js 15, App Router): métricas, discrepancias, modelos, categorías, configuración y `GET /api/health`.                      |
+| `apps/web`        | Panel (Next.js 15, App Router): métricas, correos, discrepancias, reglas, modelos, categorías, configuración y `GET /api/health`.     |
 | `apps/worker`     | Worker (Node 22 + TypeScript): migraciones, sincronización en modo sombra, clasificador, peticiones del panel y `/livez` y `/health`. |
 | `packages/db`     | Esquema Prisma 7, migraciones, semilla y cliente compartido.                                                                          |
 | `packages/shared` | Esquema Zod de la decisión, categorías y normalización de CIF.                                                                        |

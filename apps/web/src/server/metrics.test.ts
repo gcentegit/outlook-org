@@ -5,7 +5,9 @@ import {
   getServiceStatus,
   computeMetrics,
   evaluateMessages,
+  countStates,
   listDiscrepancies,
+  listMessages,
   loadLatencyByModel,
   paginate,
   type LoadedDecision,
@@ -41,6 +43,7 @@ function message(over: Partial<LoadedMessage> = {}): LoadedMessage {
     receivedAt: new Date('2026-09-10T08:00:00Z'),
     sender: 'prov@example.com',
     subject: 'Factura',
+    status: 'processed',
     seenCategories: [],
     decisions: [],
     corrections: [],
@@ -357,5 +360,66 @@ describe('getServiceStatus', () => {
     };
     const status = await getServiceStatus(db as never, 300, new Date('2026-10-02T12:00:00Z'));
     expect(status).toMatchObject({ state: 'ok', pending: 4, failed: 2, needsReprocess: 5 });
+  });
+});
+
+describe('listMessages', () => {
+  const valid = (categories: string[], needsReview = false) =>
+    decision({
+      categories,
+      decision: { source: 'rule', reason: 'motivo', confidence: 1, needsReview },
+    });
+
+  it('da a cada correo su estado: clasificado, sin categoría, en duda, a reprocesar o en cola', () => {
+    const messages = [
+      message({ id: 'c', decisions: [valid(['FOOD BOX'])] }),
+      message({ id: 'n', decisions: [valid([])] }),
+      message({ id: 'd', decisions: [valid(['LATERAL'], true)] }),
+      message({ id: 'r', decisions: [{ ...valid([]), degraded: true }] }),
+      message({ id: 'f', status: 'failed' }),
+      message({ id: 'q', status: 'pending' }),
+    ];
+    const states = Object.fromEntries(
+      listMessages(messages, { category: null, state: null }).map((m) => [m.id, m.state]),
+    );
+    expect(states).toEqual({
+      c: 'classified',
+      n: 'none',
+      d: 'doubt',
+      r: 'reprocess',
+      f: 'reprocess',
+      q: 'queued',
+    });
+    expect(countStates(messages)).toEqual({
+      classified: 1,
+      none: 1,
+      doubt: 1,
+      reprocess: 2,
+      queued: 1,
+    });
+  });
+
+  it('filtra por estado y por categoría propuesta, del más reciente al más antiguo', () => {
+    const messages = [
+      message({
+        id: 'viejo',
+        receivedAt: new Date('2026-09-01T08:00:00Z'),
+        decisions: [valid(['FOOD BOX'])],
+      }),
+      message({
+        id: 'nuevo',
+        receivedAt: new Date('2026-09-05T08:00:00Z'),
+        decisions: [valid(['FOOD BOX'])],
+      }),
+      message({ id: 'lateral', decisions: [valid(['LATERAL'])] }),
+      message({ id: 'cola', status: 'pending' }),
+    ];
+    expect(listMessages(messages, { category: 'FOOD BOX', state: null }).map((m) => m.id)).toEqual([
+      'nuevo',
+      'viejo',
+    ]);
+    expect(listMessages(messages, { category: null, state: 'queued' }).map((m) => m.id)).toEqual([
+      'cola',
+    ]);
   });
 });

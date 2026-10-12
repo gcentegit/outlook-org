@@ -53,6 +53,8 @@ export interface LoadedMessage {
   receivedAt: Date;
   sender: string;
   subject: string;
+  /** Estado del trabajo del worker: `pending` en cola, `failed` agotó los reintentos sin decisión. */
+  status: 'pending' | 'processed' | 'failed';
   seenCategories: string[];
   decisions: LoadedDecision[];
   corrections: { final: string[]; createdAt: Date }[];
@@ -66,6 +68,7 @@ export interface EvaluatedMessage {
   receivedAt: Date;
   sender: string;
   subject: string;
+  status: LoadedMessage['status'];
   /** Decisión vigente (null si el correo aún no tiene ninguna). */
   decision: {
     id: string;
@@ -122,6 +125,7 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
       receivedAt: message.receivedAt,
       sender: message.sender,
       subject: message.subject,
+      status: message.status,
       decision:
         latest && details
           ? {
@@ -324,6 +328,63 @@ export function listDiscrepancies(
     .sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
 }
 
+/**
+ * Cómo ha quedado un correo para quien mira el panel:
+ * - `classified`: decisión válida con alguna categoría.
+ * - `none`: decisión válida sin ninguna categoría (no es de ninguna sociedad del grupo).
+ * - `doubt`: decisión válida pero marcada para revisar (confianza baja o categorías en duda).
+ * - `reprocess`: decisión tomada con un fallo técnico (docling o el LLM caídos, o sin clave del LLM);
+ *   se volverá a procesar.
+ * - `queued`: aún sin decisión (en cola o con los reintentos agotados).
+ */
+export type MessageState = 'classified' | 'none' | 'doubt' | 'reprocess' | 'queued';
+export const MESSAGE_STATES: readonly MessageState[] = [
+  'classified',
+  'none',
+  'doubt',
+  'reprocess',
+  'queued',
+];
+
+export function messageState(item: EvaluatedMessage): MessageState {
+  if (!item.decision) return item.status === 'failed' ? 'reprocess' : 'queued';
+  if (item.decision.degraded) return 'reprocess';
+  if (item.decision.needsReview) return 'doubt';
+  return item.decision.proposed.length > 0 ? 'classified' : 'none';
+}
+
+export interface ListedMessage extends EvaluatedMessage {
+  state: MessageState;
+}
+
+/**
+ * Todos los correos del periodo con su decisión vigente y su estado, del más reciente al más
+ * antiguo. Con categoría, solo los que tienen esa categoría propuesta; con estado, solo ese estado.
+ */
+export function listMessages(
+  messages: readonly LoadedMessage[],
+  filter: { category: Category | null; state: MessageState | null },
+): ListedMessage[] {
+  return evaluateMessages(messages)
+    .map((item) => ({ ...item, state: messageState(item) }))
+    .filter(
+      (item) =>
+        (!filter.state || item.state === filter.state) &&
+        (!filter.category || (item.decision?.proposed.includes(filter.category) ?? false)),
+    )
+    .sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
+}
+
+/** Cuántos correos hay en cada estado (para los contadores de la página). */
+export function countStates(messages: readonly LoadedMessage[]): Record<MessageState, number> {
+  const counts = Object.fromEntries(MESSAGE_STATES.map((s) => [s, 0])) as Record<
+    MessageState,
+    number
+  >;
+  for (const item of evaluateMessages(messages)) counts[messageState(item)]++;
+  return counts;
+}
+
 export interface Page<T> {
   items: T[];
   page: number;
@@ -360,6 +421,7 @@ export async function loadMessages(
       receivedAt: true,
       sender: true,
       subject: true,
+      status: true,
       seenCategories: true,
       decisions: {
         select: {
@@ -428,6 +490,20 @@ export async function getDiscrepancies(
     page,
     pageSize,
   );
+}
+
+export async function getMessageList(
+  db: Pick<PrismaClient, 'message'>,
+  filter: MetricsFilter,
+  state: MessageState | null,
+  page: number,
+  pageSize = 25,
+): Promise<Page<ListedMessage> & { counts: Record<MessageState, number> }> {
+  const messages = await loadMessages(db, filter);
+  return {
+    ...paginate(listMessages(messages, { category: filter.category, state }), page, pageSize),
+    counts: countStates(messages),
+  };
 }
 
 // --- Estado del servicio --------------------------------------------------------------------

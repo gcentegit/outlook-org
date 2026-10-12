@@ -28,9 +28,11 @@ describe('comprobación de acceso en cada página y route handler', () => {
     expect(pages.map(rel).sort()).toEqual([
       '(panel)/categorias/page.tsx',
       '(panel)/configuracion/page.tsx',
+      '(panel)/correos/page.tsx',
       '(panel)/discrepancias/page.tsx',
       '(panel)/modelos/page.tsx',
       '(panel)/page.tsx',
+      '(panel)/reglas/page.tsx',
     ]);
   });
 

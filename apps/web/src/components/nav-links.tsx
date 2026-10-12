@@ -7,7 +7,9 @@ import { cn } from './ui';
 
 export const NAV_ITEMS = [
   { href: '/', label: 'Resumen' },
+  { href: '/correos', label: 'Correos' },
   { href: '/discrepancias', label: 'Discrepancias' },
+  { href: '/reglas', label: 'Reglas' },
   { href: '/modelos', label: 'Modelos' },
   { href: '/categorias', label: 'Categorías' },
   { href: '/configuracion', label: 'Configuración' },

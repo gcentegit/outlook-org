@@ -1,11 +1,23 @@
 import { CATEGORIES } from '@clasificador/shared';
+import type { ReactNode } from 'react';
 
 import type { PanelFilter } from '@/server/filter-params';
 
 import { buttonClass, inputClass, labelClass } from './ui';
 
-/** Formulario GET con rango de fechas y categoría: el filtro vive en la URL (se puede compartir). */
-export function FiltersForm({ filter, action }: { filter: PanelFilter; action: string }) {
+/**
+ * Formulario GET con rango de fechas y categoría: el filtro vive en la URL (se puede compartir).
+ * `children` añade campos propios de una página antes del botón.
+ */
+export function FiltersForm({
+  filter,
+  action,
+  children,
+}: {
+  filter: PanelFilter;
+  action: string;
+  children?: ReactNode;
+}) {
   return (
     <form
       method="get"
@@ -54,6 +66,7 @@ export function FiltersForm({ filter, action }: { filter: PanelFilter; action: s
           ))}
         </select>
       </div>
+      {children}
       <button type="submit" className={buttonClass.primary}>
         Aplicar
       </button>
