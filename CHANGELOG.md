@@ -3,34 +3,34 @@
 ## [0.2.0](https://github.com/gcentegit/outlook-org/compare/v0.1.3...v0.2.0) (2026-10-12)
 
 
-### Funcionalidades
+### 🚀 Novedades
 
-* **web:** páginas de correos y reglas en el panel ([#27](https://github.com/gcentegit/outlook-org/issues/27)) ([4c40dfe](https://github.com/gcentegit/outlook-org/commit/4c40dfedb79093bb7bc4ee3eb1909d8c4c4ec537))
+* **web:** 🗂️ páginas de correos y reglas en el panel ([#27](https://github.com/gcentegit/outlook-org/issues/27)) ([4c40dfe](https://github.com/gcentegit/outlook-org/commit/4c40dfedb79093bb7bc4ee3eb1909d8c4c4ec537))
 
 ## [0.1.3](https://github.com/gcentegit/outlook-org/compare/v0.1.2...v0.1.3) (2026-10-12)
 
 
-### Correcciones
+### 🔧 Correcciones
 
-* **web:** llevar el oid de Microsoft en la sesión para que las acciones del panel funcionen ([#25](https://github.com/gcentegit/outlook-org/issues/25)) ([27fed17](https://github.com/gcentegit/outlook-org/commit/27fed17a9b5a6060731b4bb88c01cf029246a6d1))
+* **web:** 🔐 llevar el oid de Microsoft en la sesión para que las acciones del panel funcionen ([#25](https://github.com/gcentegit/outlook-org/issues/25)) ([27fed17](https://github.com/gcentegit/outlook-org/commit/27fed17a9b5a6060731b4bb88c01cf029246a6d1))
 
 ## [0.1.2](https://github.com/gcentegit/outlook-org/compare/v0.1.1...v0.1.2) (2026-10-12)
 
 
-### Correcciones
+### 🔧 Correcciones
 
-* **worker:** quitar los caracteres nulos del texto de los adjuntos ([#23](https://github.com/gcentegit/outlook-org/issues/23)) ([12726ff](https://github.com/gcentegit/outlook-org/commit/12726ff3a863a1c76b8e82bef1b08fddd3695b2a))
+* **worker:** 📎 quitar los caracteres nulos del texto de los adjuntos ([#23](https://github.com/gcentegit/outlook-org/issues/23)) ([12726ff](https://github.com/gcentegit/outlook-org/commit/12726ff3a863a1c76b8e82bef1b08fddd3695b2a))
 
 ## [0.1.1](https://github.com/gcentegit/outlook-org/compare/v0.1.0...v0.1.1) (2026-10-12)
 
 
-### Rendimiento
+### ⚡ Rendimiento
 
-* **worker:** leer la capa de texto del PDF antes de usar OCR ([#21](https://github.com/gcentegit/outlook-org/issues/21)) ([8c926fa](https://github.com/gcentegit/outlook-org/commit/8c926fadfc275a11c985ed1d4676c3304e44925c))
+* **worker:** 📄 leer la capa de texto del PDF antes de usar OCR ([#21](https://github.com/gcentegit/outlook-org/issues/21)) ([8c926fa](https://github.com/gcentegit/outlook-org/commit/8c926fadfc275a11c985ed1d4676c3304e44925c))
 
 ## 0.1.0 (2026-10-03)
 
 
-### Funcionalidades
+### 🚀 Novedades
 
-* clasificador del buzón de Proveedores en modo sombra ([6208561](https://github.com/gcentegit/outlook-org/commit/6208561ef4c639317017b97f60aa6844b105e3ac))
+* 🏷️ clasificador del buzón de Proveedores en modo sombra ([6208561](https://github.com/gcentegit/outlook-org/commit/6208561ef4c639317017b97f60aa6844b105e3ac))
