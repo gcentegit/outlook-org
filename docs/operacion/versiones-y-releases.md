@@ -51,14 +51,32 @@ tipo(ámbito opcional): descripción en minúsculas, en español y sin punto fin
 ```
 
 Tipos permitidos: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert`.
+En `feat`, `fix`, `perf` y `revert` la descripción **empieza por un icono**
+(`fix(web): 🔐 llevar el oid de Microsoft en la sesión...`), y el mismo check lo exige.
 Como el cuerpo queda en blanco, un cambio incompatible solo se marca con `!` tras el tipo; el aviso
 `BREAKING CHANGE:` en el cuerpo no llega a `main`. Explica en la descripción del PR (hay una plantilla)
 qué hay que hacer al desplegar.
 
-El `CHANGELOG.md` de la raíz muestra **Funcionalidades** (`feat`), **Correcciones** (`fix`),
-**Rendimiento** (`perf`) y **Reversiones** (`revert`). Los demás tipos quedan ocultos: son
+El `CHANGELOG.md` de la raíz muestra **🚀 Novedades** (`feat`), **🔧 Correcciones** (`fix`),
+**⚡ Rendimiento** (`perf`) y **↩️ Reversiones** (`revert`). Los demás tipos quedan ocultos: son
 mantenimiento que no cambia lo que hace el servicio. El encabezado de los cambios incompatibles lo
 escribe release-please y sale en inglés (`BREAKING CHANGES`); no es configurable.
+
+### Notas de la release legibles
+
+Cada título de PR acaba siendo un punto de las notas de la Release (`* **web:** 🔐 llevar el oid...`),
+así que se escribe pensando en quien las lee:
+
+- **Un icono al principio de la descripción** que diga algo de ese punto, para recorrer la lista con
+  la vista. Guía: 🏷️ categorías · 📮 correos · 📎 adjuntos · 📄 PDF y OCR · 🤖 LLM · 🔐 acceso y
+  sesión · 🗂️ páginas del panel · 🎨 aspecto · 🛡️ guardas · 📥 sincronización · ⚡ rendimiento ·
+  🐛 fallo corregido · ⚠️ aviso importante.
+- **Lenguaje de producto**: qué cambia para quien usa el panel o el buzón, sin nombres de ficheros ni
+  funciones. El detalle técnico y qué pasaba antes van en la descripción del PR.
+
+Las notas se generan del changelog y no se redactan aparte. Retocar el formato de una Release ya
+publicada (por ejemplo, con `gh release edit`) está bien si a la vez se cambia igual su sección del
+`CHANGELOG.md`; añadir hechos que no estén en el changelog, no.
 
 Dependabot abre sus PR como `build(deps): ...` y `ci(deps): ...`, así que no provocan versión. Si una
 actualización es urgente (seguridad), cambia el título a `fix(deps): ...` antes de fusionar.

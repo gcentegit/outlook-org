@@ -3,7 +3,9 @@ name: Título del PR
 # Los PR se fusionan con «squash» y el TÍTULO pasa a ser el mensaje del commit en main, que es lo que
 # lee release-please para calcular la versión y el CHANGELOG. Por eso se valida el título (no los
 # commits de la rama, que se aplastan). Formato: `tipo(ámbito opcional): descripción`; un cambio
-# incompatible lleva `!` tras el tipo (`feat!: ...`). Reglas: docs/operacion/versiones-y-releases.md.
+# incompatible lleva `!` tras el tipo (`feat!: ...`). Los tipos que salen en las notas de la release
+# (feat, fix, perf, revert) llevan además un icono al principio de la descripción
+# (`fix(web): 🔐 ...`). Reglas: docs/operacion/versiones-y-releases.md.
 #
 # El PR de versión lo crea release-please con GITHUB_TOKEN y este workflow no se lanza en él (su título,
 # `chore: release X.Y.Z`, ya es válido). Por eso este check no debe marcarse como obligatorio.
@@ -37,3 +39,20 @@ jobs:
             ci
             chore
             revert
+
+      # La descripción es cada punto de las notas de la release: el icono permite recorrerlas con la
+      # vista. Solo se exige en los tipos visibles en el CHANGELOG; el resto no llega a las notas.
+      - name: Icono al principio de la descripción
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          node -e '
+            const title = process.env.PR_TITLE;
+            const match = /^(\w+)(\([^)]*\))?!?: (.*)$/u.exec(title);
+            if (!match) process.exit(0); // el formato ya lo valida el paso anterior
+            const [, type, , subject] = match;
+            if (!["feat", "fix", "perf", "revert"].includes(type)) process.exit(0);
+            if (/^\p{Extended_Pictographic}/u.test(subject)) process.exit(0);
+            console.log(`::error::El título debe empezar la descripción por un icono: "${type}(ámbito): 🐛 descripción". Guía: docs/operacion/versiones-y-releases.md`);
+            process.exit(1);
+          '

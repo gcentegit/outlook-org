@@ -1,7 +1,8 @@
 <!--
 El TÍTULO del PR será el mensaje del commit en main y decide la versión:
 `tipo: descripción` con tipo feat, fix, perf, refactor, docs, test, build, ci, chore o revert.
-Un cambio incompatible lleva `!` (`feat!: ...`). Ver docs/operacion/versiones-y-releases.md.
+Un cambio incompatible lleva `!` (`feat!: ...`). En feat, fix, perf y revert la descripción empieza
+por un icono (`fix(web): 🔐 ...`). Ver docs/operacion/versiones-y-releases.md.
 -->
 
 ## Qué cambia
