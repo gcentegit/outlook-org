@@ -9,8 +9,13 @@ texto y a veces un escaneo. Código: `apps/worker/src/extract/` y `apps/worker/s
 
 ## Decisión
 
-- La conversión la hace **docling-serve (versión CPU)** como servicio independiente, con OCR
-  RapidOCR solo cuando hace falta. Solo CPU: el servidor es arm64 sin GPU.
+- La conversión la hace **docling-serve (versión CPU)** como servicio independiente. Solo CPU: el
+  servidor es arm64 sin GPU.
+- **OCR solo sin capa de texto.** Un PDF se convierte primero sin OCR ni estructura de tablas y solo
+  se repite con OCR RapidOCR si no trae texto propio (escaneos y fotos); las imágenes van siempre
+  con OCR. Con datos reales, el OCR sobre PDF con texto solo leía logos y sellos: no aportó ningún
+  CIF ni razón social y multiplicaba el tiempo por diez
+  ([medición](../../plans/reports/validacion-261012-1530-velocidad-extraccion.md)).
 - Se leen adjuntos `fileAttachment` que no sean inline, de tipo PDF, imagen (png, jpg, tiff), DOCX
   o XLSX; la extensión del nombre manda sobre el tipo MIME. Los demás se registran y se omiten.
 - Límites configurables: `ATTACHMENT_MAX_BYTES` (15 MiB por defecto; los mayores se omiten sin
@@ -27,4 +32,6 @@ texto y a veces un escaneo. Código: `apps/worker/src/extract/` y `apps/worker/s
   PDF que lleva dentro. No se ha medido cuántos casos hay; el descubrimiento con datos reales
   debe contarlos para decidir si se soportan o se descartan de forma informada.
 - Si los escaneos dan mal resultado con RapidOCR, la alternativa a probar es PP-OCRv5 mobile.
+- Un PDF cuya capa de texto no contiene el CIF pero sí lo lleva dibujado (en un sello o una imagen)
+  no se lee con OCR. En la muestra real no hubo ningún caso; si aparecen, se verán como dudosos.
 - Los textos extraídos son datos de terceros ([0010](0010-retencion-y-datos-de-terceros.md)).

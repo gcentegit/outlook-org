@@ -29,7 +29,8 @@ function fakeDb() {
 }
 
 const docling = { url: 'http://docling.test', maxPages: 2, timeoutSeconds: 30 };
-const file = { name: 'f.pdf', contentType: 'application/pdf', bytes: Buffer.from('contenido') };
+// Una imagen se convierte siempre en una sola petición: así cada llamada a docling es una conversión.
+const file = { name: 'f.png', contentType: 'image/png', bytes: Buffer.from('contenido') };
 const now = new Date('2026-10-02T10:00:00Z');
 
 function doclingFetch(md: string, ocr = false) {
