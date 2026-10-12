@@ -67,8 +67,9 @@ model Message {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  decisions   Decision[]
-  corrections Correction[]
+  decisions         Decision[]
+  corrections       Correction[]
+  appliedCategories AppliedCategory[]
 
   @@index([conversationId])
   @@index([receivedAt])
@@ -89,15 +90,15 @@ model AttachmentText {
 }
 
 model Rule {
-  id         String     @id @default(cuid())
-  type       RuleType
+  id        String     @id @default(cuid())
+  type      RuleType
   /// Valor ya normalizado (el CIF en mayúsculas y sin espacios ni guiones).
-  value      String
-  category   String
-  weight     RuleWeight
-  active     Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  value     String
+  category  String
+  weight    RuleWeight
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@unique([type, value, category])
   @@index([active])
@@ -142,6 +143,19 @@ model Correction {
 
   @@index([messageId])
   @@index([createdAt])
+}
+
+/// Categoría que el servicio escribió en el correo (solo en modo real). Si después el correo ya no
+/// la tiene es que el equipo la quitó, y no se vuelve a poner.
+model AppliedCategory {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  /// Nombre tal como está en la lista maestra del buzón.
+  category  String
+  appliedAt DateTime @default(now())
+
+  @@unique([messageId, category])
 }
 
 /// Proveedor y modelo de LLM activos; el worker lo lee en cada trabajo.

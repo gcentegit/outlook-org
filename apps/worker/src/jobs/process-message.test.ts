@@ -35,6 +35,7 @@ function store(over: Partial<DecisionStore> = {}): DecisionStore {
     saveDecision: vi.fn(async () => {}),
     markFailed: vi.fn(async () => {}),
     forget: vi.fn(async () => {}),
+    markApplyFailed: vi.fn(async () => {}),
     ...over,
   };
 }
@@ -173,5 +174,35 @@ describe('processMessage: fallos técnicos', () => {
     expect(d.store.markFailed).toHaveBeenCalledWith('m1');
     await expect(processMessage('m2', d, { isLast: false })).rejects.toThrow('Graph 503');
     expect(d.store.markFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it('con escritura en el buzón, la hace tras guardar una decisión válida con la lista maestra', async () => {
+    const apply = vi.fn(async () => {});
+    const d = deps({ apply });
+    expect(await processMessage('m1', d)).toBe('processed');
+    expect(apply).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'm1' }),
+      expect.anything(),
+      ['FOOD BOX', 'LATERAL', 'ARCOBETA'],
+    );
+    expect(d.store.markApplyFailed).not.toHaveBeenCalled();
+  });
+
+  it('una decisión degradada no se escribe en el buzón', async () => {
+    const apply = vi.fn(async () => {});
+    const d = deps({ apply, classify: vi.fn(async (email) => degradedResult(email, false)) });
+    expect(await processMessage('m1', d)).toBe('degraded');
+    expect(apply).not.toHaveBeenCalled();
+  });
+
+  it('si falla la escritura, la decisión queda guardada y el correo marcado para reprocesar', async () => {
+    const d = deps({
+      apply: vi.fn(async () => {
+        throw new Error('Graph 503');
+      }),
+    });
+    expect(await processMessage('m1', d)).toBe('processed');
+    expect(d.store.saveDecision).toHaveBeenCalledOnce();
+    expect(d.store.markApplyFailed).toHaveBeenCalledWith('m1');
   });
 });

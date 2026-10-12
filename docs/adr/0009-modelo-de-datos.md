@@ -24,6 +24,9 @@ solo se recogen las decisiones de forma que el esquema no puede explicar por sí
 - `CategorySetting` (una fila por categoría) guarda el modo sombra/live del panel. Sin fila, la
   categoría está en sombra. El panel accede con SQL directo (tolera que la tabla no exista) y el
   worker la lee con Prisma solo para exponerla.
+- `AppliedCategory` (única por correo y categoría) guarda lo que el servicio escribió en el buzón en
+  modo real, para no volver a poner lo que el equipo quite
+  ([0004](0004-modo-sombra-y-activacion-por-categoria.md)). Se borra con el correo.
 - `Message.status` (`pending`, `processed`, `failed`), `Message.needsReprocess`, `Decision.degraded`
   y `AllowedUser.oid` (nulo, único) existen para el estado de los correos, el reproceso y el acceso
   atado a la cuenta de Microsoft. Los correos que ya tenían decisión pasaron a `processed` en su

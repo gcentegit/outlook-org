@@ -94,8 +94,10 @@ caracteres) sale hacia el proveedor elegido. [ADR 0003](adr/0003-llm-configurabl
 
 - **Hace:** leer el buzón (delta, mensajes, adjuntos, categorías maestras), extraer, clasificar,
   llamar al LLM, guardar decisiones y correcciones, mostrarlas en el panel y enviar el latido.
-- **No hace:** aplicar categorías a ningún correo. No existe el `PATCH`; con `MODE=live` el worker se
-  niega a arrancar. Los interruptores sombra/live del panel solo guardan una preferencia.
+- **No hace:** aplicar categorías a ningún correo. La escritura está programada
+  (`apps/worker/src/graph/apply-categories.ts`) pero bloqueada: con `MODE=live` el worker se niega a
+  arrancar hasta que se autorice la activación real. Los interruptores sombra/live del panel solo
+  guardan una preferencia mientras tanto.
 - **Única escritura en el buzón:** crear una categoría en la lista maestra cuando un usuario
   autorizado lo pide y confirma en el panel; no toca ningún correo. El worker la ejecuta; la web
   no puede. [ADR 0004](adr/0004-modo-sombra-y-activacion-por-categoria.md) y

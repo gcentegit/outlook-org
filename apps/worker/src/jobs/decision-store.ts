@@ -55,6 +55,10 @@ export function createPrismaDecisionStore(db: Db): DecisionStore {
       });
     },
 
+    async markApplyFailed(messageId) {
+      await db.message.updateMany({ where: { id: messageId }, data: { needsReprocess: true } });
+    },
+
     async forget(messageId) {
       await db.message.deleteMany({ where: { id: messageId, decisions: { none: {} } } });
     },
