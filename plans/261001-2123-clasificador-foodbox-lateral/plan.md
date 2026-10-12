@@ -44,10 +44,11 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - **Fuera de alcance:** el resto de categorías (responsables, estados,
   ALQUILERES, PRESUPUESTO, TESORERIA, FRANQUICIA, Mini…), la edición de reglas
   desde el panel y los webhooks.
-- **Aceptación:** precisión ≥ 95 % por categoría medida contra la **muestra de unos 200 correos
-  revisada a mano** (fase 9), **y** una cobertura mínima por categoría (porcentaje de los correos de
-  esa sociedad que se etiquetan) que se fijará con los datos de la fase 9, tanto en la validación
-  como tras dos semanas en modo sombra; ninguna categoría puesta por personas se pierde; el panel
+- **Aceptación:** precisión ≥ 95 % por categoría **y** cobertura ≥ 90 % para FOOD BOX y LATERAL
+  (porcentaje de los correos de esa sociedad que se etiquetan), medidas contra la carpeta donde el
+  equipo archiva cada correo más una revisión corta de los dudosos (fase 9), tanto en la validación
+  como tras dos semanas en modo sombra; ARCOBETA sin cobertura mínima hasta tener datos del modo
+  sombra; ninguna categoría puesta por personas se pierde; el panel
   muestra las métricas y el cambio de modelo surte efecto sin redesplegar.
 
 ## Decisiones tomadas
@@ -65,7 +66,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - Panel en `https://clasificador.arcofood.com`, con SSO de Microsoft y una lista de usuarios autorizados (al principio solo `<ADMIN_EMAIL>`); el acceso se ata al `oid` y al `tid` de Microsoft, no solo al email.
 - Métrica de acierto: solo cuentan los correos que el equipo ha revisado; los demás se muestran aparte como pendientes de revisar.
 - Candidatas de reglas: nunca de dominio entero para correo público ni para dominios del grupo (decisión del 2026-10-02).
-- **Verdad de referencia (decisión del 2026-10-03):** el equipo pone hoy las etiquetas FOOD BOX y LATERAL solo a veces y ARCOBETA no existe todavía. El acierto se mide contra una muestra de unos 200 correos revisada a mano; el histórico sirve para sacar reglas candidatas y discrepancias.
+- **Verdad de referencia (decisión del 2026-10-09, sustituye a la del 2026-10-03):** el equipo archiva cada correo en el árbol de carpetas `Foodbox` o `Lateral`, y esa carpeta es la verdad principal, más una revisión corta de los dudosos ([informe](../reports/descubrimiento-261010-0900-fase-9-buzon-real.md)). Antes: el equipo pone hoy las etiquetas FOOD BOX y LATERAL solo a veces y ARCOBETA no existe todavía. El acierto se mide contra una muestra de unos 200 correos revisada a mano; el histórico sirve para sacar reglas candidatas y discrepancias.
 - **Versionado (decisión del 2026-10-03):** release-please y SemVer. Serie `0.x` mientras el servicio solo funcione en sombra; la `1.0.0` será la primera versión que escriba categorías en el buzón (fase 12).
 - **Sin funcionalidad nueva hasta validar con datos reales:** los riesgos de operación (caducidades, gasto del LLM, retención, adjuntos `.eml`/`.msg`) son tareas de la fase 10, no se implementan antes.
 - Umbrales acordados que no cambian sin decisión del usuario: confianza 0,8, precisión 95 %, retención de adjuntos 90 días, modo sombra obligatorio hasta la fase 12.
@@ -74,12 +75,12 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 
 - [x] Generar el certificado y seguir la [guía de Entra ID y RBAC](../../docs/guias/entra-id-rbac.md) (fase 1). Hecho el 2026-10-09.
 - [ ] Crear la cuenta de Anthropic y su clave de API (aplazada por el usuario a la fase 10).
-- [ ] Revisar a mano la muestra de ~200 correos (fase 9) y decidir con los datos la cobertura mínima por categoría.
+- [x] Revisar la muestra de dudosos (fase 9, en parte) y decidir la cobertura mínima: 90 % para FOOD BOX y LATERAL.
 - [ ] Anotar en el registro de actividades de tratamiento de la empresa el plazo de conservación decidido (12 meses para remitentes, asuntos y decisiones; 90 días para el texto de adjuntos).
 - [x] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11. Creada el 2026-10-09.
 - [x] Designar quién atiende los avisos de Uptime Kuma: el administrador (decidido el 2026-10-09).
 - [ ] Acordar cómo y cuándo se informa al equipo de Proveedores (fase 11).
-- [ ] Autorizar el alta y el despliegue en Dokploy (fase 11).
+- [x] Autorizar el alta y el despliegue en Dokploy: autorizado el 2026-10-10 en modo sombra y con un dominio temporal, adelantado a la fase 10; las dos semanas de observación de la fase 11 cuentan tras la fase 10.
 
 ## Phases
 
@@ -93,12 +94,12 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 | 6 | [Servicio en modo sombra y despliegue](./phase-06-servicio-sombra.md) | Done in code (deployment in phase 11) | 1.5d | 3, 5 |
 | 7 | [Panel de métricas y configuración](./phase-07-panel.md) | Done in code (real validation in phases 10 and 11) | 2.5d | 5, 6 |
 | 8 | [Repositorio, versionado y documentación](./phase-08-repositorio-versionado-y-documentacion.md) | Done | 1d | Nada |
-| 9 | [Descubrimiento y verdad de referencia](./phase-09-descubrimiento-y-verdad-de-referencia.md) | Pending | 1d | 1 |
+| 9 | [Descubrimiento y verdad de referencia](./phase-09-descubrimiento-y-verdad-de-referencia.md) | Done | 1d | 1 |
 | 10 | [Validación con datos reales](./phase-10-validacion-con-datos-reales.md) | Pending | 4d | 1, 9 |
 | 11 | [Despliegue en sombra y observación](./phase-11-despliegue-en-sombra-y-observacion.md) | Pending | 1d + 2 semanas | 10 |
 | 12 | [Activación real (1.0.0)](./phase-12-activacion-real.md) | Pending | 1d + 1 semana por categoría | 11 |
 
-Esfuerzo total estimado: 19 días de trabajo (11,5 ya construidos; unos 7,5 pendientes, más las
+Esfuerzo total estimado: 19 días de trabajo (13 ya hechos; unos 6 pendientes, más las
 semanas de observación).
 
 ## Dependencies
@@ -115,7 +116,7 @@ semanas de observación).
 ## Success Criteria
 
 - [x] La app solo puede leer el buzón de Proveedores (comprobado con `Test-ServicePrincipalAuthorization`).
-- [ ] Informe de descubrimiento y muestra de ~200 correos revisada a mano, con la cobertura mínima por categoría decidida.
+- [x] Informe de descubrimiento con la verdad de referencia (carpeta más revisión corta) y la cobertura mínima por categoría decidida.
 - [ ] Informe de evaluación contra la muestra con precisión y cobertura por categoría, con y sin LLM.
 - [ ] Servicio desplegado en Dokploy, en modo sombra, con heartbeat en Uptime Kuma.
 - [ ] Panel accesible por SSO con métricas y selector de modelo.
