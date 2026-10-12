@@ -1,5 +1,6 @@
 import { prisma } from '@clasificador/db';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { FiltersForm } from '@/components/filters-form';
 import { ReprocessButton } from '@/components/reprocess-button';
@@ -26,7 +27,10 @@ import { requireUser } from '@/lib/session';
 import { parseFilter, type SearchParams } from '@/server/filter-params';
 import {
   getMetrics,
+  getReprocessCauses,
   getServiceStatus,
+  REPROCESS_CAUSES,
+  type ReprocessCause,
   ORIGINS,
   type Origin,
   type ServiceStatus,
@@ -41,7 +45,25 @@ const ORIGIN_LABELS: Record<Origin, string> = {
   none: 'Ninguno',
 };
 
-function ServiceCard({ status }: { status: ServiceStatus }) {
+/** Qué le pasó a cada grupo de correos pendientes y qué hacer con ellos. */
+const CAUSE_TEXT: Record<ReprocessCause, (n: string) => string> = {
+  'llm-unavailable': (n) =>
+    `${n}: necesitan el modelo de lenguaje, que no está configurado (falta la clave o el proveedor). Reprocesarlos no servirá hasta configurarlo en Modelos.`,
+  'llm-failed': (n) =>
+    `${n}: el modelo de lenguaje no respondió (fallo pasajero). Se pueden reprocesar ya.`,
+  extraction: (n) =>
+    `${n}: no se pudieron leer sus adjuntos (docling o la descarga fallaron). Se pueden reprocesar ya.`,
+  retries: (n) =>
+    `${n}: el worker agotó los reintentos sin decidir. Revisa sus registros antes de reprocesar.`,
+};
+
+function ServiceCard({
+  status,
+  causes,
+}: {
+  status: ServiceStatus;
+  causes: Record<ReprocessCause, number>;
+}) {
   const badge =
     status.state === 'ok' ? (
       <Badge tone="success">Al día</Badge>
@@ -85,9 +107,21 @@ function ServiceCard({ status }: { status: ServiceStatus }) {
       </dl>
       {status.needsReprocess > 0 && (
         <div className="mt-4">
-          <Notice tone="warning" title="Hay correos decididos con un fallo técnico o sin decisión">
-            Docling o el modelo de lenguaje no estaban disponibles (o el trabajo agotó los
-            reintentos). Esos correos no cuentan en las métricas hasta que se reprocesen.
+          <Notice
+            tone="warning"
+            title={`${formatInt(status.needsReprocess)} correo(s) pendientes de reprocesar`}
+          >
+            <ul className="list-disc space-y-1 pl-4">
+              {REPROCESS_CAUSES.filter((cause) => causes[cause] > 0).map((cause) => (
+                <li key={cause}>{CAUSE_TEXT[cause](formatInt(causes[cause]))}</li>
+              ))}
+            </ul>
+            <p className="mt-2">
+              No cuentan en las métricas hasta que se reprocesen.{' '}
+              <Link href="/correos?estado=reprocess" className="font-medium underline">
+                Ver cuáles son
+              </Link>
+            </p>
           </Notice>
           <ReprocessButton count={status.needsReprocess} />
         </div>
@@ -108,9 +142,10 @@ export default async function SummaryPage({
   await requireUser();
   const filter = parseFilter(await searchParams);
   const db = prisma();
-  const [metrics, status] = await Promise.all([
+  const [metrics, status, causes] = await Promise.all([
     getMetrics(db, { from: filter.range.from, to: filter.range.to, category: filter.category }),
     getServiceStatus(db, readSyncStaleSeconds()),
+    getReprocessCauses(db),
   ]);
   const { summary } = metrics;
   const originTotal = ORIGINS.reduce((sum, origin) => sum + metrics.origin[origin], 0);
@@ -124,7 +159,7 @@ export default async function SummaryPage({
       <FiltersForm filter={filter} action="/" />
 
       <div className="space-y-6">
-        <ServiceCard status={status} />
+        <ServiceCard status={status} causes={causes} />
 
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <Stat label="Correos leídos" value={formatInt(summary.read)} />

@@ -523,6 +523,48 @@ export interface ServiceStatus {
   lastDecisionAt: Date | null;
 }
 
+/** Por qué está un correo pendiente de reprocesar; decide qué se le dice a quien mira el panel. */
+export type ReprocessCause = 'llm-unavailable' | 'llm-failed' | 'extraction' | 'retries';
+export const REPROCESS_CAUSES: readonly ReprocessCause[] = [
+  'llm-unavailable',
+  'llm-failed',
+  'extraction',
+  'retries',
+];
+
+/**
+ * Causa a partir del correo y de su decisión vigente. El worker anota en el motivo «LLM no
+ * disponible» (sin clave o sin proveedor: reprocesar no sirve hasta configurarlo) o «LLM fallido»
+ * (error pasajero); una decisión degradada sin ninguno de los dos se debe a los adjuntos (docling o
+ * la descarga). Sin decisión, el trabajo agotó los reintentos.
+ */
+export function reprocessCause(latest: { reason: string | null } | null): ReprocessCause {
+  if (!latest) return 'retries';
+  if (latest.reason?.includes('LLM no disponible')) return 'llm-unavailable';
+  if (latest.reason?.includes('LLM fallido')) return 'llm-failed';
+  return 'extraction';
+}
+
+export async function getReprocessCauses(
+  db: Pick<PrismaClient, 'message'>,
+): Promise<Record<ReprocessCause, number>> {
+  const rows = await db.message.findMany({
+    where: { needsReprocess: true },
+    select: {
+      decisions: { select: { decision: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+    },
+  });
+  const counts = Object.fromEntries(REPROCESS_CAUSES.map((c) => [c, 0])) as Record<
+    ReprocessCause,
+    number
+  >;
+  for (const row of rows) {
+    const latest = row.decisions[0];
+    counts[reprocessCause(latest ? { reason: readDetails(latest.decision).reason } : null)]++;
+  }
+  return counts;
+}
+
 export function classifySync(
   lastSyncAt: Date | null,
   now: Date,
