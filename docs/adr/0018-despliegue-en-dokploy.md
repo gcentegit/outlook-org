@@ -36,9 +36,9 @@ corrigen debilidades conocidas desde el principio. El alta de servicios está en
 
 ## Advertencias de despliegue
 
-- **Actualización `stop-first` (la de por defecto), nunca `start-first`.** Con `start-first` la
-  instancia nueva esperaría el bloqueo de instancia única y nunca llegaría a estar sana; la
-  anterior no se pararía ([0005](0005-sincronizacion-delta-e-instancia-unica.md)).
+- **Actualización `stop-first` en el worker, nunca `start-first`.** Dokploy aplica `start-first` si no
+  se indica otra cosa, así que el alta lo fija. Con `start-first` la instancia nueva esperaría el
+  bloqueo de instancia única, nunca llegaría a estar sana y Swarm volvería a la anterior ([0005](0005-sincronizacion-delta-e-instancia-unica.md)).
 - **Sin credenciales de Graph el worker ya no se reinicia en bucle:** el `HEALTHCHECK` usa `/livez`,
   que no mide la sincronización. Aun así no sincroniza hasta que se configuren `GRAPH_*` y el
   certificado montado.

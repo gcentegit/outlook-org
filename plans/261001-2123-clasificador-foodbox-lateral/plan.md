@@ -96,7 +96,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 | 8 | [Repositorio, versionado y documentación](./phase-08-repositorio-versionado-y-documentacion.md) | Done | 1d | Nada |
 | 9 | [Descubrimiento y verdad de referencia](./phase-09-descubrimiento-y-verdad-de-referencia.md) | Done | 1d | 1 |
 | 10 | [Validación con datos reales](./phase-10-validacion-con-datos-reales.md) | Pending | 4d | 1, 9 |
-| 11 | [Despliegue en sombra y observación](./phase-11-despliegue-en-sombra-y-observacion.md) | Pending | 1d + 2 semanas | 10 |
+| 11 | [Despliegue en sombra y observación](./phase-11-despliegue-en-sombra-y-observacion.md) | In progress (desplegado en sombra el 2026-10-12) | 1d + 2 semanas | 10 |
 | 12 | [Activación real (1.0.0)](./phase-12-activacion-real.md) | Pending | 1d + 1 semana por categoría | 11 |
 
 Esfuerzo total estimado: 19 días de trabajo (13 ya hechos; unos 6 pendientes, más las
@@ -118,8 +118,8 @@ semanas de observación).
 - [x] La app solo puede leer el buzón de Proveedores (comprobado con `Test-ServicePrincipalAuthorization`).
 - [x] Informe de descubrimiento con la verdad de referencia (carpeta más revisión corta) y la cobertura mínima por categoría decidida.
 - [ ] Informe de evaluación contra la muestra con precisión y cobertura por categoría, con y sin LLM.
-- [ ] Servicio desplegado en Dokploy, en modo sombra, con heartbeat en Uptime Kuma.
-- [ ] Panel accesible por SSO con métricas y selector de modelo.
+- [x] Servicio desplegado en Dokploy, en modo sombra, con heartbeat en Uptime Kuma.
+- [x] Panel accesible por SSO con métricas y selector de modelo.
 - [ ] Informe de dos semanas de modo sombra aprobado antes de pasar a live.
 - [ ] Versión 1.0.0 publicada con la activación real.
 

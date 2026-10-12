@@ -1,6 +1,6 @@
 ---
 title: "Phase 11: Despliegue en sombra y observación"
-status: todo
+status: in-progress
 effort: 1d (+ 2 semanas de observación)
 ---
 
@@ -44,14 +44,14 @@ equipo. Nada se despliega sin autorización del usuario.
 
 ## Todo
 
-- [ ] Autorización del usuario para desplegar
+- [x] Autorización del usuario para desplegar
 - [x] Categoría ARCOBETA creada en el buzón
-- [ ] Alta en Dokploy, primero en simulación y después aplicando
-- [ ] Registro DNS, dominio y HTTPS del panel
+- [x] Alta en Dokploy, primero en simulación y después aplicando
+- [x] Registro DNS, dominio y HTTPS del panel
 - [ ] Métricas del servidor activadas y límites de memoria revisados tras la primera semana
-- [ ] Despliegue del worker y la web en sombra; comprobaciones de salud en verde
+- [x] Despliegue del worker y la web en sombra; comprobaciones de salud en verde
 - [x] Persona responsable de los avisos de Uptime Kuma: el administrador
-- [ ] Monitor de Uptime Kuma y heartbeat
+- [x] Monitor de Uptime Kuma y heartbeat
 - [ ] Prueba mensual de restauración programada (hoy no está en ningún cron ni workflow) y primera ejecución con datos reales
 - [ ] Procedimiento de restauración sobre producción escrito y ensayado
 - [ ] Comunicación al equipo de Proveedores: qué verán, cómo corregir una etiqueta y a quién avisar

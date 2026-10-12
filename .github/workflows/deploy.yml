@@ -135,7 +135,9 @@ jobs:
           # de reloj: el script de espera solo mira despliegues posteriores.
           SINCE="$(date -u -d '-60 seconds' +%Y-%m-%dT%H:%M:%S)"
           WORKER_ID="$(app_id clasificador-worker)"
-          WORKER_NAME="$(app_field appName clasificador-worker)"
+          # `project.all` no trae el appName en todas las versiones de Dokploy: se pide la aplicación.
+          WORKER_NAME="$(curl -fsS -G "$API/application.one" --data-urlencode "applicationId=$WORKER_ID" \
+            -H "x-api-key: $DOKPLOY_API_KEY" | jq -er .appName)"
           echo "worker_id=$WORKER_ID" >> "$GITHUB_OUTPUT"
           echo "worker_name=$WORKER_NAME" >> "$GITHUB_OUTPUT"
 

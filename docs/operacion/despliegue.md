@@ -1,7 +1,7 @@
 # Despliegue: resumen operativo
 
-Estado: **no hay nada desplegado**. Nada se sube a Dokploy sin autorización expresa del usuario
-([ADR 0018](../adr/0018-despliegue-en-dokploy.md)). Este documento es el resumen y las advertencias;
+Estado: **desplegado en modo sombra**, con un dominio temporal del usuario. Nada más se sube a Dokploy
+sin autorización expresa del usuario ([ADR 0018](../adr/0018-despliegue-en-dokploy.md)). Este documento es el resumen y las advertencias;
 el detalle del alta de servicios (tabla de servicios, variables, memoria, cómo ejecutar el script) está
 en [infra/dokploy/README.md](../../infra/dokploy/README.md) y lo aplica
 [`provision.ts`](../../infra/dokploy/provision.ts).
@@ -31,7 +31,8 @@ primera semana.
 ## Advertencias
 
 - **Actualización `stop-first`, nunca `start-first`:** el worker es de instancia única por bloqueo;
-  con `start-first` la nueva no llegaría a estar sana y la anterior no se pararía.
+  con `start-first` la nueva no llegaría a estar sana y Swarm volvería a la anterior. Dokploy usa
+  `start-first` si no se indica otra cosa: `provision.ts` fija `stop-first` en el worker.
 - **`/health` del worker en 503 no siempre es un fallo:** sin credenciales de Graph responde 503
   `disabled` por diseño, y `/livez` responde 200. El `HEALTHCHECK` usa `/livez`.
 - **Antes de cualquier migración, copia de seguridad reciente.** Las migraciones solo avanzan: una
