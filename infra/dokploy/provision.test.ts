@@ -359,6 +359,15 @@ describe('variables de entorno', () => {
     expect(() => configFromEnv({ CLASIFICADOR_DB_PASSWORD: 'abcdefghijklmnop1234@#' })).toThrow(/solo letras y números/);
     expect(configFromEnv({ CLASIFICADOR_DB_PASSWORD: PASSWORD }).dbPassword).toBe(PASSWORD);
   });
+
+  it('PANEL_DOMAIN cambia el dominio del panel y su BETTER_AUTH_URL; sin él se usa el de siempre', () => {
+    const config = configFromEnv({ PANEL_DOMAIN: ' Panel.Ejemplo.com ' });
+    expect(config.domainHost).toBe('panel.ejemplo.com');
+    const authUrl = (c: typeof config) => buildEnv('web', hosts, c).find((e) => e.key === 'BETTER_AUTH_URL')?.value;
+    expect(authUrl(config)).toBe('https://panel.ejemplo.com');
+    expect(authUrl(configFromEnv({}))).toBe(`https://${DOMAIN_HOST}`);
+    expect(() => configFromEnv({ PANEL_DOMAIN: 'https://panel.ejemplo.com/' })).toThrow(/PANEL_DOMAIN/);
+  });
 });
 
 describe('reconcile', () => {
