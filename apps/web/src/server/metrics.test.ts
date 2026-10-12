@@ -10,6 +10,7 @@ import {
   listMessages,
   loadLatencyByModel,
   paginate,
+  reprocessCause,
   type LoadedDecision,
   type LoadedMessage,
 } from './metrics';
@@ -421,5 +422,19 @@ describe('listMessages', () => {
     expect(listMessages(messages, { category: null, state: 'queued' }).map((m) => m.id)).toEqual([
       'cola',
     ]);
+  });
+});
+
+describe('reprocessCause', () => {
+  it('distingue LLM sin configurar, LLM fallido, adjuntos y reintentos agotados', () => {
+    expect(
+      reprocessCause({ reason: 'LLM no disponible (Falta ANTHROPIC_API_KEY); categorías en duda' }),
+    ).toBe('llm-unavailable');
+    expect(reprocessCause({ reason: 'LLM fallido (timeout); categorías en duda' })).toBe(
+      'llm-failed',
+    );
+    expect(reprocessCause({ reason: 'FOOD BOX sí por regla fuerte' })).toBe('extraction');
+    expect(reprocessCause({ reason: null })).toBe('extraction');
+    expect(reprocessCause(null)).toBe('retries');
   });
 });
