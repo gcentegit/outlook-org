@@ -9,7 +9,11 @@ export interface SaveDecisionOptions {
 }
 
 export interface DecisionStore {
-  /** ¿Ya hay una decisión válida (no degradada) de este modo para el correo? Hace idempotente el trabajo. */
+  /**
+   * ¿Ya hay una decisión válida (no degradada) de este modo para el correo? Hace idempotente el
+   * trabajo. Un correo marcado para reprocesar cuenta como no decidido aunque tenga una válida: así
+   * se puede volver a decidir tras corregir una regla.
+   */
   hasDecision(messageId: string, mode: DecisionMode): Promise<boolean>;
   /**
    * Guarda la decisión y deja el correo como procesado, de forma atómica. Una decisión degradada

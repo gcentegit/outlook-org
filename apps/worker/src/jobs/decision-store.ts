@@ -7,6 +7,8 @@ type Db = Pick<PrismaClient, 'decision' | 'message' | '$transaction'>;
 export function createPrismaDecisionStore(db: Db): DecisionStore {
   return {
     async hasDecision(messageId, mode) {
+      const flagged = await db.message.count({ where: { id: messageId, needsReprocess: true } });
+      if (flagged > 0) return false;
       return (await db.decision.count({ where: { messageId, mode, degraded: false } })) > 0;
     },
 
