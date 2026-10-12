@@ -7,6 +7,7 @@ import {
   forwardedBlock,
   isInternalSender,
   razonSocialPattern,
+  withoutAddresses,
   type RuleRecord,
 } from './rules';
 import { makeAttachment, makeEmail, sociedadRules } from './test-fixtures';
@@ -86,8 +87,37 @@ describe('razonSocialPattern', () => {
   });
 });
 
+describe('withoutAddresses', () => {
+  it.each([
+    'ana@foodbox.es',
+    'Ana <ana.perez+facturas@foodbox.es>',
+    'www.foodbox.es',
+    'https://foodbox.es/facturas?id=1',
+    'WWW.ARCOFOOD.COM',
+  ])('quita %s', (text) => {
+    expect(withoutAddresses(text)).not.toMatch(/foodbox|arcofood/i);
+  });
+
+  it.each(['FOODBOX, S.A.', 'ARCOBETA S.L.U.', 'Total 1.234,56 EUR'])('deja %s', (text) => {
+    expect(withoutAddresses(text)).toBe(text);
+  });
+});
+
 describe('evaluateRules', () => {
   const rules = sociedadRules();
+
+  it('la razón social no cuenta dentro de una dirección de correo o una web', () => {
+    const email = makeEmail({
+      attachments: [
+        makeAttachment(
+          'Bill to\nARCOBETA SLU Madrid ana@foodbox.es ES NIF B87694121\nwww.foodbox.es',
+        ),
+      ],
+    });
+    const ev = evaluateRules(email, rules);
+    expect(ev.ARCOBETA.strong.length).toBeGreaterThan(0);
+    expect(ev['FOOD BOX'].strong).toEqual([]);
+  });
 
   it('detecta el CIF de una sociedad en el Markdown de un adjunto', () => {
     const email = makeEmail({

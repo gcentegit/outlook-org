@@ -53,6 +53,19 @@ const CIF_SEPARATOR = '[\\s.\\-]{0,3}';
 /** Forma societaria: "S.L.", "SL", "S.A.", "SA" (y su variante unipersonal) una vez normalizada. */
 const LEGAL_FORM_AT_END = /\s+S\s?[AL]U?$/;
 
+/**
+ * Direcciones de correo y webs ("ana@foodbox.es", "www.foodbox.es", "https://foodbox.es/x"). Una vez
+ * normalizado el texto se pierden la arroba y los puntos y "foodbox.es" quedaría como la palabra
+ * FOODBOX: por eso se quitan antes de buscar la razón social.
+ */
+const ADDRESS_OR_WEB =
+  /[\w.+-]+@[\w-]+(?:\.[\w-]+)+|(?:https?:\/\/)?(?:[\w-]+\.)+[a-z]{2,24}(?![\w-])(?:\/\S*)?/gi;
+
+/** Texto sin direcciones de correo ni webs, donde una razón social sí cuenta. */
+export function withoutAddresses(text: string): string {
+  return text.replace(ADDRESS_OR_WEB, ' ');
+}
+
 /** Expresión que reconoce un CIF con o sin prefijo "ES" y con separadores opcionales. */
 export function cifPattern(rawCif: string): RegExp | null {
   let cif = normalizeCif(rawCif);
@@ -65,7 +78,8 @@ export function cifPattern(rawCif: string): RegExp | null {
 /**
  * Expresión para una razón social. La forma societaria del valor (S.L., SL, S.A., SA...) no se exige
  * en el texto (regla del negocio, 2026-10-12): basta el nombre como palabra completa, así que
- * "foodboxes" no cuenta pero "Equipo Foodbox" sí. La firma de un remitente del grupo no cuenta
+ * "foodboxes" no cuenta pero "Equipo Foodbox" sí. Dentro de una dirección de correo o una web no
+ * cuenta: `evaluateRules` las quita antes (`withoutAddresses`). La firma de un remitente del grupo no cuenta
  * porque en ese caso solo se mira en adjuntos y reenvíos (`evaluateRules`).
  */
 export function razonSocialPattern(rawName: string): RegExp | null {
@@ -153,7 +167,7 @@ export function evaluateRules(
       : [subjectAndBody, ...attachmentsText]
   ).join('\n');
   const foldedSubjectAndBody = foldText(subjectAndBody);
-  const foldedFull = foldText(fullText);
+  const foldedNames = foldText(withoutAddresses(fullText));
   const from = email.fromAddress?.trim().toLowerCase() ?? null;
   const fromDomain = from ? senderDomain(from) : null;
 
@@ -170,7 +184,7 @@ export function evaluateRules(
         break;
       }
       case 'razon_social': {
-        if (razonSocialPattern(rule.value)?.test(foldedFull)) {
+        if (razonSocialPattern(rule.value)?.test(foldedNames)) {
           description = `razón social «${rule.value}»`;
         }
         break;
