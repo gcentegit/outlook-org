@@ -357,11 +357,15 @@ describe.skipIf(!withDocling)('servicio en modo sombra con docling (integración
         status: 'error',
       });
 
-      // Reproceso: it-3 sigue marcado (no hay LLM) y vuelve a procesarse, con una nueva decisión.
-      expect(await run(REPROCESS_FLAGGED_QUEUE)).toEqual({ enqueued: 1 });
-      await waitFor('la segunda decisión de it-3', async () =>
-        (await db.decision.count({ where: { messageId: 'it-3' } })) === 2 ? true : null,
-      );
+      // Reproceso: it-3 sigue marcado (no hay LLM) y it-2, ya decidido, se marca a mano (como tras
+      // corregir una regla). Los dos vuelven a procesarse, con una nueva decisión cada uno.
+      await db.message.update({ where: { id: 'it-2' }, data: { needsReprocess: true } });
+      expect(await run(REPROCESS_FLAGGED_QUEUE)).toEqual({ enqueued: 2 });
+      for (const id of ['it-2', 'it-3']) {
+        await waitFor(`la segunda decisión de ${id}`, async () =>
+          (await db.decision.count({ where: { messageId: id } })) === 2 ? true : null,
+        );
+      }
       const flagged = await db.message.findMany({
         where: { needsReprocess: true, id: { startsWith: 'it-' } },
       });
