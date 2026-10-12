@@ -60,6 +60,7 @@ Riesgos de operación que tocan código:
 - [ ] Adjuntos `.eml` y `.msg`: soportarlos o descartarlos de forma informada, según lo medido en la fase 9
 - [ ] Pruebas de navegador del panel en el repositorio, y pruebas de integración (PostgreSQL y docling) en CI
 - [ ] Reducir la imagen del worker (hoy unos 2 GB): compilar el worker y separar las migraciones
+- [x] Páginas «Correos» (cada correo con su decisión, estado y motivo) y «Reglas» (solo lectura, con los correos que decidió cada una) en el panel (decisión del 2026-10-12)
 - [ ] Registro de caídas en el panel (decisión del 2026-10-12): guardar cuándo empieza y termina cada parada de la sincronización y mostrar el historial junto al estado del servicio; los avisos siguen en Uptime Kuma
 
 Velocidad de la extracción (decisión del 2026-10-09). En la fase 9, docling en CPU tardó unos 20 s

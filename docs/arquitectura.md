@@ -12,7 +12,7 @@ real ni está desplegado**. Solo funciona en modo sombra.
 | Pieza | Qué hace | Dónde |
 | --- | --- | --- |
 | Worker | Sincroniza la Bandeja de entrada, extrae adjuntos, clasifica, guarda decisiones y atiende las peticiones del panel. Es el único que tiene el certificado de Graph y las claves de LLM. | `apps/worker/src/` |
-| Web (panel) | Métricas, discrepancias, modelo de LLM, categorías del buzón y configuración. Sin credenciales del buzón: pide al worker por la cola. | `apps/web/src/` |
+| Web (panel) | Métricas, correos con su decisión, discrepancias, reglas (solo lectura), modelo de LLM, categorías del buzón y configuración. Sin credenciales del buzón: pide al worker por la cola. | `apps/web/src/` |
 | PostgreSQL | Datos de la aplicación y la cola de trabajos (pg-boss). | `packages/db/prisma/schema.prisma` |
 | docling-serve | Convierte PDF, imágenes, DOCX y XLSX a texto (con OCR si hace falta). Servicio aparte, solo CPU. | imagen de terceros |
 | Microsoft Graph | Buzón de Proveedores (lectura) y categorías maestras. | `apps/worker/src/graph/` |
