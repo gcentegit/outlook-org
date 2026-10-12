@@ -1,0 +1,14 @@
+{
+  "name": "@clasificador/release-notes",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Notas de las Releases: detalle desde la descripción de cada PR y comprobación del título y la sección en CI.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

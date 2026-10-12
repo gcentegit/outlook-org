@@ -5,7 +5,8 @@ name: Título del PR
 # commits de la rama, que se aplastan). Formato: `tipo(ámbito opcional): descripción`; un cambio
 # incompatible lleva `!` tras el tipo (`feat!: ...`). Los tipos que salen en las notas de la release
 # (feat, fix, perf, revert) llevan además un icono al principio de la descripción
-# (`fix(web): 🔐 ...`). Reglas: docs/operacion/versiones-y-releases.md.
+# (`fix(web): 🔐 ...`) y la sección «Para las notas de la release» en la descripción del PR.
+# Reglas: docs/operacion/versiones-y-releases.md.
 #
 # El PR de versión lo crea release-please con GITHUB_TOKEN y este workflow no se lanza en él (su título,
 # `chore: release X.Y.Z`, ya es válido). Por eso este check no debe marcarse como obligatorio.
@@ -16,6 +17,7 @@ on:
     branches: [main]
 
 permissions:
+  contents: read
   pull-requests: read
 
 jobs:
@@ -40,19 +42,19 @@ jobs:
             chore
             revert
 
-      # La descripción es cada punto de las notas de la release: el icono permite recorrerlas con la
-      # vista. Solo se exige en los tipos visibles en el CHANGELOG; el resto no llega a las notas.
-      - name: Icono al principio de la descripción
+      # Cada título es un punto de las notas de la Release y la sección «Para las notas de la release»
+      # de la descripción es su detalle. Solo se exigen en los tipos que salen en el CHANGELOG.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: infra/release-notes
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Icono en el título y notas de la release en la descripción
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          node -e '
-            const title = process.env.PR_TITLE;
-            const match = /^(\w+)(\([^)]*\))?!?: (.*)$/u.exec(title);
-            if (!match) process.exit(0); // el formato ya lo valida el paso anterior
-            const [, type, , subject] = match;
-            if (!["feat", "fix", "perf", "revert"].includes(type)) process.exit(0);
-            if (/^\p{Extended_Pictographic}/u.test(subject)) process.exit(0);
-            console.log(`::error::El título debe empezar la descripción por un icono: "${type}(ámbito): 🐛 descripción". Guía: docs/operacion/versiones-y-releases.md`);
-            process.exit(1);
-          '
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node infra/release-notes/release-notes.ts check

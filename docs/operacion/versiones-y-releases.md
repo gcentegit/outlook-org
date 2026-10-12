@@ -64,19 +64,41 @@ escribe release-please y sale en inglés (`BREAKING CHANGES`); no es configurabl
 
 ### Notas de la release legibles
 
-Cada título de PR acaba siendo un punto de las notas de la Release (`* **web:** 🔐 llevar el oid...`),
-así que se escribe pensando en quien las lee:
+Cada Release lleva, por cada PR que entra, **su título** (la línea que escribe release-please, también
+en el `CHANGELOG.md`) y **su detalle**, debajo, copiado de la sección **«Para las notas de la release»**
+de la descripción del PR. Las dos partes se escriben en origen, pensando en quien las lee:
 
-- **Un icono al principio de la descripción** que diga algo de ese punto, para recorrer la lista con
-  la vista. Guía: 🏷️ categorías · 📮 correos · 📎 adjuntos · 📄 PDF y OCR · 🤖 LLM · 🔐 acceso y
-  sesión · 🗂️ páginas del panel · 🎨 aspecto · 🛡️ guardas · 📥 sincronización · ⚡ rendimiento ·
-  🐛 fallo corregido · ⚠️ aviso importante.
+- **Un icono al principio** de la descripción del título y de cada punto del detalle, que diga algo de
+  ese punto, para recorrer la lista con la vista. Guía: 🏷️ categorías · 📮 correos · 📎 adjuntos ·
+  📄 PDF y OCR · 🤖 LLM · 🔐 acceso y sesión · 🗂️ páginas del panel · 🎨 aspecto · 🛡️ guardas ·
+  📥 sincronización · ⚡ rendimiento · 🐛 fallo corregido · ⚠️ aviso importante.
 - **Lenguaje de producto**: qué cambia para quien usa el panel o el buzón, sin nombres de ficheros ni
-  funciones. El detalle técnico y qué pasaba antes van en la descripción del PR.
+  funciones. El detalle técnico va en el resto de la descripción del PR.
+- **Qué pasaba antes**: una nota que solo dice qué hace ahora no deja entender por qué era un problema.
+- **Negrita para lo importante** de cada punto, no para frases enteras.
 
-Las notas se generan del changelog y no se redactan aparte. Retocar el formato de una Release ya
-publicada (por ejemplo, con `gh release edit`) está bien si a la vez se cambia igual su sección del
-`CHANGELOG.md`; añadir hechos que no estén en el changelog, no.
+En `feat`, `fix`, `perf` y `revert`, el check «Título del PR» exige el icono del título y la sección
+con al menos un punto, cada uno con icono. Los demás tipos no salen en las notas y no la necesitan.
+
+Al crearse la Release, el job «Notas de la Release» de [`release.yml`](../../.github/workflows/release.yml)
+copia esos puntos **tal cual** debajo de su línea y añade un pie con la comparación entre versiones y
+el `CHANGELOG.md`. No reescribe, no resume ni reordena. El `CHANGELOG.md` se queda con una línea por
+cambio: es el índice, y el detalle vive en la Release y en el PR. El código está en
+[`infra/release-notes`](../../infra/release-notes/release-notes.ts).
+
+Si hay que corregir algo después de publicar:
+
+- **El detalle**: se edita la sección del PR y se vuelve a lanzar
+  `node infra/release-notes/release-notes.ts publish vX.Y.Z` (con `GITHUB_TOKEN` y
+  `GITHUB_REPOSITORY`; `--dry-run` enseña el resultado sin tocar nada). Solo completa las líneas que
+  aún no tienen detalle; para rehacer una, borra antes su detalle de la Release.
+- **El título de un PR ya fusionado**: se añade al final de su descripción un bloque
+  `BEGIN_COMMIT_OVERRIDE` / `END_COMMIT_OVERRIDE` con el título corregido, antes de publicar la versión;
+  release-please lo usa en lugar del commit. Si la versión ya está publicada, se cambia igual en la
+  Release y en su sección del `CHANGELOG.md`.
+
+Nunca se añade a una Release algo que no esté en su PR ni en el changelog: lo descubierto después va
+en la versión en que se descubre.
 
 Dependabot abre sus PR como `build(deps): ...` y `ci(deps): ...`, así que no provocan versión. Si una
 actualización es urgente (seguridad), cambia el título a `fix(deps): ...` antes de fusionar.
@@ -95,7 +117,7 @@ actualización es urgente (seguridad), cambia el título a `fix(deps): ...` ante
 4. Cuando decides publicar, revisas el changelog del PR de versión y lo fusionas con «squash». Ese push
    construye de nuevo las imágenes, ya con la versión nueva en `package.json`.
 5. En esa ejecución release-please crea la etiqueta `vX.Y.Z` y la Release de GitHub con las notas del
-   changelog (el título es `vX.Y.Z`).
+   changelog (el título es `vX.Y.Z`), y el job de notas añade debajo de cada línea el detalle de su PR.
 6. El job de promoción comprueba que la imagen del commit lleva la versión de la Release y le añade la
    etiqueta `X.Y.Z` con `docker buildx imagetools create`: mismo digest, **sin reconstruir**.
 7. Se llama a [`deploy.yml`](../../.github/workflows/deploy.yml), que despliega esa versión en Dokploy

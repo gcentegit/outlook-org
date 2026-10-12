@@ -2,6 +2,7 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'infra/dokploy'
+  - 'infra/release-notes'
 
 # pnpm 10+ no ejecuta scripts de instalación salvo los aprobados aquí.
 # Prisma descarga su motor de migraciones (binario) en el postinstall.
