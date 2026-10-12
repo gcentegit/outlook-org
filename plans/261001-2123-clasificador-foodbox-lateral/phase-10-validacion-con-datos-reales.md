@@ -66,11 +66,11 @@ Velocidad de la extracción (decisión del 2026-10-09). En la fase 9, docling en
 por correo y pasó por OCR 62 de 68 adjuntos, casi siempre por logos y sellos. Cada cambio se mide
 contra la muestra: tiempo por correo y que no se pierda ningún CIF ni razón social.
 
-- [ ] Leer primero la capa de texto del PDF con un lector ligero y enviar a docling solo los PDF sin texto (escaneados o fotos)
-- [ ] Desactivar la estructura de tablas (`do_table_structure=false`; o, si hiciera falta, `table_mode=fast`): para el CIF y la razón social basta el texto
-- [ ] Medir las opciones de docling que reducen trabajo: `images_scale` menor (hoy 2,0), `ocr_lang=es` y el backend `pypdfium2`
-- [ ] Medir si basta la primera página (`page_range` 1-1) sin perder la sociedad facturada
-- [ ] No convertir las imágenes pequeñas que llegan como adjunto normal (logos de firma tipo `image001.png`); las incrustadas ya se saltan
+- [x] Leer primero la capa de texto del PDF y usar OCR solo en los PDF sin texto (escaneados o fotos): hecho con docling sin OCR, sin dependencia nueva; de unos 20 s a 4,5 s por correo sin perder ninguna categoría ([informe](../reports/validacion-261012-1530-velocidad-extraccion.md))
+- [x] Desactivar la estructura de tablas (`do_table_structure=false`): para el CIF y la razón social basta el texto
+- [x] Medir las opciones de docling que reducen trabajo: `pypdfium2` no gana tiempo y pierde un CIF; `images_scale` y `ocr_lang` solo afectan al OCR, que ya casi no se usa
+- [x] Medir si basta la primera página: gana 0,3 s por adjunto y pierde un CIF, así que se mantienen 2 páginas
+- [x] Imágenes pequeñas como adjunto normal (logos de firma): descartado por ahora, solo 1 de 185 adjuntos en la muestra
 - [ ] Decidir con el usuario cómo sabe el equipo que un correo se leyó y quedó sin clasificar, con el volumen de dudosos medido aquí
 
 ## Success Criteria

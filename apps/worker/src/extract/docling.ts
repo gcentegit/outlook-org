@@ -75,13 +75,26 @@ interface DoclingResponse {
   confidence?: { ocr_score?: number | null } | null;
 }
 
+/** Caracteres alfanuméricos mínimos para dar por buena la capa de texto de un PDF sin OCR. */
+export const MIN_TEXT_LAYER_CHARS = 50;
+
+/** El PDF trae texto propio: lo que queda al quitar las marcas de imagen tiene suficiente contenido. */
+export function hasTextLayer(markdown: string): boolean {
+  const alnum = markdown.replace(/<!--\s*image\s*-->/g, '').match(/[\p{L}\p{N}]/gu);
+  return (alnum?.length ?? 0) >= MIN_TEXT_LAYER_CHARS;
+}
+
 /**
- * Convierte un fichero a Markdown con docling-serve (`/v1/convert/file`, OCR RapidOCR).
+ * Convierte un fichero a Markdown con docling-serve (`/v1/convert/file`).
  *
- * Criterio de `method`: docling no indica explícitamente si hubo OCR. Se usa su puntuación de
- * confianza: `confidence.ocr_score` solo viene informada si el motor de OCR llegó a leer algo
- * (escaneos, imágenes o PDF con bitmaps con texto); en un PDF con capa de texto es null y
- * solo se informa `parse_score`. Si `ocr_score` existe, el método es 'ocr'; si no, 'text'.
+ * El OCR (RapidOCR) es lo caro: en CPU multiplica por diez el tiempo de un PDF, y en los PDF con
+ * capa de texto solo lee logos y sellos, sin aportar el CIF ni la razón social. Por eso un PDF se
+ * convierte primero sin OCR y solo se repite con OCR si no trae texto propio (escaneos y fotos).
+ * Las imágenes van siempre con OCR; DOCX y XLSX, nunca. La estructura de tablas no se calcula:
+ * para el CIF y la razón social basta el texto.
+ *
+ * `method` es 'ocr' cuando el texto sale de la pasada con OCR y docling informa `ocr_score` (el
+ * motor llegó a leer algo); si no, 'text'.
  *
  * Lanza un error si docling falla; quien llama decide cómo degradar. Si docling no responde
  * (red, tiempo agotado, 502/503/504) lanza `DoclingUnavailableError`.
@@ -90,11 +103,27 @@ export async function convertWithDocling(
   file: { bytes: Buffer; filename: string; mime: string; kind: AttachmentKind },
   options: DoclingOptions,
 ): Promise<DoclingResult> {
+  if (file.kind !== 'image') {
+    const plain = await requestConversion(file, options, false);
+    if (file.kind !== 'pdf' || hasTextLayer(plain.markdown)) {
+      return { markdown: plain.markdown, method: 'text' };
+    }
+  }
+  const scanned = await requestConversion(file, options, true);
+  return { markdown: scanned.markdown, method: scanned.ocrScore != null ? 'ocr' : 'text' };
+}
+
+async function requestConversion(
+  file: { bytes: Buffer; filename: string; mime: string; kind: AttachmentKind },
+  options: DoclingOptions,
+  ocr: boolean,
+): Promise<{ markdown: string; ocrScore: number | null | undefined }> {
   const form = new FormData();
   form.append('files', new Blob([new Uint8Array(file.bytes)], { type: file.mime }), file.filename);
   form.append('to_formats', 'md');
-  form.append('do_ocr', 'true');
-  form.append('ocr_preset', 'rapidocr');
+  form.append('do_ocr', String(ocr));
+  if (ocr) form.append('ocr_preset', 'rapidocr');
+  form.append('do_table_structure', 'false');
   form.append('include_images', 'false');
   form.append('image_export_mode', 'placeholder');
   form.append('document_timeout', String(options.timeoutSeconds));
@@ -132,6 +161,6 @@ export async function convertWithDocling(
   }
   return {
     markdown: (body.document?.md_content ?? '').trim(),
-    method: body.confidence?.ocr_score != null ? 'ocr' : 'text',
+    ocrScore: body.confidence?.ocr_score,
   };
 }
