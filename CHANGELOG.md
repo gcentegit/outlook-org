@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/gcentegit/outlook-org/compare/v0.5.0...v0.6.0) (2026-10-12)
+
+
+### 🚀 Novedades
+
+* **web:** anchos fijos en la tabla de correos ([#40](https://github.com/gcentegit/outlook-org/issues/40)) ([b7fc164](https://github.com/gcentegit/outlook-org/commit/b7fc1644b2dfb02ba24f51703d9d10dfaa59419f))
+
 ## [0.5.0](https://github.com/gcentegit/outlook-org/compare/v0.4.0...v0.5.0) (2026-10-12)
 
 
