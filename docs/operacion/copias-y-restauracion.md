@@ -1,7 +1,6 @@
 # Copias de seguridad y restauración
 
-Estado: configuradas en el script de alta pero **todavía sin servicio desplegado**, así que no existe
-ninguna copia real. Motivos y decisiones: [ADR 0020](../adr/0020-copias-de-seguridad-y-restauracion.md).
+Estado: **activas**. Dokploy hace la copia diaria y la prueba de restauración se ejecuta cada mes. Motivos y decisiones: [ADR 0020](../adr/0020-copias-de-seguridad-y-restauracion.md).
 
 ## Qué se copia
 
@@ -19,8 +18,19 @@ borra el contenedor. Las variables que necesita y el ejemplo de uso están en la
 seguridad» de [infra/dokploy/README.md](../../infra/dokploy/README.md#copias-de-seguridad). Con
 `--from-file <volcado>` prueba un volcado local, útil tras tomar una copia manual.
 
-Hoy la prueba **no está programada** en ningún cron ni workflow: hay que decidir dónde se ejecuta
-cada mes (necesita Docker y las credenciales del almacenamiento). Está en el plan.
+La prueba se ejecuta **el día 1 de cada mes a las 5:00** en la máquina de desarrollo, que tiene Docker
+y el repositorio. Es un temporizador de systemd del usuario (`clasificador-restore-check.timer`,
+fuera del repositorio) que lanza el script con las variables de `secrets/restore-check.env`. Para
+verlo y ejecutarlo a mano:
+
+```bash
+systemctl --user list-timers clasificador-restore-check.timer
+systemctl --user start clasificador-restore-check.service
+journalctl --user -u clasificador-restore-check.service -n 30
+```
+
+Si esa máquina está apagada el día 1, la prueba se hace al encenderla (`Persistent=true`). Con
+`KUMA_PUSH_URL` en el fichero de variables, el resultado llega también a Uptime Kuma.
 
 ## Antes de una migración
 
@@ -29,6 +39,26 @@ Toma una copia manual (desde Dokploy o con `pg_dump`) y compruébala con
 
 ## Restaurar sobre producción
 
-No hay un procedimiento escrito ni ensayado para restaurar sobre el servicio real (el script solo
-restaura en un contenedor temporal). Escribirlo y ensayarlo es una tarea del plan antes de
-considerar el despliegue como operativo.
+La API de Dokploy no permite restaurar: se hace desde su interfaz.
+
+1. **Copia del estado actual:** en `clasificador-db`, pestaña **Backups**, ejecuta la copia a mano.
+   Si la restauración sale mal, se vuelve a este punto.
+2. **Para el worker y el panel** (botón **Stop** en `clasificador-worker` y `clasificador-web`), para
+   que nada escriba durante la restauración.
+3. En `clasificador-db`, pestaña **Backups**, pulsa **Restore Backup**. Elige el destino de copias,
+   busca el fichero dentro de `<appName de clasificador-db>/clasificador/` y pon `clasificador`
+   como base de datos. Espera a que el registro diga «Restore completed successfully!».
+4. **Arranca primero el worker.** Si la copia es anterior al código, aplica las migraciones que
+   falten al arrancar. Comprueba en sus registros que migra y sincroniza.
+5. **Arranca el panel** y comprueba que `/api/health` responde y que el estado del servicio está
+   «Al día».
+
+Los correos que llegaron entre la copia y la restauración no se pierden. La base restaurada guarda el
+punto de sincronización de la copia, así que el worker vuelve a pedir a Graph los cambios desde ahí.
+Si ese punto ha caducado, empieza de nuevo desde el correo registrado más antiguo, y vuelve a
+procesar los que no conozca.
+
+**Ensayo:** se hizo sobre una base temporal vacía, nunca sobre la real. Allí la copia se restauró
+completa y pasó `restore-check.sh`. Queda sin comprobar cómo trata Dokploy una base que ya tiene
+tablas. Si el registro muestra errores de objetos que ya existen, no arranques el worker: vuelve a
+la copia del paso 1 y revisa el caso antes de seguir.

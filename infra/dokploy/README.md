@@ -146,7 +146,7 @@ Las migraciones de Prisma solo avanzan: una versión anterior de la imagen con u
 
 ## Copias de seguridad
 
-Dokploy hace la copia diaria; [`infra/scripts/restore-check.sh`](../scripts/restore-check.sh) comprueba que se puede restaurar. Está pendiente de programar en el servidor (cron mensual); hasta entonces se ejecuta a mano:
+Dokploy hace la copia diaria; [`infra/scripts/restore-check.sh`](../scripts/restore-check.sh) comprueba que se puede restaurar. Se ejecuta cada mes con un temporizador ([copias y restauración](../../docs/operacion/copias-y-restauracion.md)), y también a mano:
 
 ```bash
 MINIO_ENDPOINT=https://<minio> MINIO_ACCESS_KEY=... MINIO_SECRET_KEY=... \
