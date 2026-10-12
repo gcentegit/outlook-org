@@ -48,12 +48,13 @@ equipo. Nada se despliega sin autorización del usuario.
 - [x] Categoría ARCOBETA creada en el buzón
 - [x] Alta en Dokploy, primero en simulación y después aplicando
 - [x] Registro DNS, dominio y HTTPS del panel
-- [ ] Métricas del servidor activadas y límites de memoria revisados tras la primera semana
+- [x] Métricas del servidor activadas (Beszel, por contenedor)
+- [ ] Límites de memoria revisados tras la primera semana
 - [x] Despliegue del worker y la web en sombra; comprobaciones de salud en verde
 - [x] Persona responsable de los avisos de Uptime Kuma: el administrador
 - [x] Monitor de Uptime Kuma y heartbeat
-- [ ] Prueba mensual de restauración programada (hoy no está en ningún cron ni workflow) y primera ejecución con datos reales
-- [ ] Procedimiento de restauración sobre producción escrito y ensayado
+- [x] Prueba mensual de restauración programada y primera ejecución con la copia real
+- [x] Procedimiento de restauración sobre producción escrito y ensayado (en una base temporal)
 - [ ] Comunicación al equipo de Proveedores: qué verán, cómo corregir una etiqueta y a quién avisar
 - [ ] Dos semanas en sombra con revisión semanal de una muestra en el panel
 - [ ] Informe de modo sombra aprobado por el usuario
