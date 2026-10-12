@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/gcentegit/outlook-org/compare/v0.1.3...v0.2.0) (2026-10-12)
+
+
+### Funcionalidades
+
+* **web:** páginas de correos y reglas en el panel ([#27](https://github.com/gcentegit/outlook-org/issues/27)) ([4c40dfe](https://github.com/gcentegit/outlook-org/commit/4c40dfedb79093bb7bc4ee3eb1909d8c4c4ec537))
+
 ## [0.1.3](https://github.com/gcentegit/outlook-org/compare/v0.1.2...v0.1.3) (2026-10-12)
 
 
