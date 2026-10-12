@@ -1,6 +1,6 @@
 {
   "name": "clasificador-proveedores",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Clasificador del buzón de Proveedores: FOOD BOX, LATERAL y ARCOBETA.",
   "license": "UNLICENSED",

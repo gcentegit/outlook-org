@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/gcentegit/outlook-org/compare/v0.1.2...v0.1.3) (2026-10-12)
+
+
+### Correcciones
+
+* **web:** llevar el oid de Microsoft en la sesión para que las acciones del panel funcionen ([#25](https://github.com/gcentegit/outlook-org/issues/25)) ([27fed17](https://github.com/gcentegit/outlook-org/commit/27fed17a9b5a6060731b4bb88c01cf029246a6d1))
+
 ## [0.1.2](https://github.com/gcentegit/outlook-org/compare/v0.1.1...v0.1.2) (2026-10-12)
 
 
