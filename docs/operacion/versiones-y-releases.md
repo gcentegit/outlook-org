@@ -123,7 +123,9 @@ actualización es urgente (seguridad), cambia el título a `fix(deps): ...` ante
 7. Se llama a [`deploy.yml`](../../.github/workflows/deploy.yml), que despliega esa versión en Dokploy
    (worker primero, esperar a que esté sano, después la web) si existen los secretos `DOKPLOY_API_URL` y
    `DOKPLOY_API_KEY`; si no, avisa y termina sin error. Detalle:
-   [infra/dokploy/README.md](../../infra/dokploy/README.md).
+   [infra/dokploy/README.md](../../infra/dokploy/README.md). **Hoy esos secretos no están
+   configurados y se despliega a mano**: en Dokploy, fijar la imagen `X.Y.Z` en `clasificador-worker`,
+   desplegarlo y esperar a que esté sano; después, lo mismo en `clasificador-web`.
 8. Compruebas `GET /api/health`: debe devolver la versión y el commit nuevos.
 
 Todo esto ocurre en una misma ejecución porque GitHub no lanza otros workflows por lo que hace

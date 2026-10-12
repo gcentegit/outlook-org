@@ -13,7 +13,9 @@ Todo lo que se describe aquí lo crea y comprueba [`provision.ts`](provision.ts)
 | `clasificador-docling` | Application | `ghcr.io/docling-project/docling-serve-cpu:v1.36.0` | 5001 (solo interno) | ninguno | 1,5 GiB / 4 GiB | `GET /health` (curl) |
 | `clasificador-db` | PostgreSQL nativo | `postgres:16-alpine` | 5432 (sin puerto publicado) | ninguno | 256 MiB / 1 GiB | `pg_isready -U clasificador -d clasificador` |
 
-- Todas: 1 réplica, `autoDeploy` apagado (la única vía de despliegue es el workflow de publicación) y `TZ=Europe/Madrid`.
+**Dominio temporal.** Mientras `clasificador.arcofood.com` no esté listo, el panel se publica en un dominio provisional: se fija con `PANEL_DOMAIN` al ejecutar el alta (que cambia también `BETTER_AUTH_URL`) y con la variable `WEB_URL` del repositorio en GitHub, que usa el despliegue para comprobar `/api/health`. La URI de retorno de la app de login en Entra ID debe ser la del dominio provisional. Cuando el definitivo esté listo, se vuelve a ejecutar el alta sin `PANEL_DOMAIN`, se cambia la URI en Entra ID y se borra `WEB_URL`.
+
+- Todas: 1 réplica, `autoDeploy` apagado (se despliega con el workflow de publicación o, mientras no tenga los secretos de Dokploy, a mano) y `TZ=Europe/Madrid`.
 - No hay Redis: la cola (pg-boss) usa el mismo PostgreSQL.
 - Los servicios se hablan por `dokploy-network` con el `appName` que Dokploy asigna (puede llevar un sufijo aleatorio). `provision.ts` lo lee y lo escribe en `DATABASE_URL` y `DOCLING_URL`.
 - Los límites de memoria son un punto de partida: se ajustan con las métricas reales tras la primera semana.
