@@ -179,9 +179,9 @@ export default async function SummaryPage({
             hint="en cola, fallidos o por detectar"
           />
           <Stat
-            label="Pendientes de revisar"
+            label="Sin contrastar con el equipo"
             value={formatInt(summary.awaitingReview)}
-            hint="con decisión, aún sin revisar por el equipo: no cuentan en el acierto"
+            hint="decididos, pero el equipo aún no les ha puesto categoría en Outlook: no cuentan en el acierto"
           />
           <Stat
             label="Cobertura"
