@@ -43,8 +43,8 @@ export class GraphClient {
 
   /**
    * Petición ya validada (lanza `GraphError` si no es 2xx). `pathOrUrl` admite una ruta o la URL
-   * absoluta de un `@odata.nextLink`. Solo los GET se reintentan ante 429/503/504: repetir un POST
-   * podría duplicar lo que crea. `ifMatch` añade la cabecera `If-Match` (Graph responde 412 si el
+   * absoluta de un `@odata.nextLink`. Se reintentan ante 429/503/504 los GET y los PATCH con
+   * `If-Match`; repetir un POST podría duplicar lo que crea. `ifMatch` añade la cabecera `If-Match` (Graph responde 412 si el
    * recurso cambió desde que se leyó).
    */
   private async request(
@@ -54,7 +54,9 @@ export class GraphClient {
     },
   ): Promise<Response> {
     const url = pathOrUrl.startsWith('https://') ? pathOrUrl : `${this.baseUrl}${pathOrUrl}`;
-    const maxRetries = init.method === 'GET' ? this.maxRetries : 0;
+    // Un PATCH con If-Match se puede repetir: si ya se aplicó, la repetición da 412 y no cambia nada.
+    const retryable = init.method === 'GET' || (init.method === 'PATCH' && init.ifMatch);
+    const maxRetries = retryable ? this.maxRetries : 0;
     for (let attempt = 0; ; attempt++) {
       const res = await this.fetchImpl(url, {
         method: init.method,

@@ -8,6 +8,10 @@ const MESSAGE_PATH = '/users/buzon%40ejemplo.com/messages/m1';
 interface FakeMessage {
   categories: string[];
   etag: number;
+  /** Graph no devuelve etag. */
+  noEtag?: boolean;
+  /** El PATCH falla siempre con este estado. */
+  patchStatus?: number;
 }
 
 /**
@@ -20,10 +24,14 @@ function fakeMailbox(message: FakeMessage, onRead?: () => void) {
     const u = String(url);
     expect(u.split('?')[0]).toBe(`https://graph.test${MESSAGE_PATH}`);
     if ((init?.method ?? 'GET') === 'GET') {
-      const body = { '@odata.etag': `W/"${message.etag}"`, categories: [...message.categories] };
+      const body = {
+        ...(message.noEtag ? {} : { '@odata.etag': `W/"${message.etag}"` }),
+        categories: [...message.categories],
+      };
       onRead?.();
       return Response.json(body);
     }
+    if (message.patchStatus) return new Response('no', { status: message.patchStatus });
     const ifMatch = new Headers(init?.headers).get('If-Match');
     if (ifMatch !== `W/"${message.etag}"`) return new Response('cambió', { status: 412 });
     const { categories } = JSON.parse(String(init?.body)) as { categories: string[] };
@@ -47,7 +55,10 @@ function memoryStore(initial: string[] = []): AppliedCategoryStore & { applied: 
     applied,
     listApplied: async () => [...applied],
     recordApplied: async (_id, categories) => {
-      applied.push(...categories);
+      for (const c of categories) if (!applied.includes(c)) applied.push(c);
+    },
+    forgetApplied: async (_id, categories) => {
+      for (const c of categories) applied.splice(applied.indexOf(c), 1);
     },
   };
 }
@@ -101,7 +112,7 @@ describe('applyCategories', () => {
     expect(patches).toEqual([{ categories: ['Pagado', 'Revisar', 'LATERAL'], ifMatch: 'W/"2"' }]);
   });
 
-  it('si el correo cambia en cada intento, se rinde con el error y no anota nada', async () => {
+  it('si el correo cambia en cada intento, se rinde con el error y deja lo anotado (en la duda, no se reescribe)', async () => {
     const message = { categories: [], etag: 1 };
     const { graph, patches } = fakeMailbox(message, () => {
       message.etag++;
@@ -111,7 +122,36 @@ describe('applyCategories', () => {
       applyCategories('m1', ['LATERAL'], { ...deps(graph, store), maxAttempts: 2 }),
     ).rejects.toThrow('412');
     expect(patches).toEqual([]);
+    expect(store.applied).toEqual(['LATERAL']);
+  });
+
+  it('sin etag no escribe ni anota nada', async () => {
+    const { graph, patches } = fakeMailbox({ categories: [], etag: 1, noEtag: true });
+    const store = memoryStore();
+    await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow('etag');
+    expect(patches).toEqual([]);
     expect(store.applied).toEqual([]);
+  });
+
+  it('si Graph rechaza la escritura, borra lo anotado y lanza el error', async () => {
+    const { graph } = fakeMailbox({ categories: [], etag: 1, patchStatus: 403 });
+    const store = memoryStore();
+    await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow('403');
+    expect(store.applied).toEqual([]);
+  });
+
+  it('un 409 también se trata como conflicto: vuelve a leer y escribe', async () => {
+    const message: FakeMessage = { categories: ['Pagado'], etag: 1, patchStatus: 409 };
+    let reads = 0;
+    const { graph, patches } = fakeMailbox(message, () => {
+      reads++;
+      if (reads === 2) delete message.patchStatus;
+    });
+    const store = memoryStore();
+    const result = await applyCategories('m1', ['LATERAL'], deps(graph, store));
+    expect(result.added).toEqual(['LATERAL']);
+    expect(patches).toEqual([{ categories: ['Pagado', 'LATERAL'], ifMatch: 'W/"1"' }]);
+    expect(store.applied).toEqual(['LATERAL']);
   });
 });
 

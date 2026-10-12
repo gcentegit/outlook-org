@@ -60,6 +60,7 @@ export function createPrismaSyncStore(db: Db): SyncStore {
             take: 1,
             select: { decisionId: true, final: true },
           },
+          appliedCategories: { select: { category: true } },
         },
       });
       const known = new Map<string, KnownMessage & { status: MessageStatus }>();
@@ -70,6 +71,7 @@ export function createPrismaSyncStore(db: Db): SyncStore {
           seenCategories: row.seenCategories,
           latestDecision: row.decisions[0] ?? null,
           latestCorrection: row.corrections[0] ?? null,
+          appliedCategories: row.appliedCategories.map((a) => a.category),
         });
       }
       return known;

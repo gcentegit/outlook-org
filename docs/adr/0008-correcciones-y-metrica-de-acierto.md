@@ -15,7 +15,8 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
 
 - Un cambio de categorías en un correo ya registrado se compara con su última decisión, solo en
   FOOD BOX/LATERAL/ARCOBETA y sin importar el orden. En modo sombra todo cambio es del equipo. En
-  modo live, un cambio que solo suma lo decidido por el servicio es propio y se ignora.
+  modo live, un cambio que solo suma lo que escribió el servicio (`AppliedCategory`, no la decisión
+  entera: con la activación por categoría puede escribir solo una parte) es propio y se ignora.
 - Si el equipo vuelve a dejar lo propuesto después de haberlo corregido, se registra una corrección
   con `proposed` igual a `final`, para que la última corrección de cada correo sea la vigente. Un
   acuerdo sin corrección previa no se registra. `Message.seenCategories` se actualiza siempre que

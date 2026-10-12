@@ -6,6 +6,8 @@ import { GraphError, type GraphClient } from './client';
 export interface AppliedCategoryStore {
   listApplied(messageId: string): Promise<string[]>;
   recordApplied(messageId: string, categories: readonly string[]): Promise<void>;
+  /** Borra lo anotado cuando Graph rechazó la escritura: seguro que no se aplicó. */
+  forgetApplied(messageId: string, categories: readonly string[]): Promise<void>;
 }
 
 export interface ApplyCategoriesDeps {
@@ -51,11 +53,20 @@ export function categoriesToApply(
   return names;
 }
 
+/** Respuestas de Graph cuando el correo cambió desde que se leyó: se vuelve a leer. */
+const CONFLICT_STATUS = new Set([409, 412]);
+
 /**
  * Añade categorías a un correo sin quitar ninguna. El `PATCH` de Graph reemplaza la lista entera,
  * así que se leen las categorías actuales justo antes y se escribe con `If-Match`: si el correo
- * cambió entre la lectura y la escritura (412), se vuelve a leer. Una categoría que el correo ya
- * tiene no se toca, y una que el servicio escribió antes y ya no está tampoco se vuelve a poner.
+ * cambió entre la lectura y la escritura (412 o 409), se vuelve a leer. Sin etag no se escribe,
+ * porque no habría forma de no pisar un cambio. Una categoría que el correo ya tiene no se toca, y
+ * una que el servicio escribió antes y ya no está tampoco se vuelve a poner.
+ *
+ * Lo que se va a escribir se anota antes del `PATCH` y se borra solo si Graph lo rechaza con un
+ * error que no sea de conflicto. Si no se sabe cómo acabó (corte de red, conflicto), queda anotado:
+ * en la duda, el servicio no vuelve a poner una categoría que el correo no tiene, porque podría
+ * haberla quitado el equipo.
  */
 export async function applyCategories(
   messageId: string,
@@ -76,18 +87,27 @@ export async function applyCategories(
       else result.added.push(name);
     }
     if (result.added.length === 0) return result;
+    const etag = message['@odata.etag'];
+    if (!etag) throw new Error(`Graph no devolvió el etag del correo ${messageId}: no se escribe`);
 
+    await deps.store.recordApplied(messageId, result.added);
     try {
       await deps.graph.patchJson(
         path,
         { categories: [...current, ...result.added] },
-        message['@odata.etag'] ? { ifMatch: message['@odata.etag'] } : {},
+        { ifMatch: etag },
       );
     } catch (err) {
-      if (err instanceof GraphError && err.status === 412 && attempt < maxAttempts) continue;
+      if (!(err instanceof GraphError)) throw err;
+      // Un conflicto puede venir de un reintento de un PATCH que ya se aplicó: lo anotado se queda
+      // y, al releer, lo que ya esté en el correo cuenta como escrito por el servicio.
+      if (CONFLICT_STATUS.has(err.status)) {
+        if (attempt < maxAttempts) continue;
+        throw err;
+      }
+      await deps.store.forgetApplied(messageId, result.added);
       throw err;
     }
-    await deps.store.recordApplied(messageId, result.added);
     return result;
   }
 }

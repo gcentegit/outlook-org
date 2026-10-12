@@ -20,5 +20,11 @@ export function createPrismaAppliedCategoryStore(
         skipDuplicates: true,
       });
     },
+
+    async forgetApplied(messageId, categories) {
+      await db.appliedCategory.deleteMany({
+        where: { messageId, category: { in: [...categories] } },
+      });
+    },
   };
 }

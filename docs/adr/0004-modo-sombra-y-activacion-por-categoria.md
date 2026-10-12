@@ -26,10 +26,11 @@ buzón hay que medir el acierto con datos reales.
   - Solo se escriben las categorías de la decisión que el panel tiene en live, con el nombre de la
     lista maestra del buzón; una que no esté en ella no se escribe.
   - El `PATCH` de `categories` **reemplaza** la lista entera: se leen las categorías actuales justo
-    antes y se escribe con `If-Match`. Si el correo cambió entre medias (412), se vuelve a leer, hasta
-    tres veces. Nunca se quita ninguna.
-  - Lo que escribe el servicio queda en `AppliedCategory`. Si después el correo ya no la tiene, la
-    quitó el equipo y no se vuelve a poner.
+    antes y se escribe con `If-Match`. Si el correo cambió entre medias (412 o 409), se vuelve a
+    leer, hasta tres veces. Sin etag no se escribe. Nunca se quita ninguna.
+  - Lo que escribe el servicio se anota en `AppliedCategory` antes del `PATCH` y se borra solo si
+    Graph lo rechaza. Si después el correo ya no la tiene, la quitó el equipo y no se vuelve a poner;
+    en la duda (no se sabe si se escribió), tampoco.
   - Si la escritura falla, la decisión queda guardada y el correo marcado para reprocesar: volver a
     escribir no duplica nada.
 

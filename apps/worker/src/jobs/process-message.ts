@@ -124,7 +124,11 @@ export async function processMessage(
         await deps.apply(email, result, masterNames);
       } catch (err) {
         log(`no se pudieron escribir las categorías de ${messageId}: ${String(err)}`);
-        await deps.store.markApplyFailed(messageId);
+        await deps.store
+          .markApplyFailed(messageId)
+          .catch((markErr: unknown) =>
+            log(`no se pudo marcar ${messageId} para reprocesar: ${String(markErr)}`),
+          );
       }
     }
     return 'processed';
