@@ -58,7 +58,8 @@ esta lista:
     - El CIF vale con o sin «ES» delante y con espacios, puntos o guiones. La razón social vale con
       o sin forma societaria (S.L., S.A.), y valen también las variantes de
       [sociedades-categorias.md](sociedades-categorias.md): «FOOD BOX» por FOODBOX y «ARCOBETA» por
-      ARCO BETA.
+      ARCO BETA. El nombre dentro de una dirección de correo o una web (`…@foodbox.es`,
+      `www.foodbox.es`) no cuenta.
 2. **Descarte.** Si aparece una sociedad de otra categoría, esta se descarta: una factura a LATERAL
    IBERIA no es de FOOD BOX.
 3. **Hilo.** Si otro correo de la misma conversación ya tenía esa categoría (puesta por el equipo o

@@ -20,7 +20,8 @@ Regla del negocio: FOODBOX va a **FOOD BOX**, ARCO BETA va a **ARCOBETA**, y tod
 
 1. **CIF del cliente** en la factura. Es la señal más fiable. Solo cuentan estos siete CIF, porque en la factura también aparece el del proveedor.
 2. **Razón social del cliente**, con o sin forma societaria (S.A., S.L.): basta el nombre como
-   palabra completa. Las facturas también la escriben de otra forma, y las dos valen (reglas del
+   palabra completa. No cuenta dentro de una dirección de correo o una web: «ana@foodbox.es» o
+   «www.foodbox.es» no son una factura a FOODBOX. Las facturas también la escriben de otra forma, y las dos valen (reglas del
    negocio, 2026-10-12):
    - FOODBOX también como **FOOD BOX**
    - ARCO BETA también como **ARCOBETA**
