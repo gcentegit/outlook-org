@@ -95,7 +95,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 | 7 | [Panel de métricas y configuración](./phase-07-panel.md) | Done in code (real validation in phases 10 and 11) | 2.5d | 5, 6 |
 | 8 | [Repositorio, versionado y documentación](./phase-08-repositorio-versionado-y-documentacion.md) | Done | 1d | Nada |
 | 9 | [Descubrimiento y verdad de referencia](./phase-09-descubrimiento-y-verdad-de-referencia.md) | Done | 1d | 1 |
-| 10 | [Validación con datos reales](./phase-10-validacion-con-datos-reales.md) | Pending | 4d | 1, 9 |
+| 10 | [Validación con datos reales](./phase-10-validacion-con-datos-reales.md) | In progress | 4d | 1, 9 |
 | 11 | [Despliegue en sombra y observación](./phase-11-despliegue-en-sombra-y-observacion.md) | In progress (desplegado en sombra el 2026-10-12) | 1d + 2 semanas | 10 |
 | 12 | [Activación real (1.0.0)](./phase-12-activacion-real.md) | Pending | 1d + 1 semana por categoría | 11 |
 

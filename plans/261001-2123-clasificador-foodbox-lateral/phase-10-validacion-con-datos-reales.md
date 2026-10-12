@@ -1,6 +1,6 @@
 ---
 title: "Phase 10: Validación con datos reales"
-status: todo
+status: in-progress
 effort: 4d
 ---
 
@@ -43,11 +43,11 @@ añadir funcionalidad nueva, porque ya hay datos que la justifiquen.
 
 Validación:
 
-- [ ] Prueba de extracción con 20 facturas reales e informe (datos de terceros en `data/history/`)
+- [x] Prueba de extracción con facturas reales e informe: 69 de 70 con el CIF del grupo ([informe](../reports/validacion-261012-1415-extraccion-facturas-reales.md))
 - [ ] Importación real del histórico y reglas candidatas revisadas con el usuario
 - [ ] Evaluación contra la muestra, con y sin LLM, y comparativa de al menos dos modelos
-- [ ] Validación del cliente de Graph contra el buzón real
-- [ ] Validación del login con Microsoft real y de la lista de usuarios
+- [x] Validación del cliente de Graph contra el buzón real (importación de la fase 9 y sincronización del worker en Dokploy)
+- [x] Validación del login con Microsoft real y de la lista de usuarios
 - [ ] Medir el acierto contra la carpeta donde se archiva cada correo: hoy el panel mide contra las etiquetas y el worker solo sigue la Bandeja de entrada ([ADR 0008](../../docs/adr/0008-correcciones-y-metrica-de-acierto.md))
 - [ ] Riesgo: si el worker está parado más tiempo del que tarda el equipo en mover un correo a su carpeta, ese correo no se procesa
 - [ ] Ajuste de reglas y del umbral de confianza (el 0,8 acordado solo cambia con datos y con el usuario)

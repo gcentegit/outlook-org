@@ -55,7 +55,7 @@ equipo. Nada se despliega sin autorización del usuario.
 - [x] Monitor de Uptime Kuma y heartbeat
 - [x] Prueba mensual de restauración programada y primera ejecución con la copia real
 - [x] Procedimiento de restauración sobre producción escrito y ensayado (en una base temporal)
-- [ ] Comunicación al equipo de Proveedores: qué verán, cómo corregir una etiqueta y a quién avisar
+- [x] Comunicación al equipo de Proveedores: en sombra no cambia nada, que sigan etiquetando y archivando como siempre y a quién avisar (enviada el 2026-10-12; cómo corregir una etiqueta irá en el aviso de la fase 12)
 - [ ] Dos semanas en sombra con revisión semanal de una muestra en el panel
 - [ ] Informe de modo sombra aprobado por el usuario
 
