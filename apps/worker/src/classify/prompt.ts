@@ -24,7 +24,10 @@ export function firstPage(markdown: string): string {
 export function buildSystemPrompt(): string {
   const lines = (category: Category): string =>
     SOCIEDADES.filter((s) => s.category === category)
-      .map((s) => `    - ${s.razonSocial} (CIF ${s.cif})`)
+      .map(
+        (s) =>
+          `    - ${s.razonSocial} (CIF ${s.cif})${s.variantes?.length ? `; también escrita ${s.variantes.join(', ')}` : ''}`,
+      )
       .join('\n');
   return `Eres un clasificador de correos del buzón de Proveedores de un grupo de restauración.
 Decides, para cada categoría que se te pida, si el correo corresponde a ella. La categoría la

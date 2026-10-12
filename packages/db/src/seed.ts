@@ -1,4 +1,4 @@
-import { SOCIEDADES, normalizeCif } from '@clasificador/shared';
+import { SOCIEDADES, normalizeCif, razonesSociales } from '@clasificador/shared';
 
 import type { PrismaClient } from './generated/client';
 
@@ -18,7 +18,8 @@ export interface SeedResult {
  * Datos mínimos para que el servicio funcione. Idempotente y no destructiva: solo inserta lo que
  * falta y nunca modifica lo que ya existe (una regla desactivada sigue desactivada).
  *
- * - Reglas fuertes: CIF y razón social de cada sociedad, una a una por su clave natural.
+ * - Reglas fuertes: CIF, razón social y sus variantes de cada sociedad, una a una por su clave
+ *   natural.
  * - Administrador: solo si no hay ningún usuario autorizado y hay `adminEmail` (sin valor por
  *   defecto). Si alguien quitó al administrador inicial a propósito, un arranque posterior no lo
  *   vuelve a dar de alta.
@@ -38,9 +39,9 @@ export async function applySeed(
 
   for (const s of SOCIEDADES) {
     const rules = [
-      { type: 'cif', value: normalizeCif(s.cif) },
-      { type: 'razon_social', value: s.razonSocial },
-    ] as const;
+      { type: 'cif' as const, value: normalizeCif(s.cif) },
+      ...razonesSociales(s).map((value) => ({ type: 'razon_social' as const, value })),
+    ];
     for (const { type, value } of rules) {
       const key = { type_value_category: { type, value, category: s.category } };
       if (await db.rule.findUnique({ where: key, select: { id: true } })) continue;

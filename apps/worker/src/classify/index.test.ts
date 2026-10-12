@@ -84,6 +84,16 @@ describe('classify: reglas', () => {
     expect(decision.needsReview).toBe(false);
   });
 
+  it('la razón social vale también escrita «FOOD BOX, S.A.» o «ARCOBETA, S.L.» (con su forma societaria)', async () => {
+    const foodbox = makeEmail({ attachments: [makeAttachment('Cliente: FOOD BOX, S.A.')] });
+    expect((await classify(foodbox, makeCtx().ctx)).decision.categories).toEqual(['FOOD BOX']);
+    const arcobeta = makeEmail({ attachments: [makeAttachment('Cliente: ARCOBETA S.L.')] });
+    expect((await classify(arcobeta, makeCtx().ctx)).decision.categories).toEqual(['ARCOBETA']);
+    // Sin forma societaria no es la sociedad (la marca sale en firmas y direcciones).
+    const marca = makeEmail({ bodyText: 'Un saludo, equipo de Food Box' });
+    expect((await classify(marca, makeCtx().ctx)).decision.categories).toEqual([]);
+  });
+
   it('el CIF del proveedor no cuenta: sin señales queda en duda', async () => {
     const email = makeEmail({ bodyText: 'Emisor CIF B12345678, C/ Núñez Morgado 6' });
     const { decision } = await classify(email, makeCtx().ctx);

@@ -1,8 +1,8 @@
-import { SOCIEDADES, normalizeCif } from '@clasificador/shared';
+import { SOCIEDADES, normalizeCif, razonesSociales } from '@clasificador/shared';
 
 import type { RuleRecord } from './rules';
 
-/** Reglas fuertes por defecto: CIF y razón social de las siete sociedades (docs/referencia/sociedades-categorias.md). */
+/** Reglas fuertes por defecto: CIF, razón social y sus variantes de las siete sociedades (docs/referencia/sociedades-categorias.md). */
 export function defaultRules(): RuleRecord[] {
   return SOCIEDADES.flatMap((s) => [
     {
@@ -12,12 +12,12 @@ export function defaultRules(): RuleRecord[] {
       category: s.category,
       weight: 'fuerte' as const,
     },
-    {
-      id: `rs-${s.cif}`,
+    ...razonesSociales(s).map((value, i) => ({
+      id: i === 0 ? `rs-${s.cif}` : `rs-${s.cif}-${i}`,
       type: 'razon_social' as const,
-      value: s.razonSocial,
+      value,
       category: s.category,
       weight: 'fuerte' as const,
-    },
+    })),
   ]);
 }

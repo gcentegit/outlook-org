@@ -47,11 +47,11 @@ function fakeDb(initial: { rules?: RuleRow[]; users?: string[]; llms?: string[] 
 }
 
 describe('applySeed', () => {
-  it('en una base vacía crea las 14 reglas fuertes, el administrador y el modelo', async () => {
+  it('en una base vacía crea las 16 reglas fuertes, el administrador y el modelo', async () => {
     const { db, rules, users, llms } = fakeDb();
     const result = await applySeed(db, { adminEmail: 'admin@ejemplo.com' });
     expect(result).toEqual({
-      rulesCreated: 14,
+      rulesCreated: 16,
       adminCreated: true,
       adminMissing: false,
       llmCreated: true,
@@ -82,9 +82,9 @@ describe('applySeed', () => {
     for (const adminEmail of [undefined, '', '   ']) {
       const { db, users, rules, llms } = fakeDb();
       const result = await applySeed(db, { adminEmail });
-      expect(result).toMatchObject({ adminCreated: false, adminMissing: true, rulesCreated: 14 });
+      expect(result).toMatchObject({ adminCreated: false, adminMissing: true, rulesCreated: 16 });
       expect(users).toEqual([]);
-      expect(rules).toHaveLength(14);
+      expect(rules).toHaveLength(16);
       expect(llms).toHaveLength(1);
     }
   });
@@ -106,7 +106,7 @@ describe('applySeed', () => {
     };
     const { db, rules } = fakeDb({ rules: [existing] });
     const result = await applySeed(db);
-    expect(result.rulesCreated).toBe(13);
+    expect(result.rulesCreated).toBe(15);
     expect(rules.find((r) => r.value === 'A87240420')?.active).toBe(false);
   });
 
