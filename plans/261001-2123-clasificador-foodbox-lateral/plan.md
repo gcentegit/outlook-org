@@ -69,6 +69,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - **Verdad de referencia (decisión del 2026-10-09, sustituye a la del 2026-10-03):** el equipo archiva cada correo en el árbol de carpetas `Foodbox` o `Lateral`, y esa carpeta es la verdad principal, más una revisión corta de los dudosos ([informe](../reports/descubrimiento-261010-0900-fase-9-buzon-real.md)). Antes: el equipo pone hoy las etiquetas FOOD BOX y LATERAL solo a veces y ARCOBETA no existe todavía. El acierto se mide contra una muestra de unos 200 correos revisada a mano; el histórico sirve para sacar reglas candidatas y discrepancias.
 - **Versionado (decisión del 2026-10-03):** release-please y SemVer. Serie `0.x` mientras el servicio solo funcione en sombra; la `1.0.0` será la primera versión que escriba categorías en el buzón (fase 12).
 - **Sin funcionalidad nueva hasta validar con datos reales:** los riesgos de operación (caducidades, gasto del LLM, retención, adjuntos `.eml`/`.msg`) son tareas de la fase 10, no se implementan antes.
+- Razón social (reglas del negocio del 2026-10-12): vale sin forma societaria y con las variantes «FOOD BOX» y «ARCOBETA», pero no dentro de una dirección de correo o una web ([sociedades y categorías](../../docs/referencia/sociedades-categorias.md)).
 - Umbrales acordados que no cambian sin decisión del usuario: confianza 0,8, precisión 95 %, retención de adjuntos 90 días, modo sombra obligatorio hasta la fase 12.
 
 ## Pendiente del usuario
@@ -80,6 +81,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - [x] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11. Creada el 2026-10-09.
 - [x] Designar quién atiende los avisos de Uptime Kuma: el administrador (decidido el 2026-10-09).
 - [ ] Acordar cómo y cuándo se informa al equipo de Proveedores (fase 11).
+- [ ] Hablar con el equipo de Proveedores de las reglas nuevas propuestas y del LLM antes de activarlos (aplazado el 2026-10-12 por la privacidad de correos y facturas).
 - [x] Autorizar el alta y el despliegue en Dokploy: autorizado el 2026-10-10 en modo sombra y con un dominio temporal, adelantado a la fase 10; las dos semanas de observación de la fase 11 cuentan tras la fase 10.
 
 ## Phases
