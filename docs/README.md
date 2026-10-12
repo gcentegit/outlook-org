@@ -10,6 +10,7 @@ estado, no documentación vigente.
 | [adr/README.md](adr/README.md) | Índice de los registros de decisión: una decisión por fichero, agrupadas por tema. |
 | [guias/entra-id-rbac.md](guias/entra-id-rbac.md) | Guía paso a paso para dar acceso a la app en Microsoft 365, limitado al buzón de Proveedores. |
 | [referencia/sociedades-categorias.md](referencia/sociedades-categorias.md) | Las siete sociedades, sus CIF y la categoría que corresponde a cada una. |
+| [referencia/como-revisa-los-correos.md](referencia/como-revisa-los-correos.md) | Paso a paso, para el equipo de Proveedores: cómo se lee cada correo, cuándo hay OCR y cómo se decide cada categoría. |
 | [operacion/despliegue.md](operacion/despliegue.md) | Resumen operativo del despliegue en Dokploy y sus advertencias. |
 | [operacion/copias-y-restauracion.md](operacion/copias-y-restauracion.md) | Copias de seguridad de PostgreSQL y prueba de restauración. |
 | [operacion/credenciales-y-caducidades.md](operacion/credenciales-y-caducidades.md) | Qué credenciales caducan, cuándo y cómo se renuevan. |
