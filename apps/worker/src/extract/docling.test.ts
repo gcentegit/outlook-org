@@ -91,6 +91,13 @@ describe('convertWithDocling (servidor simulado)', () => {
     expect(sent.body).toMatch(/name="page_range"\r\n\r\n2/);
   });
 
+  it('quita los caracteres nulos de la capa de texto, que PostgreSQL no admite', async () => {
+    reply = ok(`Factura\u0000 emitida\u0000 ${textPage}`);
+    const r = await convertWithDocling(pdf, opts());
+    expect(r.markdown).not.toContain('\u0000');
+    expect(r.markdown.startsWith('Factura emitida')).toBe(true);
+  });
+
   it('un PDF sin capa de texto (escaneado) se repite con RapidOCR', async () => {
     received = [];
     queue = [ok('<!-- image -->'), ok(textPage, 0.93)];

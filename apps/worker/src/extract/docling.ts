@@ -160,7 +160,8 @@ async function requestConversion(
     throw new Error(`docling no pudo convertir ${file.filename}: ${reason}`);
   }
   return {
-    markdown: (body.document?.md_content ?? '').trim(),
+    // La capa de texto de algunos PDF trae caracteres nulos, que PostgreSQL no admite en un texto.
+    markdown: (body.document?.md_content ?? '').replaceAll('\u0000', '').trim(),
     ocrScore: body.confidence?.ocr_score,
   };
 }
