@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/gcentegit/outlook-org/compare/v0.4.0...v0.5.0) (2026-10-12)
+
+
+### 🚀 Novedades
+
+* **web:** el motivo muestra solo lo que se cumple y el indicador se aclara ([#38](https://github.com/gcentegit/outlook-org/issues/38)) ([3784332](https://github.com/gcentegit/outlook-org/commit/378433266be6ca798830bd29df75c87dcaaf7a4b))
+
 ## [0.4.0](https://github.com/gcentegit/outlook-org/compare/v0.3.0...v0.4.0) (2026-10-12)
 
 
