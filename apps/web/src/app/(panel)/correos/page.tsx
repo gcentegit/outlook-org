@@ -16,7 +16,12 @@ import {
 import { formatDateTime, formatInt, formatPercent } from '@/lib/format';
 import { requireUser } from '@/lib/session';
 import { parseFilter, type PanelFilter, type SearchParams } from '@/server/filter-params';
-import { getMessageList, MESSAGE_STATES, type MessageState } from '@/server/metrics';
+import {
+  appliedReasons,
+  getMessageList,
+  MESSAGE_STATES,
+  type MessageState,
+} from '@/server/metrics';
 
 export const metadata: Metadata = { title: 'Correos' };
 
@@ -161,7 +166,7 @@ export default async function MessagesPage({
                     <details>
                       <summary className="cursor-pointer">Ver motivo</summary>
                       <ul className="mt-2 list-disc space-y-1 pl-4">
-                        {item.decision.reason.split('; ').map((line, i) => (
+                        {appliedReasons(item.decision.reason).map((line, i) => (
                           <li key={i} className="break-words">
                             {line}
                           </li>

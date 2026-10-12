@@ -353,6 +353,24 @@ export function messageState(item: EvaluatedMessage): MessageState {
   return item.decision.proposed.length > 0 ? 'classified' : 'none';
 }
 
+/**
+ * Del motivo que guarda el worker (líneas separadas por «; »), solo lo que se cumple: la regla que
+ * decidió una categoría, la herencia del hilo o el «sí» del LLM. Si no se cumple nada, una sola
+ * línea: el motivo de que esté pendiente (LLM sin configurar o fallido) o «Ninguna regla se cumple».
+ */
+export function appliedReasons(reason: string | null): string[] {
+  if (!reason) return [];
+  const lines = reason.split('; ');
+  const applied = lines.filter((line) =>
+    /^(FOOD BOX|LATERAL|ARCOBETA) (por |heredada del hilo|sí según el LLM)/.test(line),
+  );
+  if (applied.length > 0) return applied;
+  const pending = lines.find((line) =>
+    /^(LLM no disponible|LLM fallido|sin LLM configurado)/.test(line),
+  );
+  return [pending ?? 'Ninguna regla se cumple'];
+}
+
 export interface ListedMessage extends EvaluatedMessage {
   state: MessageState;
 }

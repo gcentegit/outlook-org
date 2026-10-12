@@ -9,6 +9,7 @@ import {
   listDiscrepancies,
   listMessages,
   loadLatencyByModel,
+  appliedReasons,
   paginate,
   reprocessCause,
   type LoadedDecision,
@@ -436,5 +437,32 @@ describe('reprocessCause', () => {
     expect(reprocessCause({ reason: 'FOOD BOX sí por regla fuerte' })).toBe('extraction');
     expect(reprocessCause({ reason: null })).toBe('extraction');
     expect(reprocessCause(null)).toBe('retries');
+  });
+});
+
+describe('appliedReasons', () => {
+  it('deja solo lo que se cumple: regla, hilo o «sí» del LLM', () => {
+    expect(
+      appliedReasons(
+        'FOOD BOX por CIF A87240420 (adjunto); LATERAL sin coincidencias en las reglas; ARCOBETA descartada(s): el documento es de otra sociedad del grupo',
+      ),
+    ).toEqual(['FOOD BOX por CIF A87240420 (adjunto)']);
+    expect(
+      appliedReasons(
+        'LATERAL heredada del hilo (correo m1 etiquetado por el equipo); FOOD BOX no según el LLM (0.90): otra sociedad',
+      ),
+    ).toEqual(['LATERAL heredada del hilo (correo m1 etiquetado por el equipo)']);
+  });
+
+  it('sin nada que se cumpla, una sola línea: por qué está pendiente o que no hay regla', () => {
+    expect(
+      appliedReasons(
+        'FOOD BOX sin coincidencias en las reglas; LLM no disponible (Falta ANTHROPIC_API_KEY); categorías en duda',
+      ),
+    ).toEqual(['LLM no disponible (Falta ANTHROPIC_API_KEY)']);
+    expect(appliedReasons('FOOD BOX sin coincidencias en las reglas')).toEqual([
+      'Ninguna regla se cumple',
+    ]);
+    expect(appliedReasons(null)).toEqual([]);
   });
 });
