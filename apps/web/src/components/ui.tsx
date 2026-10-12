@@ -96,12 +96,14 @@ export function DataTable({
   children,
 }: {
   caption: string;
-  headers: { label: string; align?: 'right' }[];
+  /** `width` (p. ej. '20%') fija el ancho de la columna: la tabla deja de recolocarse al abrir un detalle. */
+  headers: { label: string; align?: 'right'; width?: string }[];
   children: ReactNode;
 }) {
+  const fixed = headers.some((h) => h.width);
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className={cn('w-full text-left text-sm', fixed && 'min-w-[60rem] table-fixed')}>
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr className="border-b border-border text-muted">
@@ -109,6 +111,7 @@ export function DataTable({
               <th
                 key={h.label}
                 scope="col"
+                style={h.width ? { width: h.width } : undefined}
                 className={cn('px-3 py-2 font-medium', h.align === 'right' && 'text-right')}
               >
                 {h.label}

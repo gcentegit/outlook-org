@@ -123,13 +123,14 @@ export default async function MessagesPage({
         ) : (
           <DataTable
             caption="Correos y decisión del clasificador"
+            // Anchos fijos, pensados con «Ver motivo» abierto: así la tabla no salta al abrirlo.
             headers={[
-              { label: 'Recibido' },
-              { label: 'Correo' },
-              { label: 'Estado' },
-              { label: 'Propuesto' },
-              { label: 'Equipo' },
-              { label: 'Por qué' },
+              { label: 'Recibido', width: '12%' },
+              { label: 'Correo', width: '21%' },
+              { label: 'Estado', width: '15%' },
+              { label: 'Propuesto', width: '12%' },
+              { label: 'Equipo', width: '9%' },
+              { label: 'Por qué', width: '31%' },
             ]}
           >
             {result.items.map((item) => (
@@ -137,7 +138,7 @@ export default async function MessagesPage({
                 <td className={`${cellClass} whitespace-nowrap`}>
                   {formatDateTime(item.receivedAt)}
                 </td>
-                <td className={`${cellClass} max-w-xs`}>
+                <td className={cellClass}>
                   <p className="break-words font-medium">{item.subject || '(sin asunto)'}</p>
                   <p className="break-all text-xs text-muted">{item.sender || '(pendiente)'}</p>
                 </td>
@@ -161,7 +162,7 @@ export default async function MessagesPage({
                 <td className={cellClass}>
                   <Categories names={item.team} />
                 </td>
-                <td className={`${cellClass} max-w-sm text-muted`}>
+                <td className={`${cellClass} text-muted`}>
                   {item.decision?.reason ? (
                     <details>
                       <summary className="cursor-pointer">Ver motivo</summary>
