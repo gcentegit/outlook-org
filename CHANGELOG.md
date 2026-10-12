@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/gcentegit/outlook-org/compare/v0.6.1...v0.6.2) (2026-10-12)
+
+
+### 🔧 Correcciones
+
+* **worker:** 📮 un correo marcado para reprocesar se vuelve a decidir aunque ya estuviera decidido ([#45](https://github.com/gcentegit/outlook-org/issues/45)) ([56e960f](https://github.com/gcentegit/outlook-org/commit/56e960fa8825f656999c26eb6b7550be64f0d927))
+
 ## [0.6.1](https://github.com/gcentegit/outlook-org/compare/v0.6.0...v0.6.1) (2026-10-12)
 
 
