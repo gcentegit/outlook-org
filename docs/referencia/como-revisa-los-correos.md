@@ -55,10 +55,10 @@ esta lista:
     - Si el remitente es externo, se busca en el asunto, el cuerpo y los adjuntos.
     - Si es de un dominio de correo del grupo, solo en los adjuntos y en la parte reenviada o citada
       del correo, porque su firma lleva los datos del propio grupo.
-    - El CIF vale con o sin «ES» delante y con espacios, puntos o guiones. La razón social tiene que
-      ir con su forma societaria (S.L., S.A.), y valen también las variantes de
-      [sociedades-categorias.md](sociedades-categorias.md): «FOOD BOX, S.A.» por FOODBOX y
-      «ARCOBETA, S.L.» por ARCO BETA.
+    - El CIF vale con o sin «ES» delante y con espacios, puntos o guiones. La razón social vale con
+      o sin forma societaria (S.L., S.A.), y valen también las variantes de
+      [sociedades-categorias.md](sociedades-categorias.md): «FOOD BOX» por FOODBOX y «ARCOBETA» por
+      ARCO BETA.
 2. **Descarte.** Si aparece una sociedad de otra categoría, esta se descarta: una factura a LATERAL
    IBERIA no es de FOOD BOX.
 3. **Hilo.** Si otro correo de la misma conversación ya tenía esa categoría (puesta por el equipo o

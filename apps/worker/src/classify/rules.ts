@@ -51,7 +51,6 @@ const BOUNDARY_AFTER = '(?![A-Z0-9])';
 /** Hasta tres separadores (espacio, punto, guion) entre los caracteres de un CIF. */
 const CIF_SEPARATOR = '[\\s.\\-]{0,3}';
 /** Forma societaria: "S.L.", "SL", "S.A.", "SA" (y su variante unipersonal) una vez normalizada. */
-const LEGAL_FORM = 'S\\s?[AL]U?';
 const LEGAL_FORM_AT_END = /\s+S\s?[AL]U?$/;
 
 /** Expresión que reconoce un CIF con o sin prefijo "ES" y con separadores opcionales. */
@@ -64,18 +63,15 @@ export function cifPattern(rawCif: string): RegExp | null {
 }
 
 /**
- * Expresión para una razón social. Si el valor de la regla lleva forma societaria, el texto
- * también debe llevarla (S.L., SL, S.A., SA; con comas y espacios variables). Así "foodbox.example"
- * en una firma o dirección de correo no cuenta como la sociedad.
+ * Expresión para una razón social. La forma societaria del valor (S.L., SL, S.A., SA...) no se exige
+ * en el texto (regla del negocio, 2026-10-12): basta el nombre como palabra completa, así que
+ * "foodboxes" no cuenta pero "Equipo Foodbox" sí. La firma de un remitente del grupo no cuenta
+ * porque en ese caso solo se mira en adjuntos y reenvíos (`evaluateRules`).
  */
 export function razonSocialPattern(rawName: string): RegExp | null {
-  let folded = foldText(rawName);
+  const folded = foldText(rawName).replace(LEGAL_FORM_AT_END, '');
   if (!folded) return null;
-  const hasLegalForm = LEGAL_FORM_AT_END.test(folded);
-  if (hasLegalForm) folded = folded.replace(LEGAL_FORM_AT_END, '');
-  if (!folded) return null;
-  const tail = hasLegalForm ? `\\s+${LEGAL_FORM}` : '';
-  return new RegExp(`${BOUNDARY_BEFORE}${wordsPattern(folded)}${tail}${BOUNDARY_AFTER}`);
+  return new RegExp(`${BOUNDARY_BEFORE}${wordsPattern(folded)}${BOUNDARY_AFTER}`);
 }
 
 function keywordPattern(rawKeyword: string): RegExp | null {

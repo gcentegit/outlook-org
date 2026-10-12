@@ -19,10 +19,11 @@ Regla del negocio: FOODBOX va a **FOOD BOX**, ARCO BETA va a **ARCOBETA**, y tod
 ## Señales
 
 1. **CIF del cliente** en la factura. Es la señal más fiable. Solo cuentan estos siete CIF, porque en la factura también aparece el del proveedor.
-2. **Razón social del cliente**, siempre con su forma societaria (S.A., S.L.). Las facturas también
-   la escriben de otra forma, y las dos valen (regla del negocio, 2026-10-12):
-   - FOODBOX, S.A. también como **FOOD BOX, S.A.**
-   - ARCO BETA, S.L. también como **ARCOBETA, S.L.**
+2. **Razón social del cliente**, con o sin forma societaria (S.A., S.L.): basta el nombre como
+   palabra completa. Las facturas también la escriben de otra forma, y las dos valen (reglas del
+   negocio, 2026-10-12):
+   - FOODBOX también como **FOOD BOX**
+   - ARCO BETA también como **ARCOBETA**
 
    Las variantes están en [`packages/shared/src/sociedades.ts`](../../packages/shared/src/sociedades.ts)
    y cada una es una regla fuerte más.
