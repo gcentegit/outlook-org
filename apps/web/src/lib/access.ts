@@ -24,7 +24,7 @@ export type Access =
 export interface SessionIdentity {
   email: string;
   name: string;
-  /** Identificador de objeto de la cuenta en Entra ID (`oid`, que better-auth guarda como `accountId`). */
+  /** Identificador de objeto de la cuenta en Entra ID (`oid` del id_token, guardado en la sesión). */
   oid: string | null;
 }
 

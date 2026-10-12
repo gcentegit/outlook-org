@@ -120,16 +120,14 @@ async function signIn(allowed: string[], linked: Record<string, string | null> =
       bound[email] = oid;
       return 'ok';
     },
+    // Como en `session.ts`: el oid sale de la sesión. Se lee con otra instancia, igual que hace una
+    // acción del servidor de Next.js (otra copia del módulo).
     sessionUser: async () => {
-      if (!session?.user.email) return null;
-      const accounts = await auth.api.listUserAccounts({
+      const read = await createAuth({ authority }).api.getSession({
         headers: new Headers({ cookie: cookiesOf(callback) }),
       });
-      return {
-        email: session.user.email,
-        name: session.user.name,
-        oid: accounts.find((a) => a.providerId === 'microsoft')?.accountId ?? null,
-      };
+      if (!read?.user.email) return null;
+      return { email: read.user.email, name: read.user.name, oid: read.user.oid ?? null };
     },
   });
   return { authorize, callback, access, session, bound };
@@ -171,11 +169,28 @@ describe('login con Microsoft (Entra ID simulado)', () => {
 });
 
 describe('identidad: oid y tid de Microsoft', () => {
-  it('el oid del id_token llega a la sesión como accountId de la cuenta', async () => {
+  it('el oid del id_token viaja en la sesión y lo lee cualquier instancia (acciones del servidor)', async () => {
     claims = { email: 'ana@ejemplo.com', preferred_username: 'ana@ejemplo.com' };
     const { access, bound } = await signIn(['ana@ejemplo.com']);
     expect(access.status).toBe('ok');
     expect(bound['ana@ejemplo.com']).toBe('oid-123');
+  });
+
+  it('nadie puede cambiar su oid: /update-user está desactivado', async () => {
+    claims = { email: 'ana@ejemplo.com', preferred_username: 'ana@ejemplo.com' };
+    const { callback } = await signIn(['ana@ejemplo.com']);
+    const res = await createAuth({ authority }).handler(
+      new Request('http://localhost:3110/api/auth/update-user', {
+        method: 'POST',
+        headers: {
+          cookie: cookiesOf(callback),
+          origin: 'http://localhost:3110',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ oid: 'oid-impostor' }),
+      }),
+    );
+    expect(res.status).toBe(404);
   });
 
   it('el primer acceso válido guarda el oid y el siguiente exige que coincida', async () => {

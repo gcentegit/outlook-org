@@ -6,7 +6,10 @@ import { readMicrosoftLogin } from './panel-env';
 
 /**
  * Instancia de better-auth sin base de datos (modo sin estado): la sesión viaja en una cookie
- * cifrada (JWE), así que no hacen falta tablas de usuario/sesión/cuenta. Quién puede entrar lo
+ * cifrada (JWE), así que no hacen falta tablas de usuario/sesión/cuenta. El `oid` de Microsoft va
+ * dentro de esa sesión, como campo del usuario: la lista de cuentas de better-auth vive en la
+ * memoria de cada instancia, y Next.js ejecuta las acciones del servidor en otra copia del módulo
+ * (y un reinicio la vacía), así que no sirve para identificar a nadie. Quién puede entrar lo
  * decide siempre `AllowedUser`, que se consulta en cada petición (ver `session.ts`); quitar a
  * alguien de la lista le corta el acceso al instante aunque su cookie siga vigente.
  *
@@ -40,6 +43,10 @@ export function createAuth(options: { authority?: string } = {}) {
       },
     },
     account: { storeStateStrategy: 'cookie', storeAccountCookie: true },
+    // `input: true` es lo que deja que `mapProfileToUser` lo rellene; ningún usuario puede escribirlo
+    // porque no hay registro con contraseña y `/update-user` está desactivado.
+    user: { additionalFields: { oid: { type: 'string', required: false, input: true } } },
+    disabledPaths: ['/update-user'],
     // Los errores de OAuth vuelven al login, que los explica.
     onAPIError: { errorURL: '/login' },
     socialProviders: microsoft.configured
@@ -54,8 +61,8 @@ export function createAuth(options: { authority?: string } = {}) {
             disableProfilePhoto: true,
             prompt: 'select_account',
             // El email por sí solo no identifica a nadie (Microsoft no lo verifica y es editable): el
-            // acceso se ata al `oid` de la cuenta (better-auth lo guarda como `accountId`, ver
-            // `session.ts`) y el token debe ser del tenant configurado (`tid`). Aquí se rechaza un
+            // acceso se ata al `oid` del id_token, que se guarda en la sesión (ver `session.ts`), y
+            // el token debe ser del tenant configurado (`tid`). Aquí se rechaza un
             // token de otro tenant: es el único momento en que se procesa un token de Microsoft. Un
             // email vacío hace que better-auth cancele el login y vuelva a /login con
             // `error=email_not_found` (lanzar un error daría un 500 en pantalla).
@@ -65,7 +72,8 @@ export function createAuth(options: { authority?: string } = {}) {
                 return { email: '' };
               }
               const email = profile.email ?? profile.preferred_username;
-              return email ? { email } : {};
+              const { oid } = profile as { oid?: unknown };
+              return email ? { email, oid: typeof oid === 'string' ? oid : null } : {};
             },
           },
         }

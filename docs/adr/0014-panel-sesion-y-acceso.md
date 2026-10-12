@@ -38,7 +38,11 @@ de Microsoft no debe bastar para entrar. El panel vive en `https://clasificador.
 
 - Mientras alguien no haya iniciado sesión, su hueco está sin vincular (confianza en el primer
   uso): conviene vigilar la columna «Cuenta de Microsoft» de Configuración.
-- El `oid` sale de la cuenta que better-auth guarda como `accountId`; en modo sin estado no se pudo
-  llevar `oid`/`tid` al usuario de la sesión con `additionalFields`.
+- El `oid` del id_token viaja en la sesión cifrada, como campo del usuario (`additionalFields`). No
+  se lee de la lista de cuentas de better-auth: en modo sin estado vive en la memoria de cada
+  instancia, y las acciones del servidor de Next.js corren en otra copia del módulo, así que allí
+  salía vacía y toda acción respondía «no autorizado». El campo admite entrada (`input: true`) solo
+  para que lo rellene `mapProfileToUser`; nadie puede escribirlo porque `/update-user` está
+  desactivado y no hay registro con contraseña. Una sesión anterior al campo pide volver a entrar.
 - El secreto de la app de login caduca: véase
   [credenciales y caducidades](../operacion/credenciales-y-caducidades.md).

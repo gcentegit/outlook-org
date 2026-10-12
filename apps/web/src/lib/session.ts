@@ -28,14 +28,9 @@ export const getAccess = cache((): Promise<Access> =>
       if (!readMicrosoftLogin().configured) return null;
       const session = await getAuth().api.getSession({ headers: await headers() });
       if (!session?.user.email) return null;
-      // better-auth guarda como `accountId` el `oid` verificado del id_token de Microsoft; sale de
-      // la cookie de cuenta, sin base de datos.
-      // Si la cookie de cuenta falta o caducó, no hay `oid` y no se entra (se pide volver a iniciar sesión).
-      const accounts = await getAuth()
-        .api.listUserAccounts({ headers: await headers() })
-        .catch(() => []);
-      const oid = accounts.find((account) => account.providerId === 'microsoft')?.accountId;
-      return { email: session.user.email, name: session.user.name, oid: oid ?? null };
+      // El `oid` verificado del id_token viaja en la sesión (ver `auth.ts`). Una sesión anterior a
+      // este campo no lo trae: no se entra y se pide volver a iniciar sesión.
+      return { email: session.user.email, name: session.user.name, oid: session.user.oid ?? null };
     },
   }),
 );
