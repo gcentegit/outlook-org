@@ -49,6 +49,11 @@ Validación:
 - [x] Validación del cliente de Graph contra el buzón real (importación de la fase 9 y sincronización del worker en Dokploy)
 - [x] Validación del login con Microsoft real y de la lista de usuarios
 - [ ] Medir el acierto contra la carpeta donde se archiva cada correo: hoy el panel mide contra las etiquetas y el worker solo sigue la Bandeja de entrada ([ADR 0008](../../docs/adr/0008-correcciones-y-metrica-de-acierto.md))
+  - Propuesta del 2026-10-12, aplazada por el usuario: la tabla de precisión y cobertura del panel apenas se mueve porque solo compara con los correos que el equipo etiqueta en Outlook (41 de 43 decididos estaban sin contrastar). Diseño:
+    1. el worker busca de vez en cuando en qué carpeta acabó cada correo decidido, por su `internetMessageId`, porque el id de Graph cambia al moverlo;
+    2. la guarda en la base de datos (migración pequeña, con copia previa);
+    3. el panel usa como verdad el árbol Foodbox → FOOD BOX y el árbol Lateral → LATERAL, además de las etiquetas del equipo;
+    4. los correos de otras carpetas y ARCOBETA quedan fuera de la medida o para revisión.
 - [ ] Riesgo: si el worker está parado más tiempo del que tarda el equipo en mover un correo a su carpeta, ese correo no se procesa
 - [ ] Ajuste de reglas y del umbral de confianza (el 0,8 acordado solo cambia con datos y con el usuario)
 
