@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/gcentegit/outlook-org/compare/v0.8.0...v0.9.0) (2026-10-13)
+
+
+### 🚀 Novedades
+
+* 🗂️ «Correos» muestra la carpeta exacta donde está cada correo ([#57](https://github.com/gcentegit/outlook-org/issues/57)) ([1a0bf37](https://github.com/gcentegit/outlook-org/commit/1a0bf3777ac52f16da1ada99e59ed17a0968d94d))
+
 ## [0.8.0](https://github.com/gcentegit/outlook-org/compare/v0.7.0...v0.8.0) (2026-10-13)
 
 
