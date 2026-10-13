@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/gcentegit/outlook-org/compare/v0.7.0...v0.8.0) (2026-10-13)
+
+
+### 🚀 Novedades
+
+* 📂 el panel compara con la carpeta donde el equipo archiva cada correo ([#55](https://github.com/gcentegit/outlook-org/issues/55)) ([ecfb635](https://github.com/gcentegit/outlook-org/commit/ecfb63587d4576e2dd1022827d1a3c469670a9f5))
+
 ## [0.7.0](https://github.com/gcentegit/outlook-org/compare/v0.6.2...v0.7.0) (2026-10-13)
 
 
