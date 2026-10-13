@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/gcentegit/outlook-org/compare/v0.9.0...v0.9.1) (2026-10-13)
+
+
+### 🔧 Correcciones
+
+* 🔁 reprocesar ya no deja en cola los correos que el equipo archivó ([#60](https://github.com/gcentegit/outlook-org/issues/60)) ([76fae41](https://github.com/gcentegit/outlook-org/commit/76fae4126a03ea8650aacbf7d45dad3692b52eca))
+
 ## [0.9.0](https://github.com/gcentegit/outlook-org/compare/v0.8.0...v0.9.0) (2026-10-13)
 
 
