@@ -1,5 +1,5 @@
 import { prisma } from '@clasificador/db';
-import { FOLDERS_SYNC_ID, type MessageFolder } from '@clasificador/shared';
+import { FOLDERS_SYNC_ID } from '@clasificador/shared';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -15,6 +15,7 @@ import {
   labelClass,
   PageHeader,
 } from '@/components/ui';
+import { folderLabel } from '@/lib/folder-label';
 import { formatDateTime, formatInt, formatPercent } from '@/lib/format';
 import { requireUser } from '@/lib/session';
 import { parseFilter, type PanelFilter, type SearchParams } from '@/server/filter-params';
@@ -38,15 +39,6 @@ const STATES: Record<
   doubt: { label: 'En duda', tone: 'warning' },
   reprocess: { label: 'Pendiente de reprocesar', tone: 'warning' },
   queued: { label: 'En cola', tone: 'neutral' },
-};
-
-/** Dónde está el correo, tal como lo ve quien mira el panel. */
-const FOLDER_LABELS: Record<MessageFolder, string> = {
-  foodbox: 'Archivado en Foodbox',
-  lateral: 'Archivado en Lateral',
-  inbox: 'En la Bandeja de entrada',
-  other: 'En otra carpeta',
-  missing: 'Ya no está en el buzón',
 };
 
 function parseState(params: SearchParams): MessageState | null {
@@ -147,8 +139,8 @@ export default async function MessagesPage({
               { label: 'Correo', width: '21%' },
               { label: 'Estado', width: '15%' },
               { label: 'Propuesto', width: '12%' },
-              { label: 'Equipo', width: '12%' },
-              { label: 'Por qué', width: '28%' },
+              { label: 'Equipo', width: '17%' },
+              { label: 'Por qué', width: '23%' },
             ]}
           >
             {result.items.map((item) => (
@@ -179,8 +171,8 @@ export default async function MessagesPage({
                 </td>
                 <td className={cellClass}>
                   <Categories names={item.team} />
-                  <p className="mt-1 text-xs text-muted">
-                    {item.folder ? FOLDER_LABELS[item.folder] : 'Carpeta sin comprobar'}
+                  <p className="mt-1 break-words text-xs text-muted">
+                    {folderLabel(item.folder, item.folderPath)}
                   </p>
                 </td>
                 <td className={`${cellClass} text-muted`}>

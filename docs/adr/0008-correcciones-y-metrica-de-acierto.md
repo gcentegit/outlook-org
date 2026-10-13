@@ -52,7 +52,7 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
 - La sincronización solo sigue la Bandeja de entrada, así que no ve a qué carpeta se mueve un
   correo. El worker lo comprueba aparte cada hora y cuando se pide desde el panel: busca cada correo
   por su conversación y su fecha de recepción (el id de Graph cambia al moverlo), guarda la carpeta
-  en `Message.folder` y, fuera de la Bandeja, anota también sus categorías con la misma lógica que
+  en `Message.folder` (con su ruta en `folderPath`, que el panel muestra en «Correos») y, fuera de la Bandeja, anota también sus categorías con la misma lógica que
   la sincronización (con su corrección, si la hay). Los que siguen en la Bandeja se miran en cada
   ronda; los archivados en el último mes, una vez al día; los que ya no están, nunca más. Solo lee
   el buzón.

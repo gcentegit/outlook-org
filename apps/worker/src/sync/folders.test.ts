@@ -10,6 +10,7 @@ import {
   locateMessage,
   recordArchivedCategories,
   type FolderCheckStore,
+  type FolderInfo,
   type MessageToLocate,
 } from './folders';
 
@@ -70,19 +71,25 @@ const msg = (id: string, conversationId: string, receivedAt: string): MessageToL
 describe('loadFolderMap', () => {
   it('reconoce la Bandeja, los árboles de las sociedades con sus subcarpetas y el resto', async () => {
     const folderOf = await loadFolderMap(fakeMailbox([]), 'buzon@ejemplo.com');
-    expect(folderOf('inbox')).toBe('inbox');
-    expect(folderOf('fb')).toBe('foodbox');
-    expect(folderOf('fb-2026')).toBe('foodbox');
+    expect(folderOf('inbox')).toEqual({ folder: 'inbox', path: 'Bandeja de entrada' });
+    expect(folderOf('fb')).toEqual({ folder: 'foodbox', path: 'Bandeja de entrada/Foodbox' });
+    expect(folderOf('fb-2026')).toEqual({
+      folder: 'foodbox',
+      path: 'Bandeja de entrada/Foodbox/2026',
+    });
     // El nombre no distingue mayúsculas.
-    expect(folderOf('lat')).toBe('lateral');
-    expect(folderOf('deleted')).toBe('other');
-    expect(folderOf('desconocida')).toBe('other');
+    expect(folderOf('lat').folder).toBe('lateral');
+    expect(folderOf('deleted')).toEqual({ folder: 'other', path: 'Elementos eliminados' });
+    expect(folderOf('desconocida')).toEqual({ folder: 'other', path: null });
   });
 });
 
 describe('locateMessage', () => {
-  const folderOf = (id: string) =>
-    (({ inbox: 'inbox', fb: 'foodbox', lat: 'lateral' }) as const)[id as 'inbox'] ?? 'other';
+  const KINDS: Record<string, MessageFolder> = { inbox: 'inbox', fb: 'foodbox', lat: 'lateral' };
+  const folderOf = (id: string): FolderInfo => ({
+    folder: KINDS[id] ?? 'other',
+    path: `ruta de ${id}`,
+  });
 
   it('encuentra el correo por conversación y fecha, y toma sus categorías fuera de la Bandeja', async () => {
     const graph = fakeMailbox([
@@ -101,7 +108,7 @@ describe('locateMessage', () => {
         msg('m', 'c1', '2026-10-10T09:00:00.000Z'),
         folderOf,
       ),
-    ).toEqual({ folder: 'foodbox', categories: ['FOOD BOX', 'Urgente'] });
+    ).toEqual({ folder: 'foodbox', path: 'ruta de fb', categories: ['FOOD BOX', 'Urgente'] });
   });
 
   it('en la Bandeja no toma categorías: de eso ya se ocupa la sincronización', async () => {
@@ -120,7 +127,7 @@ describe('locateMessage', () => {
         msg('m', 'c1', '2026-10-10T09:00:00Z'),
         folderOf,
       ),
-    ).toEqual({ folder: 'inbox', categories: null });
+    ).toEqual({ folder: 'inbox', path: 'ruta de inbox', categories: null });
   });
 
   it('si hay copias en varias carpetas, manda la del árbol de una sociedad', async () => {
@@ -159,7 +166,7 @@ describe('locateMessage', () => {
         msg('m', 'c1', '2026-10-10T09:00:00Z'),
         folderOf,
       ),
-    ).toEqual({ folder: 'lateral', categories: null });
+    ).toEqual({ folder: 'lateral', path: 'ruta de lat', categories: null });
   });
 
   it('si ya no está en el buzón lo marca como desaparecido; las comillas del id se escapan', async () => {
@@ -173,17 +180,17 @@ describe('locateMessage', () => {
         msg('m', "c'2", '2026-10-10T09:00:00Z'),
         folderOf,
       ),
-    ).toEqual({ folder: 'missing', categories: null });
+    ).toEqual({ folder: 'missing', path: null, categories: null });
   });
 });
 
 function memoryStore(pending: MessageToLocate[]) {
-  const saved = new Map<string, MessageFolder>();
+  const saved = new Map<string, FolderInfo>();
   const categories = new Map<string, string[]>();
   let checkedAt: Date | null = null;
   const store: FolderCheckStore = {
     listToCheck: async () => pending,
-    saveLocation: async (id, folder) => void saved.set(id, folder),
+    saveLocation: async (id, location) => void saved.set(id, location),
     markChecked: async (at) => void (checkedAt = at),
   };
   const recordCategories = async (id: string, names: string[]) => void categories.set(id, names);
@@ -221,8 +228,11 @@ describe('checkFolders', () => {
         log,
       }),
     ).toEqual({ checked: 2, archived: 1, failed: 1 });
-    expect(saved.get('m1')).toBe('foodbox');
-    expect(saved.get('m3')).toBe('inbox');
+    expect(saved.get('m1')).toMatchObject({
+      folder: 'foodbox',
+      path: 'Bandeja de entrada/Foodbox/2026',
+    });
+    expect(saved.get('m3')?.folder).toBe('inbox');
     expect(saved.has('m2')).toBe(false);
     // Solo se anotan las categorías del archivado; las de la Bandeja son de la sincronización.
     expect([...categories]).toEqual([['m1', ['FOOD BOX']]]);
