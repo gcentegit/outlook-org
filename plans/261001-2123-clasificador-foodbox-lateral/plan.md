@@ -81,7 +81,7 @@ Cómo funciona el sistema hoy: [docs/arquitectura.md](../../docs/arquitectura.md
 - [x] Crear la categoría ARCOBETA (desde el panel o en Outlook) antes de la fase 11. Creada el 2026-10-09.
 - [x] Designar quién atiende los avisos de Uptime Kuma: el administrador (decidido el 2026-10-09).
 - [ ] Acordar cómo y cuándo se informa al equipo de Proveedores (fase 11).
-- [ ] Hablar con el equipo de Proveedores de las reglas nuevas propuestas y del LLM antes de activarlos (aplazado el 2026-10-12 por la privacidad de correos y facturas).
+- [ ] Hablar con el equipo de Proveedores de las reglas nuevas propuestas y del LLM antes de activarlos (aplazado el 2026-10-12 por la privacidad de correos y facturas). Guion preparado el 2026-10-13, con las dudas sobre cómo archivan (facturas entre sociedades, ARCOBETA en Lateral, carpetas fuera de Foodbox y Lateral), en `data/history/reunion-equipo-proveedores.html` (fuera de git).
 - [x] Autorizar el alta y el despliegue en Dokploy: autorizado el 2026-10-10 en modo sombra y con un dominio temporal, adelantado a la fase 10; las dos semanas de observación de la fase 11 cuentan tras la fase 10.
 
 ## Phases
