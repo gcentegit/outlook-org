@@ -55,8 +55,13 @@ Validación:
   - el worker comprueba cada hora, y con el botón «Comparar con las carpetas» del panel, en qué carpeta acabó cada correo, buscándolo por conversación y fecha de recepción porque el id de Graph cambia al moverlo; fuera de la Bandeja toma también sus categorías;
   - el panel usa como verdad el árbol Foodbox → FOOD BOX y el árbol Lateral → LATERAL, más las etiquetas del equipo; con solo la carpeta ARCOBETA no se compara;
   - «Correos» muestra en «Equipo» la carpeta de cada correo, y el resumen añade la evolución por semana;
-  - probado en lectura contra el buzón real: 40 de 40 correos del histórico en su carpeta, unos 0,65 s por correo.
-  - [ ] Desplegar (migración pequeña, con copia previa) y revisar las primeras cifras con el usuario
+  - probado en lectura contra el buzón real: 40 de 40 correos del histórico en su carpeta, unos 0,65 s por correo;
+  - desplegado en la 0.8.0 el 2026-10-13, con copia previa. La 0.9.0 guarda también la ruta de la carpeta y «Correos» la muestra («Archivado en Foodbox / 2026», «En otra carpeta: Elementos eliminados»);
+  - primera comparación (139 correos): 40 en Lateral, 34 en Foodbox, 24 en la Bandeja, 9 en cuatro subcarpetas de la Bandeja que no son Foodbox ni Lateral y 36 borrados del buzón, casi todos publicidad y avisos;
+  - primeras cifras contra la carpeta, con 52 correos archivados y decididos (los otros 22 esperan al LLM): FOOD BOX 88,5 % de precisión y 100 % de cobertura; LATERAL 100 % y 89,7 %. Los 3 únicos fallos son un mismo hilo interno que nombra a FOODBOX y está archivado en Lateral;
+  - provisional hasta hablar con el equipo: el árbol Lateral vale por «LATERAL o ARCOBETA».
+  - [ ] Llevar a la reunión con el equipo de Proveedores: ARCOBETA en Lateral, si esas cuatro subcarpetas son de una sola sociedad, si la subcarpeta de pendientes dentro de Lateral debe contar y el hilo archivado en otra sociedad (guion en `data/history/reunion-equipo-proveedores.html`, fuera de git)
+- [x] Publicadas el 2026-10-13 la 0.7.0 (evaluación contra carpetas, escritura de categorías preparada y bloqueada, dependencias), la 0.8.0 (comparación con las carpetas) y la 0.9.0 (ruta de la carpeta), cada una con copia previa de la base de datos
 - [x] Correos recibidos desde el 2026-10-09, antes de arrancar la sombra, recuperados reiniciando la sincronización (74 correos, con copia previa)
 - [x] Reglas del negocio del 2026-10-12 en la razón social ([sociedades y categorías](../../docs/referencia/sociedades-categorias.md)): «FOOD BOX» vale por FOODBOX y «ARCOBETA» por ARCO BETA, y la forma societaria (S.A., S.L.) no se exige (0.4.0). 9 correos más decididos al reprocesar, revisados por el usuario
 - [x] Fallo de la 0.4.0 corregido en la 0.6.1: sin forma societaria, «FOODBOX» dentro de `…@foodbox.es` o `www.foodbox.es` contaba como razón social. Ahora las direcciones de correo y las webs no cuentan. 11 correos afectados, revisados por el usuario: uno pierde FOOD BOX (factura a ARCOBETA), otro queda en duda y otro gana LATERAL y ARCOBETA por una decisión anterior a la 0.4.0
