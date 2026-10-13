@@ -12,6 +12,7 @@ import {
   createPrismaRuleRepository,
   createLiveModeWarner,
   createPrismaThreadRepository,
+  liveCategories,
   readCategoryModes,
 } from './classify';
 import {
@@ -22,9 +23,11 @@ import {
   type Config,
 } from './config';
 import { extractEmail } from './extract/extract-email';
+import { applyCategories, categoriesToApply } from './graph/apply-categories';
 import { createGraphClient, type GraphClient } from './graph/client';
 import { createHealthServer, evaluateLoopLiveness } from './health';
 import { createHeartbeat } from './heartbeat';
+import { createPrismaAppliedCategoryStore } from './jobs/applied-category-store';
 import { createPrismaDecisionStore } from './jobs/decision-store';
 import {
   createBoss,
@@ -163,6 +166,7 @@ export async function startWorker(
     const rules = createPrismaRuleRepository(db);
     const threads = createPrismaThreadRepository(db);
     const warnLiveCategories = createLiveModeWarner();
+    const appliedStore = createPrismaAppliedCategoryStore(db);
 
     await registerProcessWorker(
       boss,
@@ -197,6 +201,25 @@ export async function startWorker(
             internalDomains: config.INTERNAL_EMAIL_DOMAINS,
           });
         },
+        // Escritura en el buzón: solo en modo real y solo de las categorías que el panel tiene en
+        // live. Hoy `assertSupportedMode` impide arrancar con MODE=live, así que no se ejecuta.
+        ...(config.MODE === 'live'
+          ? {
+              apply: async (email, result, masterNames) => {
+                const live = liveCategories(await readCategoryModes(db));
+                const names = categoriesToApply(result.decision.categories, live, masterNames);
+                if (names.length === 0) return;
+                const applied = await applyCategories(email.messageId, names, {
+                  graph,
+                  mailbox,
+                  store: appliedStore,
+                });
+                if (applied.added.length > 0) {
+                  console.log(`correo ${email.messageId}: escritas ${applied.added.join(', ')}`);
+                }
+              },
+            }
+          : {}),
       },
       config.WORKER_CONCURRENCY,
     );

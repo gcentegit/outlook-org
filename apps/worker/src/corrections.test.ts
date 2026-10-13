@@ -8,6 +8,7 @@ function known(over: Partial<KnownMessage> = {}): KnownMessage {
     seenCategories: [],
     latestDecision: { id: 'd1', categories: ['LATERAL'], mode: 'shadow' },
     latestCorrection: null,
+    appliedCategories: [],
     ...over,
   };
 }
@@ -87,8 +88,28 @@ describe('evaluateCategoryChange', () => {
     const k = known({
       seenCategories: ['ARCOBETA'],
       latestDecision: { id: 'd1', categories: ['LATERAL'], mode: 'live' },
+      appliedCategories: ['LATERAL'],
     });
     expect(evaluateCategoryChange(k, ['ARCOBETA', 'LATERAL'])).toEqual({ kind: 'seen-only' });
+  });
+
+  it('en modo live, si solo se escribió una parte de lo decidido, no es una corrección del equipo', () => {
+    // Decide FOOD BOX y LATERAL, pero solo FOOD BOX está en live: el servicio escribe solo esa.
+    const k = known({
+      seenCategories: [],
+      latestDecision: { id: 'd1', categories: ['FOOD BOX', 'LATERAL'], mode: 'live' },
+      appliedCategories: ['FOOD BOX'],
+    });
+    expect(evaluateCategoryChange(k, ['FOOD BOX'])).toEqual({ kind: 'seen-only' });
+  });
+
+  it('en modo live, quitar lo que escribió el servicio es una corrección del equipo', () => {
+    const k = known({
+      seenCategories: ['FOOD BOX'],
+      latestDecision: { id: 'd1', categories: ['FOOD BOX', 'LATERAL'], mode: 'live' },
+      appliedCategories: ['FOOD BOX'],
+    });
+    expect(evaluateCategoryChange(k, [])).toMatchObject({ kind: 'correction', final: [] });
   });
 
   it('en modo live un cambio distinto de lo aplicado es del equipo', () => {

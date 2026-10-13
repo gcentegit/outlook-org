@@ -28,6 +28,8 @@ export interface DecisionStore {
   markFailed(messageId: string): Promise<void>;
   /** El correo ya no está en el buzón: se olvida si nunca llegó a decidirse. */
   forget(messageId: string): Promise<void>;
+  /** No se pudieron escribir las categorías en el buzón: el correo queda marcado para reprocesar. */
+  markApplyFailed(messageId: string): Promise<void>;
 }
 
 export interface ProcessMessageDeps {
@@ -36,6 +38,11 @@ export interface ProcessMessageDeps {
   extract: (messageId: string) => Promise<ExtractedEmail>;
   availableCategories: () => Promise<string[]>;
   classify: (email: ExtractedEmail, availableCategories: string[]) => Promise<ClassifyResult>;
+  /**
+   * Escribe en el buzón las categorías de una decisión válida (solo en modo real; en sombra no se
+   * pasa). Recibe la lista maestra con la que se clasificó.
+   */
+  apply?: (email: ExtractedEmail, result: ClassifyResult, masterNames: string[]) => Promise<void>;
   log?: (message: string) => void;
 }
 
@@ -93,7 +100,8 @@ export async function processMessage(
       throw err;
     }
 
-    const result = await deps.classify(email, await deps.availableCategories());
+    const masterNames = await deps.availableCategories();
+    const result = await deps.classify(email, masterNames);
     const extractionIssues = email.degradedReasons ?? [];
     const reasons = [...extractionIssues, ...(result.degraded ? [result.degraded.reason] : [])];
     const retryable = extractionIssues.length > 0 || (result.degraded?.transient ?? false);
@@ -108,6 +116,20 @@ export async function processMessage(
         `correo ${messageId} decidido con fallo técnico, queda para reprocesar: ${reasons.join('; ')}`,
       );
       return 'degraded';
+    }
+    if (deps.apply) {
+      // La decisión ya está guardada: un fallo al escribir no la pierde. El correo queda marcado
+      // y «Reprocesar» lo vuelve a decidir y a escribir (escribir es idempotente).
+      try {
+        await deps.apply(email, result, masterNames);
+      } catch (err) {
+        log(`no se pudieron escribir las categorías de ${messageId}: ${String(err)}`);
+        await deps.store
+          .markApplyFailed(messageId)
+          .catch((markErr: unknown) =>
+            log(`no se pudo marcar ${messageId} para reprocesar: ${String(markErr)}`),
+          );
+      }
     }
     return 'processed';
   } catch (err) {

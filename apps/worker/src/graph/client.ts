@@ -43,21 +43,27 @@ export class GraphClient {
 
   /**
    * Petición ya validada (lanza `GraphError` si no es 2xx). `pathOrUrl` admite una ruta o la URL
-   * absoluta de un `@odata.nextLink`. Solo los GET se reintentan ante 429/503/504: repetir un POST
-   * podría duplicar lo que crea.
+   * absoluta de un `@odata.nextLink`. Se reintentan ante 429/503/504 los GET y los PATCH con
+   * `If-Match`; repetir un POST podría duplicar lo que crea. `ifMatch` añade la cabecera `If-Match` (Graph responde 412 si el
+   * recurso cambió desde que se leyó).
    */
   private async request(
     pathOrUrl: string,
-    init: { method: 'GET' | 'POST'; body?: unknown } = { method: 'GET' },
+    init: { method: 'GET' | 'POST' | 'PATCH'; body?: unknown; ifMatch?: string } = {
+      method: 'GET',
+    },
   ): Promise<Response> {
     const url = pathOrUrl.startsWith('https://') ? pathOrUrl : `${this.baseUrl}${pathOrUrl}`;
-    const maxRetries = init.method === 'GET' ? this.maxRetries : 0;
+    // Un PATCH con If-Match se puede repetir: si ya se aplicó, la repetición da 412 y no cambia nada.
+    const retryable = init.method === 'GET' || (init.method === 'PATCH' && init.ifMatch);
+    const maxRetries = retryable ? this.maxRetries : 0;
     for (let attempt = 0; ; attempt++) {
       const res = await this.fetchImpl(url, {
         method: init.method,
         headers: {
           Authorization: `Bearer ${await this.options.getToken()}`,
           ...(init.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+          ...(init.ifMatch === undefined ? {} : { 'If-Match': init.ifMatch }),
         },
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
       });
@@ -81,6 +87,12 @@ export class GraphClient {
 
   async postJson<T>(path: string, body: unknown): Promise<T> {
     return (await (await this.request(path, { method: 'POST', body })).json()) as T;
+  }
+
+  /** PATCH con cuerpo JSON. Con `ifMatch`, solo se aplica si el recurso sigue en esa versión. */
+  async patchJson(path: string, body: unknown, options: { ifMatch?: string } = {}): Promise<void> {
+    const res = await this.request(path, { method: 'PATCH', body, ...options });
+    await res.body?.cancel();
   }
 
   async getBytes(pathOrUrl: string): Promise<Buffer> {

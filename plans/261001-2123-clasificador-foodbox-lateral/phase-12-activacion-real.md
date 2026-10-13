@@ -45,7 +45,10 @@ Crear: `src/graph/apply-categories.ts`. Cambiar el worker para que acepte `MODE=
 ## Todo
 
 - [ ] Discrepancias del informe de sombra revisadas y reglas ajustadas
-- [ ] `PATCH` con fusión de categorías y control de concurrencia
+- [x] `PATCH` con fusión de categorías y control de concurrencia (`If-Match`), registro de lo escrito en `AppliedCategory` para no volver a poner lo que quite el equipo, y solo las categorías en live: preparado el 2026-10-12, bloqueado mientras `MODE=live` no arranque
+- [ ] Comprobar en el buzón real, con un correo de prueba, que Graph devuelve el etag con `$select=categories` y qué responde un `PATCH` con un etag viejo (412 o 409)
+- [ ] Decidir si se piden ids inmutables (`Prefer: IdType="ImmutableId"`): un correo que sale de la Bandeja de entrada y vuelve cambia de id y pierde su registro de categorías escritas
+- [ ] Quitar el bloqueo de `MODE=live` (`assertSupportedMode`) con la autorización del usuario, copia de seguridad antes de desplegar (la versión trae la migración de `AppliedCategory`) y una prueba con un correo de prueba del buzón
 - [ ] Activación progresiva por categoría
 - [ ] Publicación de la versión 1.0.0
 

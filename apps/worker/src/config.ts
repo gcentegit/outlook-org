@@ -81,12 +81,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return parsed.data;
 }
 
-/** El PATCH de categorías no existe todavía: con `MODE=live` el worker no debe arrancar. */
+/**
+ * La escritura de categorías en el buzón está programada pero bloqueada: con `MODE=live` el worker
+ * no arranca hasta que el usuario autorice la activación real y se quite este bloqueo.
+ */
 export function assertSupportedMode(config: Pick<Config, 'MODE'>): void {
   if (config.MODE === 'live') {
     throw new ConfigError(
-      'MODE=live no está soportado todavía: este worker solo funciona en modo sombra (MODE=shadow) ' +
-        'hasta que se implemente la aplicación de categorías.',
+      'MODE=live no está activado todavía: este worker solo funciona en modo sombra (MODE=shadow) ' +
+        'hasta que se autorice la activación real.',
     );
   }
 }

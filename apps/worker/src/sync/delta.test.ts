@@ -38,6 +38,7 @@ function knownMsg(over: Partial<Known> = {}): Known {
     seenCategories: [],
     latestDecision: { id: 'd1', categories: ['LATERAL'], mode: 'shadow' },
     latestCorrection: null,
+    appliedCategories: [],
     ...over,
   };
 }

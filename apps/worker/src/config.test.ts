@@ -31,7 +31,7 @@ describe('modo y sincronización', () => {
 
   it('se niega a arrancar con MODE=live y lo explica', () => {
     const c = loadConfig({ ...env, MODE: 'live' });
-    expect(() => assertSupportedMode(c)).toThrow(/MODE=live no está soportado/);
+    expect(() => assertSupportedMode(c)).toThrow(/MODE=live no está activado/);
   });
 
   it('rechaza un MODE desconocido y un polling fuera de rango', () => {

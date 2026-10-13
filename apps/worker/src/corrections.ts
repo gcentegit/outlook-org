@@ -7,6 +7,8 @@ export interface KnownMessage {
   seenCategories: string[];
   latestDecision: { id: string; categories: string[]; mode: DecisionMode } | null;
   latestCorrection: { decisionId: string | null; final: string[] } | null;
+  /** Categorías que el servicio escribió en el correo (modo real; tabla `AppliedCategory`). */
+  appliedCategories: string[];
 }
 
 export type CategoryChange =
@@ -33,8 +35,9 @@ const sameSet = (a: readonly string[], b: readonly string[]): boolean =>
  * Decide qué hacer cuando Outlook informa de un cambio en un correo ya registrado.
  *
  * - En modo sombra el servicio nunca toca el buzón, así que todo cambio es del equipo.
- * - En modo live, un cambio que solo añade lo decidido por el servicio (sobre lo que ya había)
- *   es propio y se ignora; cualquier otro es del equipo.
+ * - En modo live, un cambio que solo añade categorías que escribió el servicio (sobre lo que ya
+ *   había) es propio y se ignora; cualquier otro es del equipo. Se compara con lo escrito de
+ *   verdad, no con la decisión: con la activación por categoría puede escribirse solo una parte.
  * - Si el equipo vuelve a dejar lo propuesto después de haberlo corregido, también se registra
  *   (con `proposed` igual a `final`), para que la última corrección de cada correo sea la vigente.
  */
@@ -55,9 +58,10 @@ export function evaluateCategoryChange(
   const proposed = relevantCategories(decision.categories);
 
   if (decision.mode === 'live') {
+    const applied = relevantCategories(known.appliedCategories);
     const appliedByUs =
-      proposed.every((c) => observed.includes(c)) &&
-      observed.every((c) => seen.includes(c) || proposed.includes(c));
+      seen.every((c) => observed.includes(c)) &&
+      observed.every((c) => seen.includes(c) || applied.includes(c));
     if (appliedByUs) return { kind: 'seen-only' };
   }
 
