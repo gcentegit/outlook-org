@@ -104,6 +104,17 @@ describe('processMessage', () => {
     expect(d.store.forget).toHaveBeenCalledWith('m1');
   });
 
+  it('un 404 que no es del último intento se reintenta: puede ser pasajero', async () => {
+    const d = deps({
+      extract: vi.fn(async () => {
+        throw new GraphError('no existe', 404);
+      }),
+    });
+    await expect(processMessage('m1', d, { isLast: false })).rejects.toThrow('no existe');
+    expect(d.store.forget).not.toHaveBeenCalled();
+    expect(d.store.markFailed).not.toHaveBeenCalled();
+  });
+
   it('otros errores de Graph se propagan para que pg-boss reintente', async () => {
     const d = deps({
       extract: vi.fn(async () => {

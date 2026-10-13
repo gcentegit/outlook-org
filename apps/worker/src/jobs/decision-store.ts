@@ -60,15 +60,17 @@ export function createPrismaDecisionStore(db: Db): DecisionStore {
     },
 
     async forget(messageId) {
-      await db.message.deleteMany({ where: { id: messageId, decisions: { none: {} } } });
-      // Con decisión, lo normal es que el equipo lo haya archivado: al moverlo Graph le cambia el
+      // Sin decisión se borra. Con decisión, lo normal es que el equipo lo haya archivado: al moverlo Graph le cambia el
       // id y ya no se puede volver a leer por él. Se conserva la decisión y deja de estar en
       // cola y marcado: reprocesarlo daría 404 siempre. Su carpeta la sigue la comprobación de
       // carpetas, que lo busca por su conversación.
-      await db.message.updateMany({
-        where: { id: messageId },
-        data: { status: 'processed', needsReprocess: false },
-      });
+      await db.$transaction([
+        db.message.deleteMany({ where: { id: messageId, decisions: { none: {} } } }),
+        db.message.updateMany({
+          where: { id: messageId },
+          data: { status: 'processed', needsReprocess: false },
+        }),
+      ]);
     },
   };
 }

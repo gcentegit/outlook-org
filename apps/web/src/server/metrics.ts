@@ -28,11 +28,13 @@ import { madridDay } from './dates';
  * - Un correo está revisado por el equipo si tiene alguna categoría en Outlook, una corrección o
  *   está archivado en el árbol de una sociedad. Solo los revisados cuentan para el acierto
  *   (aciertos, falsos positivos y negativos, precisión por modelo y discrepancias): uno sin revisar
- *   no suma como acierto ni como fallo y se cuenta aparte como «pendiente de revisar».
+ *   no suma como acierto ni como fallo y se cuenta aparte como «sin contrastar». Con filtro de
+ *   categoría, lo mismo con un correo que no se puede comparar en esa categoría.
  * - Con solo la carpeta se comparan FOOD BOX y LATERAL: la carpeta no dice nada de ARCOBETA, que no
  *   tiene árbol propio y se archiva en Lateral. Por eso, si el correo es de ARCOBETA (según la
  *   propuesta o el equipo), el árbol Lateral no cuenta como LATERAL. Con categorías del grupo o
- *   corrección del equipo se comparan las tres.
+ *   corrección del equipo se comparan las tres, salvo LATERAL y ARCOBETA en ese caso si el equipo
+ *   no puso ninguna de las dos.
  * - Solo se comparan las tres categorías automatizadas (las demás no son de este clasificador).
  * - Las decisiones degradadas (se tomaron con docling o el LLM caídos) no cuentan en nada: ni en el
  *   acierto, ni en la cobertura, ni por modelo. Quedan pendientes de reprocesar.
@@ -150,14 +152,16 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
       archivedAs === 'LATERAL' &&
       [...labels, ...toCategories(latest?.categories ?? [])].includes('ARCOBETA');
     const folderTruth = arcobetaInLateral ? null : archivedAs;
-    const compared: Category[] = labelled
-      ? [...CATEGORIES]
-      : archivedAs
-        ? FOLDER_CATEGORIES.filter((c) => !(arcobetaInLateral && c === 'LATERAL'))
-        : message.seenCategories.length > 0
-          ? // Solo categorías ajenas al grupo: el equipo lo miró y no puso ninguna de las tres.
-            [...CATEGORIES]
+    // Sin carpeta, unas categorías ajenas al grupo también dicen que el equipo no puso ninguna.
+    const base =
+      labelled || (!archivedAs && message.seenCategories.length > 0)
+        ? CATEGORIES
+        : archivedAs
+          ? FOLDER_CATEGORIES
           : [];
+    // Si el equipo no dijo cuál de las dos, el árbol Lateral no aclara LATERAL ni ARCOBETA.
+    const undecided = arcobetaInLateral && !labels.some((c) => c === 'LATERAL' || c === 'ARCOBETA');
+    const compared = base.filter((c) => !(undecided && (c === 'LATERAL' || c === 'ARCOBETA')));
     return {
       id: message.id,
       receivedAt: message.receivedAt,
@@ -317,20 +321,17 @@ export function computeMetrics(
     if (decision.proposed.length === 0) doubtful++;
     else if (!category || decision.proposed.includes(category)) classified++;
     if (!category || decision.proposed.includes(category)) origin[decision.source]++;
-    // Sin revisar por el equipo no hay con qué comparar: ni acierto ni fallo.
-    if (!item.reviewed) {
+    // Sin nada del equipo con qué comparar en las categorías mostradas: ni acierto ni fallo.
+    if (!categories.some((c) => item.compared.includes(c))) {
       if (!category || decision.proposed.includes(category)) awaitingReview++;
       continue;
     }
     addToCells(cells, decision.proposed, item);
-    // Con filtro, un correo que no se puede comparar en esa categoría no suma a su semana.
-    if (categories.some((c) => item.compared.includes(c))) {
-      const key = weekOf(item.receivedAt);
-      const week = weeks.get(key) ?? { reviewed: 0, cells: emptyCells(categories) };
-      week.reviewed++;
-      addToCells(week.cells, decision.proposed, item);
-      weeks.set(key, week);
-    }
+    const key = weekOf(item.receivedAt);
+    const week = weeks.get(key) ?? { reviewed: 0, cells: emptyCells(categories) };
+    week.reviewed++;
+    addToCells(week.cells, decision.proposed, item);
+    weeks.set(key, week);
   }
 
   const perCategory = cellsToMetrics(cells);

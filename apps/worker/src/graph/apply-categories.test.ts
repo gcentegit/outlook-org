@@ -140,6 +140,13 @@ describe('applyCategories', () => {
     expect(store.applied).toEqual([]);
   });
 
+  it('si Graph falla con un 5xx, lo anotado se queda: pudo aplicarse', async () => {
+    const { graph } = fakeMailbox({ categories: [], etag: 1, patchStatus: 500 });
+    const store = memoryStore();
+    await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow('500');
+    expect(store.applied).toEqual(['LATERAL']);
+  });
+
   it('un 409 también se trata como conflicto: vuelve a leer y escribe', async () => {
     const message: FakeMessage = { categories: ['Pagado'], etag: 1, patchStatus: 409 };
     let reads = 0;

@@ -301,6 +301,13 @@ describe('verdad por carpeta', () => {
       lateral(['FOOD BOX'], { seenCategories: ['ARCOBETA'] }),
     ]);
     expect(labelledArcobeta?.team).toEqual(['ARCOBETA']);
+    // Si el equipo quitó las categorías sin decir cuál de las dos, tampoco se comparan.
+    const [emptyCorrection] = evaluateMessages([
+      lateral(['ARCOBETA'], {
+        corrections: [{ final: [], createdAt: new Date('2026-09-12T00:00:00Z') }],
+      }),
+    ]);
+    expect(emptyCorrection?.compared).toEqual(['FOOD BOX']);
   });
 
   it('una categoría ajena al grupo no hace comparar ARCOBETA en un correo archivado', () => {
@@ -374,11 +381,17 @@ describe('evolución por semana', () => {
 
   it('con filtro de categoría, «contrastados» solo cuenta los que se pueden comparar en ella', () => {
     const metrics = computeMetrics(
-      [message({ folder: 'foodbox', decisions: [decision({ categories: ['FOOD BOX'] })] })],
+      [
+        message({ folder: 'foodbox', decisions: [decision({ categories: ['FOOD BOX'] })] }),
+        message({ folder: 'foodbox', decisions: [decision({ categories: ['ARCOBETA'] })] }),
+      ],
       NO_LATENCY,
       'ARCOBETA',
     );
     expect(metrics.perWeek).toEqual([]);
+    expect(metrics.perCategory[0]).toMatchObject({ tp: 0, fp: 0, fn: 0, tn: 0 });
+    // El propuesto como ARCOBETA queda sin contrastar, no desaparece de las cifras.
+    expect(metrics.summary.awaitingReview).toBe(1);
   });
 });
 

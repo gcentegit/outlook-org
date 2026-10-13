@@ -105,7 +105,11 @@ export async function applyCategories(
         if (attempt < maxAttempts) continue;
         throw err;
       }
-      await deps.store.forgetApplied(messageId, result.added);
+      // Solo un rechazo definitivo (4xx) asegura que no se escribió. Un 5xx o un 429 tras los
+      // reintentos pudo aplicarse: lo anotado se queda, para no volver a poner lo que quite el equipo.
+      if (err.status < 500 && err.status !== 429) {
+        await deps.store.forgetApplied(messageId, result.added);
+      }
       throw err;
     }
     return result;

@@ -10,16 +10,7 @@ import {
 import { IDLE, type ActionState } from '@/lib/action-state';
 import type { CategoryMode } from '@/server/category-modes';
 
-import { Badge, buttonClass, inputClass, labelClass, Notice } from './ui';
-
-function Feedback({ state }: { state: ActionState }) {
-  return (
-    <div aria-live="polite" className="mt-2">
-      {state.status === 'ok' && <Notice tone="success">{state.message}</Notice>}
-      {state.status === 'error' && <Notice tone="error">{state.message}</Notice>}
-    </div>
-  );
-}
+import { ActionFeedback, Badge, buttonClass, inputClass, labelClass } from './ui';
 
 /** Una fila por categoría: modo actual y botón para cambiarlo (a live pide confirmar). */
 export function CategoryModeRow({
@@ -73,7 +64,7 @@ export function CategoryModeRow({
           </button>
         </div>
       </form>
-      <Feedback state={state} />
+      <ActionFeedback state={state} className="mt-2" />
     </li>
   );
 }
@@ -101,7 +92,7 @@ export function AddUserForm() {
           {pending ? 'Guardando...' : 'Dar de alta'}
         </button>
       </div>
-      <Feedback state={state} />
+      <ActionFeedback state={state} className="mt-2" />
     </form>
   );
 }

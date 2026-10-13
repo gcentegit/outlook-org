@@ -29,7 +29,7 @@ buzón hay que medir el acierto con datos reales.
     antes y se escribe con `If-Match`. Si el correo cambió entre medias (412 o 409), se vuelve a
     leer, hasta tres veces. Sin etag no se escribe. Nunca se quita ninguna.
   - Lo que escribe el servicio se anota en `AppliedCategory` antes del `PATCH` y se borra solo si
-    Graph lo rechaza. Si después el correo ya no la tiene, la quitó el equipo y no se vuelve a poner;
+    Graph lo rechaza (un 4xx); tras un 5xx o un 429 pudo aplicarse y se queda. Si después el correo ya no la tiene, la quitó el equipo y no se vuelve a poner;
     en la duda (no se sabe si se escribió), tampoco.
   - Si la escritura falla, la decisión queda guardada y el correo marcado para reprocesar: volver a
     escribir no duplica nada.

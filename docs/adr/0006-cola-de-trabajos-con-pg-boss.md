@@ -15,7 +15,8 @@ procesado. Código: `apps/worker/src/jobs/`.
   `singletonKey = messageId`), 5 reintentos con retroceso exponencial desde 30 s y caducidad de
   30 minutos. Es idempotente: no hace nada si ya hay una decisión válida del mismo modo, y dentro
   del proceso un mismo correo no se procesa dos veces a la vez. Un 404 de Graph (correo movido o
-  borrado) termina el trabajo sin error.
+  borrado) se reintenta como cualquier error, por si es pasajero, y en el último intento termina el
+  trabajo sin error.
 - **`Message` desde la detección:** la delta registra el correo como `pending` (remitente y asunto
   vacíos hasta procesarlo) antes de encolarlo; al terminar pasa a `processed` (o `failed`). Así
   «pendientes» y «fallidos» son reales y los cambios del equipo durante el procesado no se pierden.

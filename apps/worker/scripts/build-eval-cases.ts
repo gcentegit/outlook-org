@@ -16,20 +16,22 @@
  *     [--seed 1] [--out <ruta>]
  */
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { canonicalCategory, type Category, type ExtractedEmail } from '@clasificador/shared';
+import {
+  canonicalCategory,
+  TREE_FOLDERS,
+  type Category,
+  type ExtractedEmail,
+} from '@clasificador/shared';
 
-import { loadConfig } from '../src/config';
-import type { AttachmentTextCache, CachedMethod } from '../src/extract/attachment-text';
+import { loadConfig, resolveGraphSettings } from '../src/config';
 import { extractEmail } from '../src/extract/extract-email';
 import { createGraphClient, GraphError } from '../src/graph/client';
+import { createMemoryAttachmentCache } from '../src/history/extract-sample';
 
 const repoRoot = resolve(import.meta.dirname, '../../..');
-
-/** Árbol de carpetas → categoría que representa. */
-const TREES: Record<string, Category> = { Foodbox: 'FOOD BOX', Lateral: 'LATERAL' };
 
 interface HistoryRow {
   id: string;
@@ -59,28 +61,17 @@ function shuffled<T>(items: readonly T[], next: () => number): T[] {
   return out;
 }
 
-function treeOf(folderPath: string): string | null {
-  const [root, tree] = folderPath.split('/');
-  return root === 'Bandeja de entrada' && tree && tree in TREES ? tree : null;
+/** Árbol de una sociedad donde está archivado, sin distinguir mayúsculas (igual que el worker). */
+function treeOf(folderPath: string): (typeof TREE_FOLDERS)[number] | undefined {
+  const [root, name] = folderPath.toLowerCase().split('/');
+  return root === 'bandeja de entrada'
+    ? TREE_FOLDERS.find((t) => t.name.toLowerCase() === name)
+    : undefined;
 }
 
 function teamCategories(raw: HistoryRow['categories']): Category[] {
   const list = typeof raw === 'string' ? (JSON.parse(raw) as string[]) : raw;
   return list.map(canonicalCategory).filter((c): c is Category => c !== null);
-}
-
-/** Caché de texto de adjuntos en memoria: la evaluación no toca la base de datos. */
-function memoryCache(): AttachmentTextCache {
-  const store = new Map<string, { markdown: string; method: CachedMethod; expiresAt: Date }>();
-  return {
-    attachmentText: {
-      findUnique: async ({ where }) => store.get(where.hash) ?? null,
-      upsert: async ({ where, create }) => {
-        store.set(where.hash, create);
-        return create;
-      },
-    },
-  } as AttachmentTextCache;
 }
 
 async function main(): Promise<void> {
@@ -102,6 +93,11 @@ async function main(): Promise<void> {
   const since = new Date(values.since ?? split.splitDate);
   if (Number.isNaN(since.getTime())) throw new Error('--since no es una fecha válida');
   const out = resolve(values.out ?? join(dataDir, 'evaluacion', 'casos.jsonl'));
+  // Los casos llevan correos de terceros: nunca fuera de la carpeta de datos, ignorada por git.
+  if (relative(dataDir, out).startsWith('..'))
+    throw new Error(`--out debe estar dentro de ${dataDir}`);
+  const seed = Number(values.seed);
+  if (!Number.isInteger(seed)) throw new Error('--seed debe ser un número entero');
 
   const rows = (await readFile(join(dataDir, 'messages.jsonl'), 'utf8'))
     .split('\n')
@@ -109,9 +105,9 @@ async function main(): Promise<void> {
     .map((line) => JSON.parse(line) as HistoryRow)
     .filter((row) => new Date(row.receivedAt) >= since && treeOf(row.folderPath));
 
-  const next = random(Number(values.seed));
+  const next = random(seed);
   const sample: HistoryRow[] = [];
-  for (const tree of Object.keys(TREES)) {
+  for (const tree of TREE_FOLDERS) {
     const inTree = rows.filter((row) => treeOf(row.folderPath) === tree);
     sample.push(...shuffled(inTree, next).slice(0, perTree));
   }
@@ -125,19 +121,13 @@ async function main(): Promise<void> {
   );
 
   const config = loadConfig();
-  if (!config.GRAPH_TENANT_ID || !config.GRAPH_CLIENT_ID || !config.GRAPH_CERT_PATH) {
-    throw new Error('Faltan GRAPH_TENANT_ID, GRAPH_CLIENT_ID o GRAPH_CERT_PATH');
-  }
-  if (!config.MAILBOX) throw new Error('Falta MAILBOX');
-  const graph = createGraphClient({
-    tenantId: config.GRAPH_TENANT_ID,
-    clientId: config.GRAPH_CLIENT_ID,
-    certPath: resolve(repoRoot, config.GRAPH_CERT_PATH),
-  });
+  const graphSettings = resolveGraphSettings(config);
+  if ('missing' in graphSettings) throw new Error(`Faltan ${graphSettings.missing.join(', ')}`);
+  const { mailbox, certPath, ...credentials } = graphSettings.settings;
   const deps = {
-    graph,
-    mailbox: config.MAILBOX,
-    db: memoryCache(),
+    graph: createGraphClient({ ...credentials, certPath: resolve(repoRoot, certPath) }),
+    mailbox,
+    db: createMemoryAttachmentCache(),
     docling: {
       url: config.DOCLING_URL,
       maxPages: config.ATTACHMENT_MAX_PAGES,
@@ -161,9 +151,14 @@ async function main(): Promise<void> {
       }
       throw err;
     }
-    const tree = treeOf(row.folderPath) as string;
-    const expected = [...new Set([TREES[tree] as Category, ...teamCategories(row.categories)])];
-    await appendFile(out, `${JSON.stringify({ email, expected, tree })}\n`);
+    const tree = treeOf(row.folderPath);
+    const expected = [...new Set([tree?.category, ...teamCategories(row.categories)])].filter(
+      (c): c is Category => c !== undefined,
+    );
+    // Sin las categorías de Outlook: el clasificador las tomaría por puestas por el equipo y no
+    // preguntaría al LLM por ellas (igual que la evaluación del histórico).
+    const line = { email: { ...email, categories: [] }, expected, tree: tree?.name };
+    await appendFile(out, `${JSON.stringify(line)}\n`);
     written++;
     if ((i + 1) % 10 === 0) console.log(`${i + 1}/${sample.length}`);
   }

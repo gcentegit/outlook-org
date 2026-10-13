@@ -266,6 +266,23 @@ describe('checkFolders', () => {
     expect(result).toEqual({ checked: 0, archived: 0, failed: 1 });
     expect(checkedAt()).toBeNull();
   });
+
+  it('un fallo que no es de Graph (red, base de datos) tampoco tira la ronda', async () => {
+    const graph = fakeMailbox([
+      { conversationId: 'c1', receivedDateTime: '2026-10-10T09:00:00Z', parentFolderId: 'fb' },
+    ]);
+    const { store } = memoryStore([msg('m1', 'c1', '2026-10-10T09:00:00Z')]);
+    const result = await checkFolders({
+      graph,
+      mailbox: 'buzon@ejemplo.com',
+      store,
+      recordCategories: async () => {
+        throw new Error('base de datos caída');
+      },
+      log: () => {},
+    });
+    expect(result).toEqual({ checked: 0, archived: 0, failed: 1 });
+  });
 });
 
 describe('recordArchivedCategories', () => {
