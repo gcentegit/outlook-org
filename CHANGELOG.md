@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/gcentegit/outlook-org/compare/v0.6.2...v0.7.0) (2026-10-13)
+
+
+### 🚀 Novedades
+
+* **worker:** 🏷️ escritura de categorías en el buzón preparada y bloqueada hasta la activación real ([#48](https://github.com/gcentegit/outlook-org/issues/48)) ([1c3f627](https://github.com/gcentegit/outlook-org/commit/1c3f627653ecce3ec3d700c62df686ce5de5e341))
+* **worker:** 📊 casos de evaluación contra la carpeta donde el equipo archiva cada correo ([#49](https://github.com/gcentegit/outlook-org/issues/49)) ([39a22b5](https://github.com/gcentegit/outlook-org/commit/39a22b522933550f36d3e641de2f1e0f45877448))
+
+
+### 🔧 Correcciones
+
+* **web:** 🖼️ el panel tiene icono y la consola ya no da error por el favicon ([#50](https://github.com/gcentegit/outlook-org/issues/50)) ([84e8f00](https://github.com/gcentegit/outlook-org/commit/84e8f00b9c1ea95467870604c9bb8d95f0149cbf))
+
 ## [0.6.2](https://github.com/gcentegit/outlook-org/compare/v0.6.1...v0.6.2) (2026-10-12)
 
 
