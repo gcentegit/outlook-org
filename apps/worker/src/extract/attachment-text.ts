@@ -12,7 +12,7 @@ import {
 /** Retención del texto extraído (decisión de producto: 90 días). */
 export const ATTACHMENT_TEXT_TTL_DAYS = 90;
 
-type CachedMethod = 'texto' | 'ocr';
+export type CachedMethod = 'texto' | 'ocr';
 
 /** Parte del cliente de Prisma que usa la caché (facilita probarla sin base de datos). */
 export interface AttachmentTextCache {

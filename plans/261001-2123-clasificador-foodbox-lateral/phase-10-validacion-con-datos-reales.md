@@ -46,6 +46,9 @@ Validación:
 - [x] Prueba de extracción con facturas reales e informe: 69 de 70 con el CIF del grupo ([informe](../reports/validacion-261012-1415-extraccion-facturas-reales.md))
 - [ ] Importación real del histórico y reglas candidatas revisadas con el usuario
 - [ ] Evaluación contra la muestra, con y sin LLM, y comparativa de al menos dos modelos
+  - [x] Solo reglas contra la carpeta, 800 correos archivados desde el 2026-05-01: FOOD BOX 93,1 % de precisión y 84,5 % de cobertura; LATERAL 98,7 % y 74 % ([informe](../reports/evaluacion-261013-0031-acierto-contra-carpetas.md))
+  - [ ] Revisión del usuario de los 29 correos con una sociedad distinta de su carpeta, y decidir si ARCOBETA cuenta como acierto en el árbol Lateral
+  - [ ] Con reglas de remitente y con LLM, cuando el usuario lo decida
 - [x] Validación del cliente de Graph contra el buzón real (importación de la fase 9 y sincronización del worker en Dokploy)
 - [x] Validación del login con Microsoft real y de la lista de usuarios
 - [ ] Medir el acierto contra la carpeta donde se archiva cada correo: hoy el panel mide contra las etiquetas y el worker solo sigue la Bandeja de entrada ([ADR 0008](../../docs/adr/0008-correcciones-y-metrica-de-acierto.md))

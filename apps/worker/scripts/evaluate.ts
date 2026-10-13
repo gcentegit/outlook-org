@@ -19,6 +19,9 @@
  *   --threshold 0.8          umbral de confianza
  *   --max-chars 12000        caracteres máximos enviados al LLM
  *   --details                lista cada caso con su decisión
+ *
+ * Como el worker, toma los dominios del grupo de INTERNAL_EMAIL_DOMAINS. Los casos contra las
+ * carpetas del buzón se preparan con `scripts/build-eval-cases.ts`.
  */
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
@@ -124,7 +127,12 @@ function threadRepositoryFor(cases: readonly EvalCase[]): ThreadRepository {
 
 async function runAll(
   cases: readonly EvalCase[],
-  args: { rules: RuleRepository; llm: LlmClassifier | undefined; threshold: number },
+  args: {
+    rules: RuleRepository;
+    llm: LlmClassifier | undefined;
+    threshold: number;
+    internalDomains: readonly string[];
+  },
 ): Promise<ClassifyResult[]> {
   const threads = threadRepositoryFor(cases);
   const results: ClassifyResult[] = [];
@@ -137,6 +145,7 @@ async function runAll(
         threads,
         llm: args.llm,
         confidenceThreshold: args.threshold,
+        internalDomains: args.internalDomains,
       }),
     );
   }
@@ -190,6 +199,11 @@ async function main(): Promise<void> {
   }
 
   const cases = await parseCases(casesPath);
+  // Como el worker: con los dominios del grupo, la firma de un remitente interno no cuenta.
+  const internalDomains = (process.env.INTERNAL_EMAIL_DOMAINS ?? '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
 
   let rules: RuleRepository;
   let ruleSource: string;
@@ -235,7 +249,7 @@ async function main(): Promise<void> {
     }
 
     for (const run of runs) {
-      const results = await runAll(cases, { rules, llm: run.llm, threshold });
+      const results = await runAll(cases, { rules, llm: run.llm, threshold, internalDomains });
       summaries.push(summarizeRun(run.label, cases, results));
       if (values.details) printDetails(run.label, cases, results);
     }
@@ -245,7 +259,8 @@ async function main(): Promise<void> {
 
   console.log(`# Evaluación del clasificador\n`);
   console.log(
-    `Casos: ${cases.length} (${casesPath}) | reglas: ${ruleSource} | umbral: ${threshold}\n`,
+    `Casos: ${cases.length} (${casesPath}) | reglas: ${ruleSource} | umbral: ${threshold} | ` +
+      `dominios del grupo: ${internalDomains.length}\n`,
   );
   console.log(formatReport(summaries));
   if ((values.llm ?? []).length === 0) {
