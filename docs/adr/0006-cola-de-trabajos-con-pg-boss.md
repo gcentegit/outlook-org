@@ -20,7 +20,8 @@ procesado. Código: `apps/worker/src/jobs/`.
   vacíos hasta procesarlo) antes de encolarlo; al terminar pasa a `processed` (o `failed`). Así
   «pendientes» y «fallidos» son reales y los cambios del equipo durante el procesado no se pierden.
   Un correo conocido que sigue pendiente se vuelve a encolar. Un correo que da 404 se borra si
-  nunca tuvo decisión.
+  nunca tuvo decisión; si ya la tenía (lo normal es que el equipo lo archivara, y moverlo cambia el
+  id), la conserva, vuelve a `processed` y se le quita la marca de reprocesar.
 - **Qué se guarda:** al terminar, `Message` y `Decision` en una transacción; `Decision` lleva modelo,
   tokens, coste y latencia del LLM (null si no hubo llamada) y el modo de la ejecución.
 - **Cambios del equipo durante el procesado:** actualizan `seenCategories` y el trabajo no los pisa

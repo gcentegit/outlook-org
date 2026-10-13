@@ -13,7 +13,7 @@ export function FolderCheckButton({ lastCheck }: { lastCheck: string }) {
   return (
     <form action={action}>
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={pending} className={buttonClass.secondary}>
+        <button type="submit" disabled={pending} className={buttonClass.primary}>
           {pending ? 'Pidiendo la comparación...' : 'Comparar con las carpetas'}
         </button>
         <span className="text-sm text-muted">

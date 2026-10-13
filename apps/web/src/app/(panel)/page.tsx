@@ -125,7 +125,7 @@ function ServiceCard({
               </Link>
             </p>
           </Notice>
-          <ReprocessButton count={status.needsReprocess} />
+          <ReprocessButton count={status.needsReprocess} waitingLlm={causes['llm-unavailable']} />
         </div>
       )}
       <p className="mt-3 text-xs text-muted">

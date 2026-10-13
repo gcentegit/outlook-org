@@ -26,7 +26,10 @@ export interface DecisionStore {
   ): Promise<void>;
   /** El trabajo agotó los reintentos sin decisión: el correo queda fallido y marcado para reprocesar. */
   markFailed(messageId: string): Promise<void>;
-  /** El correo ya no está en el buzón: se olvida si nunca llegó a decidirse. */
+  /**
+   * El correo ya no se encuentra por su id (borrado, o archivado: moverlo cambia el id). Se olvida
+   * si nunca llegó a decidirse; si ya tiene decisión, la conserva y deja de estar en cola y marcado.
+   */
   forget(messageId: string): Promise<void>;
   /** No se pudieron escribir las categorías en el buzón: el correo queda marcado para reprocesar. */
   markApplyFailed(messageId: string): Promise<void>;
