@@ -26,8 +26,8 @@ export function ReprocessButton({ count, waitingLlm }: { count: number; waitingL
     >
       {waitingLlm > 0 && (
         <span className="text-sm text-muted">
-          {waiting} al modelo de lenguaje, que no está configurado: seguirán marcados hasta
-          configurarlo en{' '}
+          {waiting} al modelo de lenguaje, que no está configurado:{' '}
+          {waitingLlm === 1 ? 'seguirá marcado' : 'seguirán marcados'} hasta configurarlo en{' '}
           <Link href="/modelos" className="underline">
             Modelos
           </Link>

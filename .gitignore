@@ -22,7 +22,7 @@ packages/db/src/generated/
 *.log
 
 # Histórico del buzón (correos de terceros): nunca se sube
-data/
+/data/
 
 # Herramientas de agentes (estado local)
 .agentkit/
