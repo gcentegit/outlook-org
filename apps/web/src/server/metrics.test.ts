@@ -14,6 +14,7 @@ import {
   reprocessCause,
   type LoadedDecision,
   type LoadedMessage,
+  weekOf,
 } from './metrics';
 
 let counter = 0;
@@ -47,6 +48,7 @@ function message(over: Partial<LoadedMessage> = {}): LoadedMessage {
     subject: 'Factura',
     status: 'processed',
     seenCategories: [],
+    folder: null,
     decisions: [],
     corrections: [],
     ...over,
@@ -257,6 +259,128 @@ describe('computeMetrics', () => {
   });
 });
 
+describe('verdad por carpeta', () => {
+  const lateral = (categories: string[], over: Partial<LoadedMessage> = {}) =>
+    message({ folder: 'lateral', decisions: [decision({ categories })], ...over });
+
+  it('un correo archivado en el árbol de una sociedad cuenta como revisado con esa categoría', () => {
+    const [item] = evaluateMessages([lateral(['LATERAL'])]);
+    expect(item).toMatchObject({ team: ['LATERAL'], reviewed: true });
+    expect(item?.compared).toEqual(['FOOD BOX', 'LATERAL']);
+  });
+
+  it('en la Bandeja, en otra carpeta o sin comprobar no hay con qué comparar', () => {
+    for (const folder of ['inbox', 'other', 'missing', null] as const) {
+      const [item] = evaluateMessages([message({ folder })]);
+      expect(item).toMatchObject({ team: [], compared: [], reviewed: false });
+    }
+  });
+
+  it('con solo la carpeta, ARCOBETA no se compara; con categorías del equipo, sí', () => {
+    const metrics = computeMetrics(
+      [
+        lateral(['LATERAL']),
+        lateral(['FOOD BOX']),
+        lateral(['ARCOBETA'], { seenCategories: ['ARCOBETA'] }),
+      ],
+      NO_LATENCY,
+      null,
+    );
+    const by = Object.fromEntries(metrics.perCategory.map((row) => [row.category, row]));
+    expect(by.LATERAL).toMatchObject({ tp: 1, fn: 1, tn: 1 });
+    expect(by['FOOD BOX']).toMatchObject({ fp: 1, tn: 2 });
+    // Solo el tercero, con la etiqueta del equipo, dice algo de ARCOBETA.
+    expect(by.ARCOBETA).toMatchObject({ tp: 1, fp: 0, fn: 0, tn: 0 });
+  });
+
+  it('en el árbol Lateral, un correo de ARCOBETA no cuenta como fallo de LATERAL', () => {
+    const [proposedArcobeta] = evaluateMessages([lateral(['ARCOBETA'])]);
+    expect(proposedArcobeta).toMatchObject({ team: [], compared: ['FOOD BOX'], reviewed: true });
+    const [labelledArcobeta] = evaluateMessages([
+      lateral(['FOOD BOX'], { seenCategories: ['ARCOBETA'] }),
+    ]);
+    expect(labelledArcobeta?.team).toEqual(['ARCOBETA']);
+  });
+
+  it('una categoría ajena al grupo no hace comparar ARCOBETA en un correo archivado', () => {
+    const [item] = evaluateMessages([
+      message({
+        folder: 'foodbox',
+        seenCategories: ['Pagado'],
+        decisions: [decision({ categories: ['FOOD BOX', 'ARCOBETA'] })],
+      }),
+    ]);
+    expect(item?.compared).toEqual(['FOOD BOX', 'LATERAL']);
+    // Sin carpeta, una categoría ajena sigue contando como «revisado y ninguna de las tres».
+    const [unfiled] = evaluateMessages([message({ seenCategories: ['Pagado'] })]);
+    expect(unfiled?.compared).toEqual(['FOOD BOX', 'LATERAL', 'ARCOBETA']);
+  });
+
+  it('por modelo y en discrepancias solo cuentan las categorías comparables', () => {
+    const agrees = lateral(['LATERAL', 'ARCOBETA']);
+    const differs = lateral(['FOOD BOX']);
+    expect(listDiscrepancies([agrees, differs], null).map((d) => d.id)).toEqual([differs.id]);
+    expect(listDiscrepancies([agrees], 'ARCOBETA')).toEqual([]);
+  });
+
+  it('las categorías puestas en la carpeta se suman a la de la carpeta', () => {
+    const [item] = evaluateMessages([message({ folder: 'foodbox', seenCategories: ['LATERAL'] })]);
+    expect(item?.team).toEqual(['FOOD BOX', 'LATERAL']);
+    expect(item?.compared).toEqual(['FOOD BOX', 'LATERAL', 'ARCOBETA']);
+  });
+});
+
+describe('evolución por semana', () => {
+  it('weekOf da el lunes de la semana en hora de Madrid', () => {
+    expect(weekOf(new Date('2026-10-13T10:00:00Z'))).toBe('2026-10-12');
+    expect(weekOf(new Date('2026-10-12T00:30:00+02:00'))).toBe('2026-10-12');
+    // El domingo a las 23:30 de Madrid es aún esa semana; a las 00:30 del lunes ya es la siguiente.
+    expect(weekOf(new Date('2026-10-18T21:30:00Z'))).toBe('2026-10-12');
+    expect(weekOf(new Date('2026-10-18T22:30:00Z'))).toBe('2026-10-19');
+  });
+
+  it('agrupa los revisados por semana de recepción, la más reciente primero', () => {
+    const metrics = computeMetrics(
+      [
+        message({
+          folder: 'foodbox',
+          receivedAt: new Date('2026-10-06T09:00:00Z'),
+          decisions: [decision({ categories: ['FOOD BOX'] })],
+        }),
+        message({
+          folder: 'foodbox',
+          receivedAt: new Date('2026-10-13T09:00:00Z'),
+          decisions: [decision({ categories: ['LATERAL'] })],
+        }),
+        message({
+          folder: 'inbox',
+          receivedAt: new Date('2026-10-13T10:00:00Z'),
+          decisions: [decision({ categories: ['LATERAL'] })],
+        }),
+      ],
+      NO_LATENCY,
+      'FOOD BOX',
+    );
+    expect(metrics.perWeek.map((w) => [w.week, w.reviewed])).toEqual([
+      ['2026-10-12', 1],
+      ['2026-10-05', 1],
+    ]);
+    expect(metrics.perWeek[0]?.perCategory).toMatchObject([
+      { category: 'FOOD BOX', tp: 0, fn: 1, recall: 0 },
+    ]);
+    expect(metrics.perWeek[1]?.perCategory[0]).toMatchObject({ precision: 1, recall: 1 });
+  });
+
+  it('con filtro de categoría, «contrastados» solo cuenta los que se pueden comparar en ella', () => {
+    const metrics = computeMetrics(
+      [message({ folder: 'foodbox', decisions: [decision({ categories: ['FOOD BOX'] })] })],
+      NO_LATENCY,
+      'ARCOBETA',
+    );
+    expect(metrics.perWeek).toEqual([]);
+  });
+});
+
 describe('listDiscrepancies', () => {
   const agree = message({
     seenCategories: ['FOOD BOX'],
@@ -362,6 +486,7 @@ describe('getServiceStatus', () => {
     };
     const status = await getServiceStatus(db as never, 300, new Date('2026-10-02T12:00:00Z'));
     expect(status).toMatchObject({ state: 'ok', pending: 4, failed: 2, needsReprocess: 5 });
+    expect(status.lastFolderCheckAt).toEqual(new Date('2026-10-02T11:59:00Z'));
   });
 });
 

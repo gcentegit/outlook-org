@@ -27,6 +27,9 @@ procesado. Código: `apps/worker/src/jobs/`.
   al guardar. Si el cambio llega antes de que se extraiga el correo, el clasificador lo trata como
   puesto por el equipo al llegar, no como corrección.
 - **Limpieza:** cola `cleanup-attachment-text`, programada cada día a las 03:30 (Europe/Madrid).
+- **Carpeta de cada correo:** cola `check-folders`, programada cada hora y que también encola el
+  panel. Política `stately`: como mucho una ronda esperando y otra en marcha, así que pulsar el botón
+  varias veces o coincidir con la programada no las solapa. El panel no espera al resultado.
 - Las peticiones del panel (probar modelo, categorías, reprocesar) usan colas propias
   ([0015](0015-web-sin-credenciales-del-buzon.md)).
 

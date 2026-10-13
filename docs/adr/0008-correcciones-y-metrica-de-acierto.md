@@ -7,7 +7,8 @@
 El servicio necesita saber cuándo el equipo discrepa de lo que propone, y el acierto tiene que
 medirse de forma honesta. Hoy el equipo pone las etiquetas FOOD BOX y LATERAL solo a veces, y
 ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verdad completa. Código:
-`apps/worker/src/corrections.ts` y `apps/web/src/server/metrics.ts`.
+`apps/worker/src/corrections.ts`, `apps/worker/src/sync/folders.ts` y
+`apps/web/src/server/metrics.ts`.
 
 ## Decisión
 
@@ -24,10 +25,17 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
 
 **Métrica**
 
-- **Solo cuentan los correos que el equipo ha revisado**: los que tienen alguna categoría en
-  Outlook (aunque no sea de las tres) o una corrección. Los demás no suman ni como acierto ni como
-  fallo (ni por categoría, ni por modelo, ni en las discrepancias) y se muestran aparte como
-  «pendientes de revisar». Las decisiones degradadas tampoco cuentan.
+- **Solo cuentan los correos que el equipo ha revisado**: los archivados en el árbol de una
+  sociedad y los que tienen alguna categoría en Outlook (aunque no sea de las tres) o una
+  corrección. Los demás no suman ni como acierto ni como fallo (ni por categoría, ni por modelo, ni
+  en las discrepancias) y se muestran aparte como «sin contrastar». Las decisiones degradadas
+  tampoco cuentan.
+- **Con solo la carpeta se comparan FOOD BOX y LATERAL.** La carpeta no dice nada de ARCOBETA, que
+  no tiene árbol propio y se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone una
+  categoría del grupo. Las categorías del equipo se suman a la de la carpeta.
+- **El árbol Lateral vale por «LATERAL o ARCOBETA»** (provisional, hasta que el equipo diga cómo
+  archiva ARCOBETA): si la propuesta o el equipo dicen ARCOBETA, la carpeta no cuenta como LATERAL
+  ni como fallo de LATERAL.
 - El panel limita el rango de fechas a 366 días (carga en memoria los correos del periodo).
 - **La verdad de referencia es la carpeta donde el equipo archiva cada correo**, más una revisión
   a mano de los casos que la carpeta no resuelve. El descubrimiento mostró que el equipo mueve casi
@@ -41,9 +49,16 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
 
 ## Consecuencias
 
-- El panel mide hoy contra las etiquetas de Outlook. Medir contra la carpeta exige saber a qué
-  carpeta se mueve cada correo, y el worker solo sigue la Bandeja de entrada: es una tarea de la
-  fase 10 del plan.
+- La sincronización solo sigue la Bandeja de entrada, así que no ve a qué carpeta se mueve un
+  correo. El worker lo comprueba aparte cada hora y cuando se pide desde el panel: busca cada correo
+  por su conversación y su fecha de recepción (el id de Graph cambia al moverlo), guarda la carpeta
+  en `Message.folder` y, fuera de la Bandeja, anota también sus categorías con la misma lógica que
+  la sincronización (con su corrección, si la hay). Los que siguen en la Bandeja se miran en cada
+  ronda; los archivados en el último mes, una vez al día; los que ya no están, nunca más. Solo lee
+  el buzón.
+- Un correo de varias sociedades archivado en una sola carpeta cuenta como fallo de la otra
+  categoría: la carpeta solo admite una sociedad. Hasta que el equipo decida qué hacer con las
+  facturas entre sociedades, esos casos se revisan a mano.
 - Sin revisión humana no hay acierto: durante el modo sombra hace falta revisar una muestra
   semanal en el panel.
 - Un sistema que etiquetara el 5 % de los correos con un 100 % de precisión cumpliría solo el

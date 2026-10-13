@@ -32,6 +32,7 @@ import { createPrismaDecisionStore } from './jobs/decision-store';
 import {
   createBoss,
   enqueueMessage,
+  registerCheckFoldersWorker,
   registerCleanupWorker,
   registerPanelWorkers,
   registerProcessWorker,
@@ -41,6 +42,11 @@ import {
 import { createPrismaReprocessStore } from './jobs/reprocess';
 import { describeSeed } from './seed-report';
 import { INBOX_SYNC_ID, syncInbox } from './sync/delta';
+import {
+  checkFolders,
+  createPrismaFolderCheckStore,
+  recordArchivedCategories,
+} from './sync/folders';
 import { acquireInstanceLock, type InstanceLock } from './sync/instance-lock';
 import { createMasterCategoriesProvider } from './sync/master-categories';
 import { createPoller, type Poller } from './sync/poller';
@@ -225,6 +231,17 @@ export async function startWorker(
     );
 
     const syncStore = createPrismaSyncStore(db);
+    const folderStore = createPrismaFolderCheckStore(db);
+    await registerCheckFoldersWorker(boss, () =>
+      checkFolders({
+        graph,
+        mailbox,
+        store: folderStore,
+        recordCategories: (messageId, categories) =>
+          recordArchivedCategories(syncStore, messageId, categories),
+      }),
+    );
+
     poller = createPoller({
       intervalMs: config.POLL_INTERVAL_SECONDS * 1000,
       heartbeat: createHeartbeat({ url: config.UPTIME_KUMA_PUSH_URL }),
