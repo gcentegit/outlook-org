@@ -76,6 +76,8 @@ model Message {
   needsReprocess Boolean       @default(false)
   /// Carpeta donde está el correo la última vez que se comprobó (null: aún sin comprobar).
   folder          MessageFolder?
+  /// Ruta de esa carpeta (`Bandeja de entrada/Foodbox/2026`); null si no se conoce o ya no existe.
+  folderPath      String?
   folderCheckedAt DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

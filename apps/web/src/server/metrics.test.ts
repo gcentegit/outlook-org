@@ -49,6 +49,7 @@ function message(over: Partial<LoadedMessage> = {}): LoadedMessage {
     status: 'processed',
     seenCategories: [],
     folder: null,
+    folderPath: null,
     decisions: [],
     corrections: [],
     ...over,

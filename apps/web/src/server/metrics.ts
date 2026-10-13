@@ -69,6 +69,8 @@ export interface LoadedMessage {
   seenCategories: string[];
   /** Carpeta donde está el correo según la última comprobación; null si aún no se ha comprobado. */
   folder: MessageFolder | null;
+  /** Ruta de esa carpeta (`Bandeja de entrada/Foodbox/2026`); null si no se conoce. */
+  folderPath: string | null;
   decisions: LoadedDecision[];
   corrections: { final: string[]; createdAt: Date }[];
 }
@@ -97,6 +99,7 @@ export interface EvaluatedMessage {
   } | null;
   team: Category[];
   folder: MessageFolder | null;
+  folderPath: string | null;
   /** Categorías en las que se sabe qué quiere el equipo (vacío: sin revisar). */
   compared: Category[];
   /** El equipo ya ha mirado el correo: tiene categoría en Outlook, corrección o carpeta de sociedad. */
@@ -177,6 +180,7 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
           : null,
       team: folderTruth ? toCategories([...labels, folderTruth]) : labels,
       folder: message.folder,
+      folderPath: message.folderPath,
       compared,
       reviewed: compared.length > 0,
     };
@@ -526,6 +530,7 @@ export async function loadMessages(
       status: true,
       seenCategories: true,
       folder: true,
+      folderPath: true,
       decisions: {
         select: {
           id: true,

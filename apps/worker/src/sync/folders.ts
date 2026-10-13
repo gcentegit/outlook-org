@@ -40,8 +40,14 @@ export interface MessageToLocate {
   receivedAt: Date;
 }
 
-export interface MessageLocation {
+/** Dónde está una carpeta: su tipo y su ruta legible (`Bandeja de entrada/Foodbox/2026`). */
+export interface FolderInfo {
   folder: MessageFolder;
+  /** Null si la carpeta no aparece en la lista (creada después de leerla). */
+  path: string | null;
+}
+
+export interface MessageLocation extends FolderInfo {
   /**
    * Categorías que tiene en Outlook donde está ahora. Null si sigue en la Bandeja (o hay una copia
    * allí): de esas se ocupa la sincronización. También null si ya no existe.
@@ -56,7 +62,7 @@ export interface FolderCheckStore {
    */
   listToCheck(now: Date, limit: number): Promise<MessageToLocate[]>;
   /** Si el correo se ha borrado mientras tanto (p. ej. dio 404 al procesarlo), no hace nada. */
-  saveLocation(messageId: string, folder: MessageFolder, checkedAt: Date): Promise<void>;
+  saveLocation(messageId: string, location: FolderInfo, checkedAt: Date): Promise<void>;
   /** Fecha de la última ronda que comprobó algo, para el panel. */
   markChecked(at: Date): Promise<void>;
 }
@@ -75,12 +81,13 @@ const userPath = (mailbox: string): string => `/users/${encodeURIComponent(mailb
 
 /**
  * Traduce el id de una carpeta a dónde está: la Bandeja de entrada, uno de los árboles de las
- * sociedades (la carpeta con su nombre directamente bajo la Bandeja y todas sus subcarpetas) u otra.
+ * sociedades (la carpeta con su nombre directamente bajo la Bandeja y todas sus subcarpetas) u otra,
+ * con su ruta.
  */
 export async function loadFolderMap(
   graph: GraphClient,
   mailbox: string,
-): Promise<(folderId: string) => MessageFolder> {
+): Promise<(folderId: string) => FolderInfo> {
   const inbox = await graph.getJson<GraphFolderRef>(
     `${userPath(mailbox)}/mailFolders/inbox?$select=id`,
   );
@@ -88,16 +95,18 @@ export async function loadFolderMap(
   const inboxPath = folders.find((folder) => folder.id === inbox.id)?.path;
   if (!inboxPath) throw new Error('No se encontró la Bandeja de entrada entre las carpetas.');
 
-  const byId = new Map<string, MessageFolder>([[inbox.id, 'inbox']]);
+  const byId = new Map<string, FolderInfo>();
   for (const folder of folders) {
     const path = folder.path.toLowerCase();
     const tree = TREE_FOLDERS.find((t) => {
       const root = `${inboxPath}/${t.name}`.toLowerCase();
       return path === root || path.startsWith(`${root}/`);
     });
-    if (tree) byId.set(folder.id, tree.folder);
+    const kind = folder.id === inbox.id ? 'inbox' : (tree?.folder ?? 'other');
+    byId.set(folder.id, { folder: kind, path: folder.path });
   }
-  return (folderId) => byId.get(folderId) ?? 'other';
+  if (!byId.has(inbox.id)) byId.set(inbox.id, { folder: 'inbox', path: inboxPath });
+  return (folderId) => byId.get(folderId) ?? { folder: 'other', path: null };
 }
 
 /** Si una copia está en el árbol de una sociedad, manda esa; después la Bandeja; al final otras. */
@@ -113,7 +122,7 @@ export async function locateMessage(
   graph: GraphClient,
   mailbox: string,
   message: MessageToLocate,
-  folderOf: (folderId: string) => MessageFolder,
+  folderOf: (folderId: string) => FolderInfo,
 ): Promise<MessageLocation> {
   const filter = `conversationId eq '${message.conversationId.replaceAll("'", "''")}'`;
   const items = await graph.getAll<GraphMessageLocation>(
@@ -125,12 +134,16 @@ export async function locateMessage(
     .filter(
       (item) => Math.abs(Date.parse(item.receivedDateTime) - received) < RECEIVED_TOLERANCE_MS,
     )
-    .map((item) => ({ item, folder: folderOf(item.parentFolderId) }))
+    .map((item) => ({ item, ...folderOf(item.parentFolderId) }))
     .sort((a, b) => FOLDER_RANK[a.folder] - FOLDER_RANK[b.folder]);
   const best = matches[0];
-  if (!best) return { folder: 'missing', categories: null };
+  if (!best) return { folder: 'missing', path: null, categories: null };
   const inInbox = matches.some((match) => match.folder === 'inbox');
-  return { folder: best.folder, categories: inInbox ? null : (best.item.categories ?? []) };
+  return {
+    folder: best.folder,
+    path: best.path,
+    categories: inInbox ? null : (best.item.categories ?? []),
+  };
 }
 
 /**
@@ -177,7 +190,7 @@ export async function checkFolders(deps: CheckFoldersDeps): Promise<CheckFolders
     for (const message of pending) {
       try {
         const location = await locateMessage(deps.graph, deps.mailbox, message, folderOf);
-        await deps.store.saveLocation(message.id, location.folder, now);
+        await deps.store.saveLocation(message.id, location, now);
         if (location.categories) await deps.recordCategories(message.id, location.categories);
         result.checked++;
         if (location.folder === 'foodbox' || location.folder === 'lateral') result.archived++;
@@ -201,7 +214,15 @@ export function createPrismaFolderCheckStore(
       const select = { id: true, conversationId: true, receivedAt: true } as const;
       const withConversation = { conversationId: { not: '' } };
       const urgent = await db.message.findMany({
-        where: { ...withConversation, OR: [{ folderCheckedAt: null }, { folder: 'inbox' }] },
+        where: {
+          ...withConversation,
+          OR: [
+            { folderCheckedAt: null },
+            { folder: 'inbox' },
+            // Comprobados antes de guardar la ruta: se completan en la siguiente ronda.
+            { folder: { in: ['foodbox', 'lateral', 'other'] }, folderPath: null },
+          ],
+        },
         orderBy: { folderCheckedAt: { sort: 'asc', nulls: 'first' } },
         take: limit,
         select,
@@ -220,10 +241,10 @@ export function createPrismaFolderCheckStore(
       });
       return [...urgent, ...settled];
     },
-    async saveLocation(messageId, folder, checkedAt) {
+    async saveLocation(messageId, { folder, path }, checkedAt) {
       await db.message.updateMany({
         where: { id: messageId },
-        data: { folder, folderCheckedAt: checkedAt },
+        data: { folder, folderPath: path, folderCheckedAt: checkedAt },
       });
     },
     async markChecked(at) {
