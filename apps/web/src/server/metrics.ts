@@ -3,10 +3,16 @@ import {
   CATEGORIES,
   canonicalCategory,
   decisionSourceSchema,
+  FOLDER_CATEGORIES,
+  folderCategory,
+  FOLDERS_SYNC_ID,
   type Category,
   type DecisionSource,
+  type MessageFolder,
 } from '@clasificador/shared';
 import { z } from 'zod';
+
+import { madridDay } from './dates';
 
 /**
  * Métricas del panel. Las consultas leen los mínimos campos de `Message`, `Decision` y
@@ -16,12 +22,17 @@ import { z } from 'zod';
  * Definiciones:
  * - Decisión vigente de un correo: la más reciente (sombra o live).
  * - Categorías del equipo: la última `Correction.final` si existe; si no, las categorías que el
- *   correo tiene en Outlook (`seenCategories`). En modo sombra son solo las de personas; en modo
+ *   correo tiene en Outlook (`seenCategories`), más la de la carpeta donde lo archivó (árbol
+ *   Foodbox → FOOD BOX, árbol Lateral → LATERAL). En modo sombra son solo las de personas; en modo
  *   live incluyen las que aplicó el servicio, así que ahí el acierto es más optimista.
- * - Un correo está revisado por el equipo si tiene alguna categoría en Outlook o una corrección.
- *   Solo los revisados cuentan para el acierto (aciertos, falsos positivos y negativos, precisión
- *   por modelo y discrepancias): uno sin revisar no suma como acierto ni como fallo y se cuenta
- *   aparte como «pendiente de revisar».
+ * - Un correo está revisado por el equipo si tiene alguna categoría en Outlook, una corrección o
+ *   está archivado en el árbol de una sociedad. Solo los revisados cuentan para el acierto
+ *   (aciertos, falsos positivos y negativos, precisión por modelo y discrepancias): uno sin revisar
+ *   no suma como acierto ni como fallo y se cuenta aparte como «pendiente de revisar».
+ * - Con solo la carpeta se comparan FOOD BOX y LATERAL: la carpeta no dice nada de ARCOBETA, que no
+ *   tiene árbol propio y se archiva en Lateral. Por eso, si el correo es de ARCOBETA (según la
+ *   propuesta o el equipo), el árbol Lateral no cuenta como LATERAL. Con categorías del grupo o
+ *   corrección del equipo se comparan las tres.
  * - Solo se comparan las tres categorías automatizadas (las demás no son de este clasificador).
  * - Las decisiones degradadas (se tomaron con docling o el LLM caídos) no cuentan en nada: ni en el
  *   acierto, ni en la cobertura, ni por modelo. Quedan pendientes de reprocesar.
@@ -56,6 +67,8 @@ export interface LoadedMessage {
   /** Estado del trabajo del worker: `pending` en cola, `failed` agotó los reintentos sin decisión. */
   status: 'pending' | 'processed' | 'failed';
   seenCategories: string[];
+  /** Carpeta donde está el correo según la última comprobación; null si aún no se ha comprobado. */
+  folder: MessageFolder | null;
   decisions: LoadedDecision[];
   corrections: { final: string[]; createdAt: Date }[];
 }
@@ -83,7 +96,10 @@ export interface EvaluatedMessage {
     needsReview: boolean;
   } | null;
   team: Category[];
-  /** El equipo ya ha mirado el correo: tiene alguna categoría en Outlook o una corrección. */
+  folder: MessageFolder | null;
+  /** Categorías en las que se sabe qué quiere el equipo (vacío: sin revisar). */
+  compared: Category[];
+  /** El equipo ya ha mirado el correo: tiene categoría en Outlook, corrección o carpeta de sociedad. */
   reviewed: boolean;
 }
 
@@ -120,6 +136,25 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
       (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     )[0];
     const details = latest ? readDetails(latest.decision) : null;
+    const labels = toCategories(lastCorrection ? lastCorrection.final : message.seenCategories);
+    // Con categorías del grupo o una corrección, el equipo ha dicho algo de las tres.
+    const labelled = lastCorrection !== undefined || labels.length > 0;
+    const archivedAs = folderCategory(message.folder);
+    // Provisional hasta que el equipo diga cómo archiva ARCOBETA: va al árbol Lateral, así que esa
+    // carpeta vale por «LATERAL o ARCOBETA». Si el correo es de ARCOBETA según la propuesta o el
+    // equipo, la carpeta no dice si además es de LATERAL.
+    const arcobetaInLateral =
+      archivedAs === 'LATERAL' &&
+      [...labels, ...toCategories(latest?.categories ?? [])].includes('ARCOBETA');
+    const folderTruth = arcobetaInLateral ? null : archivedAs;
+    const compared: Category[] = labelled
+      ? [...CATEGORIES]
+      : archivedAs
+        ? FOLDER_CATEGORIES.filter((c) => !(arcobetaInLateral && c === 'LATERAL'))
+        : message.seenCategories.length > 0
+          ? // Solo categorías ajenas al grupo: el equipo lo miró y no puso ninguna de las tres.
+            [...CATEGORIES]
+          : [];
     return {
       id: message.id,
       receivedAt: message.receivedAt,
@@ -140,8 +175,10 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
               needsReview: details.needsReview,
             }
           : null,
-      team: toCategories(lastCorrection ? lastCorrection.final : message.seenCategories),
-      reviewed: lastCorrection !== undefined || message.seenCategories.length > 0,
+      team: folderTruth ? toCategories([...labels, folderTruth]) : labels,
+      folder: message.folder,
+      compared,
+      reviewed: compared.length > 0,
     };
   });
 }
@@ -174,6 +211,15 @@ export interface ModelMetrics {
   avgLatencyMs: number | null;
 }
 
+/** Precisión y cobertura de las decisiones de los correos recibidos en una semana. */
+export interface WeekMetrics {
+  /** Lunes de la semana (`YYYY-MM-DD`, hora de Madrid). */
+  week: string;
+  /** Correos con decisión válida y revisados por el equipo. */
+  reviewed: number;
+  perCategory: CategoryMetrics[];
+}
+
 export interface Metrics {
   summary: {
     read: number;
@@ -188,12 +234,52 @@ export interface Metrics {
     coverage: number | null;
   };
   perCategory: CategoryMetrics[];
+  /** De la semana más reciente a la más antigua. */
+  perWeek: WeekMetrics[];
   origin: Record<Origin, number>;
   perModel: ModelMetrics[];
 }
 
-const sameSet = (a: readonly string[], b: readonly string[]): boolean =>
-  a.length === b.length && a.every((x) => b.includes(x));
+/** La decisión coincide con el equipo en todas las categorías que se pueden comparar. */
+const agrees = (proposed: readonly Category[], item: EvaluatedMessage): boolean =>
+  item.compared.every((c) => proposed.includes(c) === item.team.includes(c));
+
+type Cells = Map<Category, { tp: number; fp: number; fn: number; tn: number }>;
+
+const emptyCells = (categories: readonly Category[]): Cells =>
+  new Map(categories.map((c) => [c, { tp: 0, fp: 0, fn: 0, tn: 0 }]));
+
+/** Suma un correo revisado a la tabla de aciertos, solo en las categorías que se pueden comparar. */
+function addToCells(cells: Cells, proposed: readonly Category[], item: EvaluatedMessage): void {
+  for (const [c, cell] of cells) {
+    if (!item.compared.includes(c)) continue;
+    const did = proposed.includes(c);
+    const should = item.team.includes(c);
+    if (did && should) cell.tp++;
+    else if (did) cell.fp++;
+    else if (should) cell.fn++;
+    else cell.tn++;
+  }
+}
+
+function cellsToMetrics(cells: Cells): CategoryMetrics[] {
+  return [...cells].map(([category, { tp, fp, fn, tn }]) => ({
+    category,
+    tp,
+    fp,
+    fn,
+    tn,
+    precision: ratio(tp, tp + fp),
+    recall: ratio(tp, tp + fn),
+  }));
+}
+
+/** Lunes (`YYYY-MM-DD`) de la semana de un instante, en hora de Madrid. */
+export function weekOf(instant: Date): string {
+  const day = new Date(`${madridDay(instant)}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+  return day.toISOString().slice(0, 10);
+}
 
 /**
  * Calcula las métricas de un conjunto de correos. El filtro de categoría limita los clasificados,
@@ -213,9 +299,8 @@ export function computeMetrics(
   let pending = 0;
   let awaitingReview = 0;
   const origin: Record<Origin, number> = { thread: 0, rule: 0, llm: 0, none: 0 };
-  const cells = new Map<Category, { tp: number; fp: number; fn: number; tn: number }>(
-    categories.map((c) => [c, { tp: 0, fp: 0, fn: 0, tn: 0 }]),
-  );
+  const cells = emptyCells(categories);
+  const weeks = new Map<string, { reviewed: number; cells: Cells }>();
 
   for (const item of evaluated) {
     const decision = item.decision;
@@ -233,30 +318,25 @@ export function computeMetrics(
       if (!category || decision.proposed.includes(category)) awaitingReview++;
       continue;
     }
-    for (const c of categories) {
-      const cell = cells.get(c);
-      if (!cell) continue;
-      const did = decision.proposed.includes(c);
-      const should = item.team.includes(c);
-      if (did && should) cell.tp++;
-      else if (did) cell.fp++;
-      else if (should) cell.fn++;
-      else cell.tn++;
+    addToCells(cells, decision.proposed, item);
+    // Con filtro, un correo que no se puede comparar en esa categoría no suma a su semana.
+    if (categories.some((c) => item.compared.includes(c))) {
+      const key = weekOf(item.receivedAt);
+      const week = weeks.get(key) ?? { reviewed: 0, cells: emptyCells(categories) };
+      week.reviewed++;
+      addToCells(week.cells, decision.proposed, item);
+      weeks.set(key, week);
     }
   }
 
-  const perCategory = categories.map((c): CategoryMetrics => {
-    const { tp, fp, fn, tn } = cells.get(c) ?? { tp: 0, fp: 0, fn: 0, tn: 0 };
-    return {
-      category: c,
-      tp,
-      fp,
-      fn,
-      tn,
-      precision: ratio(tp, tp + fp),
-      recall: ratio(tp, tp + fn),
-    };
-  });
+  const perCategory = cellsToMetrics(cells);
+  const perWeek = [...weeks]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([week, row]): WeekMetrics => ({
+      week,
+      reviewed: row.reviewed,
+      perCategory: cellsToMetrics(row.cells),
+    }));
 
   const models = new Map<
     string,
@@ -271,7 +351,7 @@ export function computeMetrics(
       row.decisions++;
       if (item?.reviewed) {
         row.reviewed++;
-        if (sameSet(toCategories(decision.categories), item.team)) row.correct++;
+        if (agrees(toCategories(decision.categories), item)) row.correct++;
       }
       row.cost += decision.costUsd ?? 0;
       models.set(decision.model, row);
@@ -299,6 +379,7 @@ export function computeMetrics(
       coverage: ratio(classified, classified + doubtful),
     },
     perCategory,
+    perWeek,
     origin,
     perModel,
   };
@@ -321,9 +402,12 @@ export function listDiscrepancies(
     .filter((item): item is Discrepancy => {
       if (!item.decision || item.decision.degraded || !item.reviewed) return false;
       if (category) {
-        return item.decision.proposed.includes(category) !== item.team.includes(category);
+        return (
+          item.compared.includes(category) &&
+          item.decision.proposed.includes(category) !== item.team.includes(category)
+        );
       }
-      return !sameSet(item.decision.proposed, item.team);
+      return !agrees(item.decision.proposed, item);
     })
     .sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
 }
@@ -441,6 +525,7 @@ export async function loadMessages(
       subject: true,
       status: true,
       seenCategories: true,
+      folder: true,
       decisions: {
         select: {
           id: true,
@@ -539,6 +624,8 @@ export interface ServiceStatus {
   /** Correos marcados para reprocesar (fallidos o decididos con docling o el LLM caídos). */
   needsReprocess: number;
   lastDecisionAt: Date | null;
+  /** Última comprobación de en qué carpeta está cada correo (null: nunca). */
+  lastFolderCheckAt: Date | null;
 }
 
 /** Por qué está un correo pendiente de reprocesar; decide qué se le dice a quien mira el panel. */
@@ -598,8 +685,9 @@ export async function getServiceStatus(
   staleSeconds: number,
   now: Date = new Date(),
 ): Promise<ServiceStatus> {
-  const [sync, pending, failed, needsReprocess, lastDecision] = await Promise.all([
+  const [sync, folders, pending, failed, needsReprocess, lastDecision] = await Promise.all([
     db.syncState.findUnique({ where: { id: 'inbox' }, select: { lastSyncAt: true } }),
+    db.syncState.findUnique({ where: { id: FOLDERS_SYNC_ID }, select: { lastSyncAt: true } }),
     db.message.count({ where: { status: 'pending' } }),
     db.message.count({ where: { status: 'failed' } }),
     db.message.count({ where: { needsReprocess: true } }),
@@ -614,5 +702,6 @@ export async function getServiceStatus(
     failed,
     needsReprocess,
     lastDecisionAt: lastDecision?.createdAt ?? null,
+    lastFolderCheckAt: folders?.lastSyncAt ?? null,
   };
 }

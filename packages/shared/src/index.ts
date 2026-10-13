@@ -6,3 +6,4 @@ export * from './extracted-email';
 export * from './sociedades';
 export * from './test-classify';
 export * from './master-categories';
+export * from './folders';

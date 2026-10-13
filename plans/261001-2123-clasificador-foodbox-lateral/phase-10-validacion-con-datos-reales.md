@@ -51,12 +51,12 @@ Validación:
   - [ ] Con reglas de remitente y con LLM, cuando el usuario lo decida
 - [x] Validación del cliente de Graph contra el buzón real (importación de la fase 9 y sincronización del worker en Dokploy)
 - [x] Validación del login con Microsoft real y de la lista de usuarios
-- [ ] Medir el acierto contra la carpeta donde se archiva cada correo: hoy el panel mide contra las etiquetas y el worker solo sigue la Bandeja de entrada ([ADR 0008](../../docs/adr/0008-correcciones-y-metrica-de-acierto.md))
-  - Propuesta del 2026-10-12, aplazada por el usuario: la tabla de precisión y cobertura del panel apenas se mueve porque solo compara con los correos que el equipo etiqueta en Outlook (41 de 43 decididos estaban sin contrastar). Diseño:
-    1. el worker busca de vez en cuando en qué carpeta acabó cada correo decidido, por su `internetMessageId`, porque el id de Graph cambia al moverlo;
-    2. la guarda en la base de datos (migración pequeña, con copia previa);
-    3. el panel usa como verdad el árbol Foodbox → FOOD BOX y el árbol Lateral → LATERAL, además de las etiquetas del equipo;
-    4. los correos de otras carpetas y ARCOBETA quedan fuera de la medida o para revisión.
+- [x] Medir el acierto contra la carpeta donde se archiva cada correo ([ADR 0008](../../docs/adr/0008-correcciones-y-metrica-de-acierto.md)), preparado el 2026-10-13 a petición del usuario:
+  - el worker comprueba cada hora, y con el botón «Comparar con las carpetas» del panel, en qué carpeta acabó cada correo, buscándolo por conversación y fecha de recepción porque el id de Graph cambia al moverlo; fuera de la Bandeja toma también sus categorías;
+  - el panel usa como verdad el árbol Foodbox → FOOD BOX y el árbol Lateral → LATERAL, más las etiquetas del equipo; con solo la carpeta ARCOBETA no se compara;
+  - «Correos» muestra en «Equipo» la carpeta de cada correo, y el resumen añade la evolución por semana;
+  - probado en lectura contra el buzón real: 40 de 40 correos del histórico en su carpeta, unos 0,65 s por correo.
+  - [ ] Desplegar (migración pequeña, con copia previa) y revisar las primeras cifras con el usuario
 - [x] Correos recibidos desde el 2026-10-09, antes de arrancar la sombra, recuperados reiniciando la sincronización (74 correos, con copia previa)
 - [x] Reglas del negocio del 2026-10-12 en la razón social ([sociedades y categorías](../../docs/referencia/sociedades-categorias.md)): «FOOD BOX» vale por FOODBOX y «ARCOBETA» por ARCO BETA, y la forma societaria (S.A., S.L.) no se exige (0.4.0). 9 correos más decididos al reprocesar, revisados por el usuario
 - [x] Fallo de la 0.4.0 corregido en la 0.6.1: sin forma societaria, «FOODBOX» dentro de `…@foodbox.es` o `www.foodbox.es` contaba como razón social. Ahora las direcciones de correo y las webs no cuentan. 11 correos afectados, revisados por el usuario: uno pierde FOOD BOX (factura a ARCOBETA), otro queda en duda y otro gana LATERAL y ARCOBETA por una decisión anterior a la 0.4.0

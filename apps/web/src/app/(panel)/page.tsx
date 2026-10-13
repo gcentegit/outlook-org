@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { FiltersForm } from '@/components/filters-form';
+import { FolderCheckButton } from '@/components/folder-check-button';
 import { ReprocessButton } from '@/components/reprocess-button';
 import {
   Badge,
@@ -17,6 +18,7 @@ import {
 import {
   formatAge,
   formatDateTime,
+  formatDay,
   formatInt,
   formatLatency,
   formatPercent,
@@ -154,7 +156,7 @@ export default async function SummaryPage({
     <>
       <PageHeader
         title="Resumen"
-        description="Cómo está clasificando el servicio frente a lo que deja el equipo en Outlook. Las fechas son las de recepción del correo (hora de Madrid)."
+        description="Cómo está clasificando el servicio frente a lo que hace el equipo en Outlook: dónde archiva cada correo y qué categorías le pone. Las fechas son las de recepción del correo (hora de Madrid)."
       />
       <FiltersForm filter={filter} action="/" />
 
@@ -181,7 +183,7 @@ export default async function SummaryPage({
           <Stat
             label="Sin contrastar con el equipo"
             value={formatInt(summary.awaitingReview)}
-            hint="decididos, pero el equipo aún no les ha puesto categoría en Outlook: no cuentan en el acierto"
+            hint="decididos, pero el equipo aún no los ha archivado en Foodbox o Lateral ni les ha puesto categoría: no cuentan en el acierto"
           />
           <Stat
             label="Cobertura"
@@ -192,8 +194,11 @@ export default async function SummaryPage({
 
         <Card
           title="Precisión y cobertura por categoría"
-          description="Frente a las categorías finales del equipo (correcciones o categorías vistas en Outlook). Solo cuentan los correos que el equipo ya ha revisado (tienen alguna categoría en Outlook o una corrección); los demás no suman ni como acierto ni como fallo y se muestran aparte como «pendientes de revisar»."
+          description="Frente a lo que hizo el equipo: la carpeta donde archivó el correo (árbol Foodbox → FOOD BOX, árbol Lateral → LATERAL) y las categorías que le puso en Outlook. Solo cuentan los correos ya archivados o etiquetados; los demás no suman ni como acierto ni como fallo y se cuentan aparte como «sin contrastar». La carpeta no dice nada de ARCOBETA, que se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone la categoría."
         >
+          <div className="mb-4">
+            <FolderCheckButton lastCheck={formatDateTime(status.lastFolderCheckAt)} />
+          </div>
           <DataTable
             caption="Precisión y cobertura por categoría"
             headers={[
@@ -224,6 +229,46 @@ export default async function SummaryPage({
             pocos correos revisados las cifras no son fiables: mira cuántos hay pendientes de
             revisar antes de fiarte de ellas.
           </p>
+        </Card>
+
+        <Card
+          title="Evolución por semana"
+          description="Las mismas cifras por semana de recepción del correo, la más reciente arriba: muestra si el clasificador va acertando más con el tiempo. Una semana reciente tiene pocos correos contrastados hasta que el equipo los archiva."
+        >
+          {metrics.perWeek.length === 0 ? (
+            <p className="text-sm text-muted">
+              Aún no hay correos contrastados con el equipo en este periodo.
+            </p>
+          ) : (
+            <DataTable
+              caption="Precisión y cobertura por semana"
+              headers={[
+                { label: 'Semana del' },
+                { label: 'Contrastados', align: 'right' },
+                ...metrics.perCategory.flatMap((row) => [
+                  { label: `${row.category} precisión`, align: 'right' as const },
+                  { label: `${row.category} cobertura`, align: 'right' as const },
+                ]),
+              ]}
+            >
+              {metrics.perWeek.map((week) => (
+                <tr key={week.week}>
+                  <th scope="row" className={`${cellClass} whitespace-nowrap font-medium`}>
+                    {formatDay(week.week)}
+                  </th>
+                  <td className={numberCellClass}>{formatInt(week.reviewed)}</td>
+                  {week.perCategory.flatMap((row) => [
+                    <td key={`${row.category}-p`} className={numberCellClass}>
+                      {formatPercent(row.precision)}
+                    </td>,
+                    <td key={`${row.category}-r`} className={numberCellClass}>
+                      {formatPercent(row.recall)}
+                    </td>,
+                  ])}
+                </tr>
+              ))}
+            </DataTable>
+          )}
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -260,7 +305,7 @@ export default async function SummaryPage({
 
           <Card
             title="Por modelo"
-            description="Todas las decisiones con LLM del periodo (no se filtra por categoría; no cuentan las degradadas por un fallo técnico). Acierto: categorías idénticas a las del equipo, sobre las decisiones ya revisadas por el equipo."
+            description="Todas las decisiones con LLM del periodo (no se filtra por categoría; no cuentan las degradadas por un fallo técnico). Acierto: mismas categorías que el equipo en todo lo que se puede comparar, sobre las decisiones ya contrastadas."
           >
             {metrics.perModel.length === 0 ? (
               <p className="text-sm text-muted">Todavía no hay decisiones tomadas por un modelo.</p>

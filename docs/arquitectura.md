@@ -38,6 +38,7 @@ flowchart TD
     H --> I[Panel: métricas y discrepancias]
     K --> J[Se guarda Correction]
     J --> I
+    L[Worker: cada hora o desde el panel, busca en qué carpeta acabó cada correo] --> I
     H -. no se escribe nada en Outlook .-> A
 ```
 
@@ -55,8 +56,12 @@ flowchart TD
 5. **Guardado.** `Message` y `Decision` en una transacción. Si hubo un fallo técnico se reintenta; si
    se agotan los reintentos la decisión queda marcada como degradada y el correo para reprocesar.
    [ADR 0007](adr/0007-fallos-tecnicos-y-reproceso.md).
-6. **Lectura en el panel** (`apps/web/src/server/metrics.ts`). Solo cuentan para el acierto los
-   correos que el equipo ha revisado. [ADR 0008](adr/0008-correcciones-y-metrica-de-acierto.md).
+6. **Carpeta de cada correo** (`sync/folders.ts`). Cada hora, y cuando se pide con el botón del
+   panel, el worker busca en qué carpeta archivó el equipo cada correo (por conversación y fecha de
+   recepción, porque el id cambia al moverlo). Solo lee.
+7. **Lectura en el panel** (`apps/web/src/server/metrics.ts`). Solo cuentan para el acierto los
+   correos que el equipo ha revisado: archivados en el árbol Foodbox o Lateral, o con categorías.
+   [ADR 0008](adr/0008-correcciones-y-metrica-de-acierto.md).
 
 ## Orden de decisión del clasificador
 

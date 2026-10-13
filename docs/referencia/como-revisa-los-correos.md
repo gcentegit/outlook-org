@@ -19,6 +19,10 @@ Cada 90 segundos (por defecto) el clasificador pregunta a Microsoft 365 qué ha 
   compara lo que propuso el clasificador con lo que dejó el equipo.
 - Solo mira la Bandeja de entrada. Un correo que se mueve a una carpeta antes de que el clasificador
   lo vea no se procesa. Normalmente pasan horas o días, así que no es un problema.
+- Cada hora, y cuando alguien pulsa «Comparar con las carpetas» en el panel, comprueba en qué
+  carpeta ha archivado el equipo cada correo ya leído. Archivar en Foodbox cuenta como FOOD BOX y en
+  Lateral como LATERAL: así se mide cuánto acierta aunque nadie ponga categorías. Solo mira, no
+  mueve nada.
 
 ## Paso 2. Leer el correo y sus adjuntos (cuándo hay OCR)
 

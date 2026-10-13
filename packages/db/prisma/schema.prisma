@@ -35,6 +35,16 @@ enum DecisionMode {
   live
 }
 
+/// Dónde está el correo en el buzón (lo comprueba el worker cada hora o cuando lo pide el panel).
+/// `foodbox` y `lateral` son los árboles donde el equipo archiva cada sociedad.
+enum MessageFolder {
+  inbox
+  foodbox
+  lateral
+  other
+  missing
+}
+
 /// Estado de procesado de un correo detectado en la Bandeja de entrada.
 enum MessageStatus {
   pending
@@ -64,6 +74,9 @@ model Message {
   /// La última decisión se tomó con un fallo técnico (docling, LLM) o el trabajo agotó los reintentos:
   /// hay que volver a procesarlo. Se limpia al guardar una decisión válida.
   needsReprocess Boolean       @default(false)
+  /// Carpeta donde está el correo la última vez que se comprobó (null: aún sin comprobar).
+  folder          MessageFolder?
+  folderCheckedAt DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -75,6 +88,7 @@ model Message {
   @@index([receivedAt])
   @@index([status])
   @@index([needsReprocess])
+  @@index([folderCheckedAt])
 }
 
 /// Texto extraído de un adjunto, único por hash del fichero. Se borra al caducar (90 días).

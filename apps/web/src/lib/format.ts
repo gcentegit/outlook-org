@@ -33,6 +33,12 @@ export function formatLatency(ms: number | null): string {
     : `${Math.round(ms)} ms`;
 }
 
+/** Día `YYYY-MM-DD` como `12/10/2026`. */
+export function formatDay(day: string): string {
+  const [year, month, date] = day.split('-');
+  return `${date}/${month}/${year}`;
+}
+
 export function formatDateTime(date: Date | null): string {
   return date ? dateTime.format(date) : NOT_AVAILABLE;
 }

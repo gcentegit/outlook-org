@@ -1,8 +1,10 @@
 import {
+  CHECK_FOLDERS_QUEUE,
   CREATE_MASTER_CATEGORY_QUEUE,
   LIST_MASTER_CATEGORIES_QUEUE,
   REPROCESS_FLAGGED_QUEUE,
   TEST_CLASSIFY_QUEUE,
+  type CheckFoldersResult,
   type CreateMasterCategoryResult,
   type ListMasterCategoriesResult,
   type TestClassifyResult,
@@ -28,6 +30,9 @@ export const PROCESS_RETRY_LIMIT = 5;
 /** Limpieza diaria a las 03:30 hora de Madrid, cuando no suele llegar correo. */
 export const CLEANUP_CRON = '30 3 * * *';
 export const CLEANUP_TZ = 'Europe/Madrid';
+
+/** Comprobación de carpetas cada hora (el equipo tarda más que eso en archivar). */
+export const CHECK_FOLDERS_CRON = '5 * * * *';
 
 interface ProcessMessageData {
   messageId: string;
@@ -72,7 +77,16 @@ export async function setupQueues(boss: PgBoss): Promise<void> {
   await boss.createQueue(LIST_MASTER_CATEGORIES_QUEUE, PANEL_QUEUE_OPTIONS);
   await boss.createQueue(CREATE_MASTER_CATEGORY_QUEUE, PANEL_QUEUE_OPTIONS);
   await boss.createQueue(REPROCESS_FLAGGED_QUEUE, PANEL_QUEUE_OPTIONS);
+  // `stately`: como mucho una comprobación esperando y otra en marcha, pidan las que pidan el
+  // panel y la programación. Una ronda larga no debe solaparse con la siguiente.
+  await boss.createQueue(CHECK_FOLDERS_QUEUE, {
+    policy: 'stately',
+    retryLimit: 0,
+    expireInSeconds: 3600,
+    deleteAfterSeconds: 24 * 3600,
+  });
   await boss.schedule(CLEANUP_QUEUE, CLEANUP_CRON, {}, { tz: CLEANUP_TZ });
+  await boss.schedule(CHECK_FOLDERS_QUEUE, CHECK_FOLDERS_CRON, {}, { tz: CLEANUP_TZ });
 }
 
 /** Encola un correo; si ya hay un trabajo en espera para él, no se duplica. */
@@ -165,5 +179,24 @@ export async function registerPanelWorkers(
     const count = await reprocessFlagged(deps.reprocess, deps.enqueue);
     log(`reproceso: ${count} correo(s) vuelto(s) a encolar`);
     return { enqueued: count };
+  });
+}
+
+/**
+ * Atiende la comprobación de carpetas: la programada cada hora y la que pide el panel con su botón.
+ * Solo se registra con credenciales de Graph; sin ellas los trabajos esperan y caducan.
+ */
+export async function registerCheckFoldersWorker(
+  boss: PgBoss,
+  run: () => Promise<CheckFoldersResult>,
+  log: (message: string) => void = console.log,
+): Promise<void> {
+  await boss.work(CHECK_FOLDERS_QUEUE, { localConcurrency: 1, batchSize: 1 }, async () => {
+    const result = await run();
+    log(
+      `carpetas: ${result.checked} correo(s) comprobado(s), ${result.archived} archivado(s) en ` +
+        `Foodbox o Lateral, ${result.failed} sin localizar`,
+    );
+    return result;
   });
 }

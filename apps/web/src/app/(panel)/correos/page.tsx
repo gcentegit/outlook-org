@@ -1,8 +1,10 @@
 import { prisma } from '@clasificador/db';
+import { FOLDERS_SYNC_ID, type MessageFolder } from '@clasificador/shared';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { FiltersForm } from '@/components/filters-form';
+import { FolderCheckButton } from '@/components/folder-check-button';
 import {
   Badge,
   buttonClass,
@@ -36,6 +38,15 @@ const STATES: Record<
   doubt: { label: 'En duda', tone: 'warning' },
   reprocess: { label: 'Pendiente de reprocesar', tone: 'warning' },
   queued: { label: 'En cola', tone: 'neutral' },
+};
+
+/** Dónde está el correo, tal como lo ve quien mira el panel. */
+const FOLDER_LABELS: Record<MessageFolder, string> = {
+  foodbox: 'Archivado en Foodbox',
+  lateral: 'Archivado en Lateral',
+  inbox: 'En la Bandeja de entrada',
+  other: 'En otra carpeta',
+  missing: 'Ya no está en el buzón',
 };
 
 function parseState(params: SearchParams): MessageState | null {
@@ -74,18 +85,22 @@ export default async function MessagesPage({
   const params = await searchParams;
   const filter = parseFilter(params);
   const state = parseState(params);
-  const result = await getMessageList(
-    prisma(),
-    { from: filter.range.from, to: filter.range.to, category: filter.category },
-    state,
-    filter.page,
-  );
+  const db = prisma();
+  const [result, folderCheck] = await Promise.all([
+    getMessageList(
+      db,
+      { from: filter.range.from, to: filter.range.to, category: filter.category },
+      state,
+      filter.page,
+    ),
+    db.syncState.findUnique({ where: { id: FOLDERS_SYNC_ID }, select: { lastSyncAt: true } }),
+  ]);
 
   return (
     <>
       <PageHeader
         title="Correos"
-        description="Cada correo del periodo con lo que propone el clasificador y por qué. En modo sombra no se escribe nada en el buzón: esto es lo que habría etiquetado."
+        description="Cada correo del periodo con lo que propone el clasificador y por qué. En modo sombra no se escribe nada en el buzón: esto es lo que habría etiquetado. «Equipo» es lo que hizo el equipo: la carpeta donde lo archivó (Foodbox → FOOD BOX, Lateral → LATERAL) y las categorías que le puso."
       />
       <FiltersForm filter={filter} action="/correos">
         <div>
@@ -104,6 +119,9 @@ export default async function MessagesPage({
       </FiltersForm>
 
       <Card>
+        <div className="mb-4">
+          <FolderCheckButton lastCheck={formatDateTime(folderCheck?.lastSyncAt ?? null)} />
+        </div>
         <ul className="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Correos por estado">
           {MESSAGE_STATES.map((s) => (
             <li key={s}>
@@ -129,8 +147,8 @@ export default async function MessagesPage({
               { label: 'Correo', width: '21%' },
               { label: 'Estado', width: '15%' },
               { label: 'Propuesto', width: '12%' },
-              { label: 'Equipo', width: '9%' },
-              { label: 'Por qué', width: '31%' },
+              { label: 'Equipo', width: '12%' },
+              { label: 'Por qué', width: '28%' },
             ]}
           >
             {result.items.map((item) => (
@@ -161,6 +179,9 @@ export default async function MessagesPage({
                 </td>
                 <td className={cellClass}>
                   <Categories names={item.team} />
+                  <p className="mt-1 text-xs text-muted">
+                    {item.folder ? FOLDER_LABELS[item.folder] : 'Carpeta sin comprobar'}
+                  </p>
                 </td>
                 <td className={`${cellClass} text-muted`}>
                   {item.decision?.reason ? (
