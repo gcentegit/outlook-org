@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Glifos «mail» y «tag» de Lucide (https://lucide.dev, licencia ISC) sobre el azul primario del panel. -->
+  <rect width="32" height="32" rx="7" fill="#1d4ed8"/>
+  <g transform="translate(2.5 5.5) scale(0.9167)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/>
+    <rect width="20" height="16" x="2" y="4" rx="2"/>
+  </g>
+  <circle cx="23" cy="9" r="8" fill="#1d4ed8"/>
+  <g transform="translate(16.5 2.5) scale(0.5417) rotate(-90 12 12)" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/>
+    <circle cx="7.5" cy="7.5" r=".5" fill="#f59e0b"/>
+  </g>
+</svg>
