@@ -36,6 +36,11 @@ function store(over: Partial<DecisionStore> = {}): DecisionStore {
     markFailed: vi.fn(async () => {}),
     forget: vi.fn(async () => {}),
     markApplyFailed: vi.fn(async () => {}),
+    findLocator: vi.fn(async (id: string) => ({
+      id,
+      conversationId: 'conv-1',
+      receivedAt: new Date('2026-10-13T15:17:43Z'),
+    })),
     ...over,
   };
 }
@@ -102,6 +107,60 @@ describe('processMessage', () => {
     expect(await processMessage('m1', d)).toBe('gone');
     expect(d.store.saveDecision).not.toHaveBeenCalled();
     expect(d.store.forget).toHaveBeenCalledWith('m1');
+  });
+
+  it('un correo archivado (404 por su id) se busca por conversación y fecha y se decide con su id', async () => {
+    const extract = vi.fn(async (id: string) => {
+      if (id === 'm1') throw new GraphError('no existe', 404);
+      return makeEmail({ messageId: id });
+    });
+    const relocate = vi.fn(async () => 'm1-archivado');
+    const apply = vi.fn(async () => {});
+    const d = deps({ extract, relocate, apply });
+    expect(await processMessage('m1', d)).toBe('processed');
+    expect(relocate).toHaveBeenCalledWith({
+      id: 'm1',
+      conversationId: 'conv-1',
+      receivedAt: new Date('2026-10-13T15:17:43Z'),
+    });
+    expect(extract).toHaveBeenLastCalledWith('m1-archivado');
+    // La decisión se guarda con el id que conocemos; la escritura, con el actual del buzón.
+    expect(d.store.saveDecision).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'm1' }),
+      expect.anything(),
+      { degradedReason: null },
+    );
+    expect(apply).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'm1-archivado' }),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(d.store.forget).not.toHaveBeenCalled();
+  });
+
+  it('si tampoco aparece por conversación y fecha, se da por terminado', async () => {
+    const d = deps({
+      extract: vi.fn(async () => {
+        throw new GraphError('no existe', 404);
+      }),
+      relocate: vi.fn(async () => null),
+    });
+    expect(await processMessage('m1', d)).toBe('gone');
+    expect(d.store.saveDecision).not.toHaveBeenCalled();
+    expect(d.store.forget).toHaveBeenCalledWith('m1');
+  });
+
+  it('sin conversación guardada no se busca', async () => {
+    const relocate = vi.fn(async () => 'otro');
+    const d = deps({
+      extract: vi.fn(async () => {
+        throw new GraphError('no existe', 404);
+      }),
+      relocate,
+      store: store({ findLocator: vi.fn(async () => null) }),
+    });
+    expect(await processMessage('m1', d)).toBe('gone');
+    expect(relocate).not.toHaveBeenCalled();
   });
 
   it('otros errores de Graph se propagan para que pg-boss reintente', async () => {

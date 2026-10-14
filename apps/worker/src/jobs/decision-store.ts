@@ -59,6 +59,14 @@ export function createPrismaDecisionStore(db: Db): DecisionStore {
       await db.message.updateMany({ where: { id: messageId }, data: { needsReprocess: true } });
     },
 
+    async findLocator(messageId) {
+      const row = await db.message.findUnique({
+        where: { id: messageId },
+        select: { id: true, conversationId: true, receivedAt: true },
+      });
+      return row && row.conversationId !== '' ? row : null;
+    },
+
     async forget(messageId) {
       await db.message.deleteMany({ where: { id: messageId, decisions: { none: {} } } });
       // Con decisión, lo normal es que el equipo lo haya archivado: al moverlo Graph le cambia el

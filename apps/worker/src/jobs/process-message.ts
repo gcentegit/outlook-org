@@ -33,12 +33,26 @@ export interface DecisionStore {
   forget(messageId: string): Promise<void>;
   /** No se pudieron escribir las categorías en el buzón: el correo queda marcado para reprocesar. */
   markApplyFailed(messageId: string): Promise<void>;
+  /** Conversación y fecha de recepción guardadas, para buscarlo si cambió de id. Null si no hay. */
+  findLocator(messageId: string): Promise<MessageLocator | null>;
+}
+
+/** Lo que no cambia al mover un correo: con ello se encuentra su id actual. */
+export interface MessageLocator {
+  id: string;
+  conversationId: string;
+  receivedAt: Date;
 }
 
 export interface ProcessMessageDeps {
   mode: DecisionMode;
   store: DecisionStore;
   extract: (messageId: string) => Promise<ExtractedEmail>;
+  /**
+   * Id actual de un correo que dio 404 por su id (archivado: moverlo cambia el id), o null si ya no
+   * está en el buzón. Sin ella, un correo movido se da por desaparecido.
+   */
+  relocate?: (message: MessageLocator) => Promise<string | null>;
   availableCategories: () => Promise<string[]>;
   classify: (email: ExtractedEmail, availableCategories: string[]) => Promise<ClassifyResult>;
   /**
@@ -91,17 +105,15 @@ export async function processMessage(
   try {
     if (await deps.store.hasDecision(messageId, deps.mode)) return 'already-decided';
 
-    let email: ExtractedEmail;
-    try {
-      email = await deps.extract(messageId);
-    } catch (err) {
-      if (err instanceof GraphError && err.status === 404) {
-        log(`el correo ${messageId} ya no está en el buzón; se omite`);
-        await deps.store.forget(messageId);
-        return 'gone';
-      }
-      throw err;
+    // `mailboxEmail` lleva el id con el que está hoy en el buzón (para escribir en él); `email`, el
+    // id con el que lo conocemos, que es al que se asocia la decisión.
+    const mailboxEmail = await extractOrRelocate(messageId, deps, log);
+    if (!mailboxEmail) {
+      log(`el correo ${messageId} ya no está en el buzón; se omite`);
+      await deps.store.forget(messageId);
+      return 'gone';
     }
+    const email: ExtractedEmail = { ...mailboxEmail, messageId };
 
     const masterNames = await deps.availableCategories();
     const result = await deps.classify(email, masterNames);
@@ -124,7 +136,7 @@ export async function processMessage(
       // La decisión ya está guardada: un fallo al escribir no la pierde. El correo queda marcado
       // y «Reprocesar» lo vuelve a decidir y a escribir (escribir es idempotente).
       try {
-        await deps.apply(email, result, masterNames);
+        await deps.apply(mailboxEmail, result, masterNames);
       } catch (err) {
         log(`no se pudieron escribir las categorías de ${messageId}: ${String(err)}`);
         await deps.store
@@ -146,5 +158,35 @@ export async function processMessage(
     throw err;
   } finally {
     inFlight.delete(messageId);
+  }
+}
+
+const isNotFound = (err: unknown): boolean => err instanceof GraphError && err.status === 404;
+
+/**
+ * Lee el correo por su id y, si da 404, lo busca por su conversación y su fecha de recepción: así
+ * un correo que el equipo ya archivó se puede volver a decidir. Null si ya no está en el buzón.
+ */
+async function extractOrRelocate(
+  messageId: string,
+  deps: ProcessMessageDeps,
+  log: (message: string) => void,
+): Promise<ExtractedEmail | null> {
+  try {
+    return await deps.extract(messageId);
+  } catch (err) {
+    if (!isNotFound(err)) throw err;
+  }
+  if (!deps.relocate) return null;
+  const locator = await deps.store.findLocator(messageId);
+  if (!locator) return null;
+  const currentId = await deps.relocate(locator);
+  if (!currentId || currentId === messageId) return null;
+  log(`el correo ${messageId} cambió de id al moverlo; se lee con el actual`);
+  try {
+    return await deps.extract(currentId);
+  } catch (err) {
+    if (isNotFound(err)) return null;
+    throw err;
   }
 }
