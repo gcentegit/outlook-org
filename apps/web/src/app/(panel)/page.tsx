@@ -163,7 +163,7 @@ export default async function SummaryPage({
       <div className="space-y-6">
         <ServiceCard status={status} causes={causes} />
 
-        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Correos leídos" value={formatInt(summary.read)} />
           <Stat
             label="Clasificados"
@@ -190,11 +190,16 @@ export default async function SummaryPage({
             value={formatPercent(summary.coverage)}
             hint="clasificados / (clasificados + dudosos)"
           />
+          <Stat
+            label="Eliminados por el equipo"
+            value={formatInt(summary.deleted)}
+            hint={`${formatInt(summary.deletedUnclassified)} sin categoría propuesta; no cuentan en las demás cifras ni en el acierto`}
+          />
         </dl>
 
         <Card
           title="Precisión y cobertura por categoría"
-          description="Frente a lo que hizo el equipo: la carpeta donde archivó el correo (árbol Foodbox → FOOD BOX, árbol Lateral → LATERAL) y las categorías que le puso en Outlook. Solo cuentan los correos ya archivados o etiquetados; los demás no suman ni como acierto ni como fallo y se cuentan aparte como «sin contrastar». La carpeta no dice nada de ARCOBETA, que se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone la categoría."
+          description="Frente a lo que hizo el equipo: la carpeta donde archivó el correo (árbol Foodbox → FOOD BOX, árbol Lateral → LATERAL) y las categorías que le puso en Outlook. Solo cuentan los correos ya archivados o etiquetados; los demás no suman ni como acierto ni como fallo y se cuentan aparte como «sin contrastar». Los que el equipo eliminó tampoco cuentan. La carpeta no dice nada de ARCOBETA, que se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone la categoría."
         >
           <div className="mb-4">
             <FolderCheckButton lastCheck={formatDateTime(status.lastFolderCheckAt)} />

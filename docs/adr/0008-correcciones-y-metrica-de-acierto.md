@@ -30,6 +30,11 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
   corrección. Los demás no suman ni como acierto ni como fallo (ni por categoría, ni por modelo, ni
   en las discrepancias) y se muestran aparte como «sin contrastar». Las decisiones degradadas
   tampoco cuentan.
+- **Los correos que el equipo eliminó no cuentan** en el acierto, la cobertura ni las
+  discrepancias, aunque tuvieran categorías: se muestran aparte como «Eliminados por el equipo». Casi
+  todos son publicidad y avisos que nadie archiva ni etiqueta, y que el clasificador deja sin
+  categoría; contarlos haría pasar por fallos lo que el equipo descarta. Eliminado es «ya no está en
+  el buzón»: un correo que siga en Elementos eliminados cuenta como «otra carpeta».
 - **Con solo la carpeta se comparan FOOD BOX y LATERAL.** La carpeta no dice nada de ARCOBETA, que
   no tiene árbol propio y se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone una
   categoría del grupo. Las categorías del equipo se suman a la de la carpeta.

@@ -61,6 +61,7 @@ flowchart TD
    recepción, porque el id cambia al moverlo). Solo lee.
 7. **Lectura en el panel** (`apps/web/src/server/metrics.ts`). Solo cuentan para el acierto los
    correos que el equipo ha revisado: archivados en el árbol Foodbox o Lateral, o con categorías.
+   Los que el equipo eliminó se cuentan aparte.
    [ADR 0008](adr/0008-correcciones-y-metrica-de-acierto.md).
 
 ## Orden de decisión del clasificador

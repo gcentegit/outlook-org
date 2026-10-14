@@ -168,6 +168,8 @@ describe('computeMetrics', () => {
       pending: 1,
       awaitingReview: 1,
       coverage: 4 / 5,
+      deleted: 0,
+      deletedUnclassified: 0,
     });
   });
 
@@ -240,6 +242,47 @@ describe('computeMetrics', () => {
     expect(degraded.perCategory.every((c) => c.tp + c.fp + c.fn + c.tn === 0)).toBe(true);
   });
 
+  it('los correos eliminados por el equipo se cuentan aparte y no entran en el acierto', () => {
+    const deleted = computeMetrics(
+      [
+        // Publicidad que el equipo borró sin mirar: sin categoría propuesta.
+        message({
+          folder: 'missing',
+          decisions: [decision({ categories: [], source: 'none', degraded: true })],
+        }),
+        // Tenía categoría del equipo antes de borrarlo: tampoco se compara.
+        message({
+          folder: 'missing',
+          seenCategories: ['LATERAL'],
+          decisions: [decision({ categories: ['FOOD BOX'], source: 'llm', model: 'haiku' })],
+        }),
+        message({
+          folder: 'lateral',
+          decisions: [decision({ categories: ['LATERAL'], source: 'rule' })],
+        }),
+      ],
+      NO_LATENCY,
+      null,
+    );
+    expect(deleted.summary).toEqual({
+      read: 3,
+      classified: 1,
+      doubtful: 0,
+      pending: 0,
+      awaitingReview: 0,
+      coverage: 1,
+      deleted: 2,
+      deletedUnclassified: 1,
+    });
+    const by = Object.fromEntries(deleted.perCategory.map((row) => [row.category, row]));
+    expect(by['FOOD BOX']).toMatchObject({ tp: 0, fp: 0, fn: 0, tn: 1 });
+    expect(by.LATERAL).toMatchObject({ tp: 1, fp: 0, fn: 0, tn: 0 });
+    expect(deleted.origin).toEqual({ thread: 0, rule: 1, llm: 0, none: 0 });
+    expect(deleted.perModel).toEqual([
+      expect.objectContaining({ model: 'haiku', decisions: 1, reviewed: 0, accuracy: null }),
+    ]);
+  });
+
   it('sin latencia registrada la deja en null', () => {
     expect(computeMetrics(messages, NO_LATENCY, null).perModel[0]?.avgLatencyMs).toBeNull();
   });
@@ -275,6 +318,11 @@ describe('verdad por carpeta', () => {
       const [item] = evaluateMessages([message({ folder })]);
       expect(item).toMatchObject({ team: [], compared: [], reviewed: false });
     }
+  });
+
+  it('un correo eliminado no se compara aunque tuviera categorías del equipo', () => {
+    const [item] = evaluateMessages([message({ folder: 'missing', seenCategories: ['LATERAL'] })]);
+    expect(item).toMatchObject({ compared: [], reviewed: false, deleted: true });
   });
 
   it('con solo la carpeta, ARCOBETA no se compara; con categorías del equipo, sí', () => {
