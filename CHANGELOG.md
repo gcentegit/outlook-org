@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/gcentegit/outlook-org/compare/v0.9.1...v0.9.2) (2026-10-14)
+
+
+### 🔧 Correcciones
+
+* 🏷️ «Grupo Lateral» en los conceptos de una factura da LATERAL ([#64](https://github.com/gcentegit/outlook-org/issues/64)) ([f7a9da6](https://github.com/gcentegit/outlook-org/commit/f7a9da6b3d605dfefcfdb0fde2df77a4cac10d61))
+
 ## [0.9.1](https://github.com/gcentegit/outlook-org/compare/v0.9.0...v0.9.1) (2026-10-13)
 
 
