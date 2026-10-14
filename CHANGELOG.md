@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/gcentegit/outlook-org/compare/v0.9.2...v0.10.0) (2026-10-14)
+
+
+### 🚀 Novedades
+
+* **worker:** 📮 el reproceso encuentra los correos que el equipo ya archivó ([#67](https://github.com/gcentegit/outlook-org/issues/67)) ([9792ed8](https://github.com/gcentegit/outlook-org/commit/9792ed8ca64b1ae0347ff1fab1ba42fdbfa2a991))
+
 ## [0.9.2](https://github.com/gcentegit/outlook-org/compare/v0.9.1...v0.9.2) (2026-10-14)
 
 
