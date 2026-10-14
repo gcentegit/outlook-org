@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/gcentegit/outlook-org/compare/v0.10.0...v0.11.0) (2026-10-14)
+
+
+### 🚀 Novedades
+
+* **web:** 🗑️ el resumen cuenta aparte los correos que el equipo eliminó ([#69](https://github.com/gcentegit/outlook-org/issues/69)) ([26ee8aa](https://github.com/gcentegit/outlook-org/commit/26ee8aa2849d47fbec55d5460a52d30f45050963))
+
 ## [0.10.0](https://github.com/gcentegit/outlook-org/compare/v0.9.2...v0.10.0) (2026-10-14)
 
 
