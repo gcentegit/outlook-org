@@ -1,3 +1,5 @@
+import { readPdfTextLayer } from './pdf-text';
+
 export type AttachmentKind = 'pdf' | 'image' | 'docx' | 'xlsx';
 
 const KINDS: Record<string, { kind: AttachmentKind; mime: string }> = {
@@ -75,7 +77,7 @@ interface DoclingResponse {
   confidence?: { ocr_score?: number | null } | null;
 }
 
-/** Caracteres alfanuméricos mínimos para dar por buena la capa de texto de un PDF sin OCR. */
+/** Caracteres alfanuméricos mínimos para dar por buena la capa de texto de un PDF. */
 export const MIN_TEXT_LAYER_CHARS = 50;
 
 /** El PDF trae texto propio: lo que queda al quitar las marcas de imagen tiene suficiente contenido. */
@@ -85,13 +87,13 @@ export function hasTextLayer(markdown: string): boolean {
 }
 
 /**
- * Convierte un fichero a Markdown con docling-serve (`/v1/convert/file`).
+ * Texto de un adjunto para el clasificador.
  *
- * El OCR (RapidOCR) es lo caro: en CPU multiplica por diez el tiempo de un PDF, y en los PDF con
- * capa de texto solo lee logos y sellos, sin aportar el CIF ni la razón social. Por eso un PDF se
- * convierte primero sin OCR y solo se repite con OCR si no trae texto propio (escaneos y fotos).
- * Las imágenes van siempre con OCR; DOCX y XLSX, nunca. La estructura de tablas no se calcula:
- * para el CIF y la razón social basta el texto.
+ * Un PDF se lee primero por su capa de texto, en el propio worker y sin docling: casi todas las
+ * facturas la traen y basta para el CIF y la razón social. Solo si no trae texto propio (escaneos y
+ * fotos) o no se deja leer se convierte con docling y OCR (RapidOCR), que en CPU tarda varios
+ * segundos por página. Las imágenes van siempre a docling con OCR; DOCX y XLSX, a docling sin OCR.
+ * La estructura de tablas no se calcula: para el CIF y la razón social basta el texto.
  *
  * `method` es 'ocr' cuando el texto sale de la pasada con OCR y docling informa `ocr_score` (el
  * motor llegó a leer algo); si no, 'text'.
@@ -99,15 +101,17 @@ export function hasTextLayer(markdown: string): boolean {
  * Lanza un error si docling falla; quien llama decide cómo degradar. Si docling no responde
  * (red, tiempo agotado, 502/503/504) lanza `DoclingUnavailableError`.
  */
-export async function convertWithDocling(
+export async function convertAttachment(
   file: { bytes: Buffer; filename: string; mime: string; kind: AttachmentKind },
   options: DoclingOptions,
 ): Promise<DoclingResult> {
-  if (file.kind !== 'image') {
+  if (file.kind === 'pdf') {
+    // Un PDF dañado o cifrado para pdf.js puede abrirse con docling: se trata como si no trajera texto.
+    const text = await readPdfTextLayer(file.bytes, options).catch(() => '');
+    if (hasTextLayer(text)) return { markdown: text, method: 'text' };
+  } else if (file.kind !== 'image') {
     const plain = await requestConversion(file, options, false);
-    if (file.kind !== 'pdf' || hasTextLayer(plain.markdown)) {
-      return { markdown: plain.markdown, method: 'text' };
-    }
+    return { markdown: plain.markdown, method: 'text' };
   }
   const scanned = await requestConversion(file, options, true);
   return { markdown: scanned.markdown, method: scanned.ocrScore != null ? 'ocr' : 'text' };

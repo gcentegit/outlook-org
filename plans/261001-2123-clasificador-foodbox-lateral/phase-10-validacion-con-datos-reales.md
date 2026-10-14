@@ -96,13 +96,7 @@ contra la muestra: tiempo por correo y que no se pierda ningún CIF ni razón so
 - [x] Medir si basta la primera página: gana 0,3 s por adjunto y pierde un CIF, así que se mantienen 2 páginas
 - [x] Imágenes pequeñas como adjunto normal (logos de firma): descartado por ahora, solo 1 de 185 adjuntos en la muestra
 - [x] Probar PaddleOCR en lugar de docling: no es más rápido (27 s frente a 22 s por adjunto con OCR, mismo acierto) y en arm64 solo funciona sin oneDNN; se descarta ([informe](../reports/validacion-261013-0110-paddleocr-y-extraccion-hibrida.md))
-- [ ] Migrar a la extracción híbrida (decisión del 2026-10-13): el worker lee la capa de texto de los PDF sin docling y docling queda solo para PDF sin texto, imágenes, DOCX y XLSX. Medido con `pypdfium2`: de 2,6 s a 0,15 s por adjunto, ninguna categoría perdida y 3 adjuntos que ganan una ([informe](../reports/validacion-261013-0110-paddleocr-y-extraccion-hibrida.md)). Pasos:
-  1. elegir la librería de Node para el texto del PDF y repetir con ella la medición de los 185 adjuntos (tiempo, categorías perdidas y ganadas);
-  2. revisar a mano los adjuntos que ganen o cambien de categoría (en la prueba, uno archivado fuera de `Foodbox` y `Lateral` gana LATERAL solo por razón social);
-  3. separar las páginas con el salto que espera `firstPage` del prompt y mantener el límite de páginas;
-  4. versionar la clave de la caché de texto de adjuntos para no mezclar texto de docling y texto propio;
-  5. ADR de la decisión y actualizar `docs/arquitectura.md`;
-  6. reprocesar los correos ya decididos solo si el usuario lo pide, con copia de seguridad previa.
+- [x] Migrar a la extracción híbrida (decisión del 2026-10-13): el worker lee la capa de texto de los PDF con pdf.js y docling queda para PDF sin texto, imágenes, DOCX y XLSX. De 4,5 s a 0,31 s por adjunto en la muestra (un PDF con texto, de unos 2,5 s a 0,03 s); ningún correo pierde categoría y uno archivado en `Foodbox` gana FOOD BOX ([informe](../reports/validacion-261014-2235-extraccion-hibrida.md), [ADR 0012](../../docs/adr/0012-adjuntos-y-extraccion.md)). Los correos ya decididos no se reprocesan salvo que el usuario lo pida, con copia de seguridad previa
 - [ ] Decidir con el usuario cómo sabe el equipo que un correo se leyó y quedó sin clasificar, con el volumen de dudosos medido aquí
 
 ## Success Criteria
