@@ -26,8 +26,9 @@ faltó información. Código: `apps/worker/src/jobs/process-message.ts` y `apps/
 - **Reproceso:** botón en el Resumen del panel y `pnpm --filter @clasificador/worker reprocess`
   (`--dry-run` solo cuenta). Vuelven a encolar los correos con `needsReprocess`; el botón encola un
   trabajo `reprocess-flagged` y espera a que el worker responda cuántos eran. Un marcado que el
-  equipo ya archivó no se puede reprocesar (su id cambió): se queda con la decisión degradada y
-  sin marca. El botón dice cuántos esperan al LLM sin configurar, que seguirán marcados.
+  equipo ya archivó también se reprocesa: se encuentra por su conversación y su fecha de recepción
+  ([0006](0006-cola-de-trabajos-con-pg-boss.md)). Solo uno que ya no está en el buzón se queda con
+  su decisión y sin marca. El botón dice cuántos esperan al LLM sin configurar, que seguirán marcados.
 
 ## Consecuencias
 

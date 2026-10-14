@@ -7,6 +7,7 @@ import type { KnownMessage } from '../corrections';
 import {
   checkFolders,
   loadFolderMap,
+  findCurrentMessageId,
   locateMessage,
   recordArchivedCategories,
   type FolderCheckStore,
@@ -30,6 +31,7 @@ const FOLDERS: Record<string, { id: string; displayName: string; childFolderCoun
 };
 
 interface FakeItem {
+  id?: string;
   conversationId: string;
   receivedDateTime: string;
   parentFolderId: string;
@@ -81,6 +83,43 @@ describe('loadFolderMap', () => {
     expect(folderOf('lat').folder).toBe('lateral');
     expect(folderOf('deleted')).toEqual({ folder: 'other', path: 'Elementos eliminados' });
     expect(folderOf('desconocida')).toEqual({ folder: 'other', path: null });
+  });
+});
+
+describe('findCurrentMessageId', () => {
+  it('devuelve el id actual del correo con la misma conversación y fecha', async () => {
+    const graph = fakeMailbox([
+      {
+        id: 'otro',
+        conversationId: 'c1',
+        receivedDateTime: '2026-10-10T08:00:00Z',
+        parentFolderId: 'lat',
+      },
+      {
+        id: 'archivado',
+        conversationId: 'c1',
+        receivedDateTime: '2026-10-10T09:00:00Z',
+        parentFolderId: 'lat',
+      },
+    ]);
+    expect(
+      await findCurrentMessageId(
+        graph,
+        'buzon@ejemplo.com',
+        msg('m', 'c1', '2026-10-10T09:00:00.000Z'),
+      ),
+    ).toBe('archivado');
+  });
+
+  it('null si ya no está en el buzón', async () => {
+    const graph = fakeMailbox([]);
+    expect(
+      await findCurrentMessageId(
+        graph,
+        'buzon@ejemplo.com',
+        msg('m', 'c1', '2026-10-10T09:00:00Z'),
+      ),
+    ).toBeNull();
   });
 });
 
