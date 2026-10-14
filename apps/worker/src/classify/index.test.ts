@@ -93,6 +93,21 @@ describe('classify: reglas', () => {
     expect((await classify(sinForma, makeCtx().ctx)).decision.categories).toEqual(['FOOD BOX']);
   });
 
+  it('cada sociedad nombrada en los conceptos da su categoría, aunque la factura vaya a otra', async () => {
+    const email = makeEmail({
+      attachments: [
+        makeAttachment(
+          'ARCO BETA SL NIF: ESB87694121\n' +
+            'Asesoramiento y Compra Energía Grupo Lateral 100,00 €\n' +
+            'Asesoramiento y Compra Energía Food Box 200,00 €',
+        ),
+      ],
+    });
+    const { decision } = await classify(email, makeCtx().ctx);
+    expect(decision.categories).toEqual(['FOOD BOX', 'LATERAL', 'ARCOBETA']);
+    expect(decision.needsReview).toBe(false);
+  });
+
   it('el CIF del proveedor no cuenta: sin señales queda en duda', async () => {
     const email = makeEmail({ bodyText: 'Emisor CIF B12345678, C/ Núñez Morgado 6' });
     const { decision } = await classify(email, makeCtx().ctx);
