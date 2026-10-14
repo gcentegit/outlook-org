@@ -10,9 +10,13 @@ saber a qué sociedad pertenece cada correo.
 
 ## Decisión
 
-- Solo se automatizan **FOOD BOX**, **LATERAL** y **ARCOBETA**. Decide la sociedad facturada:
-  FOODBOX va a FOOD BOX, ARCO BETA va a ARCOBETA y toda sociedad con «Lateral» en su razón social
-  va a LATERAL ([tabla de sociedades](../referencia/sociedades-categorias.md)).
+- Solo se automatizan **FOOD BOX**, **LATERAL** y **ARCOBETA**. Deciden las sociedades del grupo
+  que aparecen en el documento: FOODBOX va a FOOD BOX, ARCO BETA va a ARCOBETA y toda sociedad con
+  «Lateral» en su razón social va a LATERAL
+  ([tabla de sociedades](../referencia/sociedades-categorias.md)). Si una factura va a una
+  sociedad pero sus conceptos nombran a otras, lleva la categoría de cada una (criterio del equipo,
+  2026-10-14): una factura a ARCO BETA con conceptos de «Grupo Lateral» y «Food Box» lleva las
+  tres.
 - Un correo puede llevar varias categorías, una o ninguna. Los correos dudosos se dejan **sin
   categoría** y se registran: ante la duda, no se etiqueta.
 - Solo se sigue la **Bandeja de entrada**. Los correos se quedan en ella al llegar; el equipo los

@@ -13,9 +13,10 @@ orden claro cuando las señales se contradicen. El código está en `apps/worker
 Para cada categoría, de más a menos prioridad:
 
 1. **Regla fuerte** (CIF o razón social de una de las siete sociedades, en el propio correo).
-   Gana a lo heredado del hilo (decisión del usuario: en un hilo manda el CIF). Si el correo
-   identifica una sociedad del grupo, las categorías de las otras sociedades se descartan sin
-   mirar nada más.
+   Gana a lo heredado del hilo (decisión del usuario: en un hilo manda el CIF). Cada sociedad
+   nombrada da su categoría, también en los conceptos de una factura a otra sociedad. Si el correo
+   identifica alguna sociedad del grupo, las categorías de las sociedades que no nombra se
+   descartan sin mirar nada más.
 2. **Herencia del hilo:** una respuesta hereda la categoría de otro correo de la misma
    conversación. Se usan las **categorías finales del equipo**: por cada correo del hilo, la
    última corrección si existe; si no, las categorías que tiene en Outlook; solo si nadie lo ha

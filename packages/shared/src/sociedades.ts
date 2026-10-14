@@ -29,7 +29,12 @@ export const SOCIEDADES: ReadonlyArray<{
     category: 'ARCOBETA',
     variantes: ['ARCOBETA, S.L.'],
   },
-  { razonSocial: 'GRUPO RESTAURACION LATERAL, S.L.', cif: 'B85554921', category: 'LATERAL' },
+  {
+    razonSocial: 'GRUPO RESTAURACION LATERAL, S.L.',
+    cif: 'B85554921',
+    category: 'LATERAL',
+    variantes: ['GRUPO LATERAL'],
+  },
   { razonSocial: 'LATERAL SANTA ANA, S.L.', cif: 'B85275279', category: 'LATERAL' },
   { razonSocial: 'LATERAL CONSELL, S.L.', cif: 'B86898491', category: 'LATERAL' },
   { razonSocial: 'LATERAL IBERIA, S.L.', cif: 'B88300413', category: 'LATERAL' },
