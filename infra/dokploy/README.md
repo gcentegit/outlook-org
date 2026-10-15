@@ -63,6 +63,7 @@ Si docling o el modelo de lenguaje fallan, el trabajo se reintenta con retroceso
 | `BETTER_AUTH_URL` | `https://clasificador.arcofood.com` |
 | `BETTER_AUTH_SECRET` | secreto del entorno del script (`openssl rand -base64 32`) |
 | `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | app de login del panel en Entra ID (`MS_CLIENT_SECRET` es secreto) |
+| `MS_CLIENT_SECRET_EXPIRES` | opcional: fecha `AAAA-MM-DD` de caducidad del secreto de login, para el aviso del panel |
 | `SYNC_STALE_SECONDS` | `300` |
 
 La web **no** lleva credenciales de Graph, ni el certificado, ni `MAILBOX`: es el contenedor expuesto a Internet y no debe poder tocar el buzón. Lee y crea las categorías del buzón pidiéndoselo al worker por la cola de trabajos (`list-master-categories`, `create-master-category`); si el worker no está en marcha o no tiene credenciales, la pantalla Categorías muestra el motivo.

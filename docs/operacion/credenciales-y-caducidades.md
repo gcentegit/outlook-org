@@ -1,9 +1,12 @@
 # Credenciales y caducidades
 
-**Hoy no hay ningún aviso automático de caducidad.** Si el certificado o el secreto de login caducan,
-el servicio deja de funcionar sin previo aviso. Está planificado (días restantes en `/health` y aviso
-con 30 días); mientras tanto, la fecha de cada caducidad se anota en el calendario del equipo al
-crear la credencial. Las fechas reales no se escriben en este repositorio.
+El panel avisa en el **Resumen** (encima de «Estado del servicio») cuando el certificado de Graph o
+el secreto de login caducan en 30 días o menos, o ya han caducado. El worker lee la caducidad del
+certificado al arrancar y la deja en la base de datos para el panel, que no tiene el certificado; la
+del secreto de login no se puede leer de forma fiable, así que se declara con `MS_CLIENT_SECRET_EXPIRES`
+(`AAAA-MM-DD`) en la web: sin ella no hay aviso del secreto. Al renovar el certificado hay que reiniciar
+el worker (lo lee al arrancar); al renovar el secreto, actualizar también esa fecha. Las fechas reales
+no se escriben en este repositorio.
 
 Los valores de las credenciales nunca van en git, en el chat ni en documentos: viven en un `.env`
 local (fuera de git) y, desplegado, en las variables de entorno o ficheros montados de Dokploy.
@@ -33,7 +36,12 @@ certificado (parte A), secreto de la app de login (parte C) y rotación de crede
   Uptime Kuma. El servicio no pierde datos, pero no sincroniza hasta renovar.
 - Secreto de login: nadie puede iniciar sesión en el panel; el worker no se ve afectado.
 
-## Pendiente (en el plan)
+## Dónde se ve
 
-Exponer los días restantes del certificado y del secreto en `/health` y avisar con 30 días de
-antelación. Cuando exista, este documento debe describir dónde se ve el aviso y quién lo atiende.
+- **Panel (Resumen):** aviso con los días que faltan, visible solo con sesión iniciada.
+- **`/health` del worker** (interno, no público): `certificateDaysRemaining` con los días que faltan para
+  que caduque el certificado (negativo si ya caducó), nunca la fecha. Ausente si no se pudo leer.
+- **`/api/health` de la web** (público): no lleva nada de esto.
+
+No hay aviso por correo ni por Uptime Kuma: quien abre el panel lo ve. Lo atiende quien administra el
+servicio, siguiendo la renovación de la tabla anterior.

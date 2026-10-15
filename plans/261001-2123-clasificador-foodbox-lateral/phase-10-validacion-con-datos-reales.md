@@ -80,7 +80,7 @@ Validación:
 
 Riesgos de operación que tocan código:
 
-- [ ] Aviso de caducidad del certificado y del secreto de login: días restantes en `/health` y aviso con 30 días
+- [x] Aviso de caducidad del certificado y del secreto de login: días restantes en `/health` y aviso con 30 días (el `/health` es el del worker; el aviso está en el Resumen del panel; el secreto de login se declara con `MS_CLIENT_SECRET_EXPIRES`)
 - [ ] Tope de gasto diario del LLM: al superarlo, los correos quedan como dudosos y se avisa
 - [ ] Implementar el borrado automático de remitentes, asuntos y decisiones con más de 12 meses (plazo decidido el 2026-10-03), con copia de seguridad previa en la primera ejecución
 - [x] Adjuntos `.eml` y `.msg`: soportarlos o descartarlos de forma informada, según lo medido en la fase 9 (descartados: 4 de 149 correos, 2,7 %; quedan registrados como omitidos, ADR 0012)

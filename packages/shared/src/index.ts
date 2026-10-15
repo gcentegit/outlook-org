@@ -7,3 +7,4 @@ export * from './sociedades';
 export * from './test-classify';
 export * from './master-categories';
 export * from './folders';
+export * from './credential-expiry';

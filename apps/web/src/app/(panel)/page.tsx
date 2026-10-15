@@ -24,8 +24,9 @@ import {
   formatPercent,
   formatUsd,
 } from '@/lib/format';
-import { readSyncStaleSeconds } from '@/lib/panel-env';
+import { readClientSecretExpiry, readSyncStaleSeconds } from '@/lib/panel-env';
 import { requireUser } from '@/lib/session';
+import { credentialWarnings } from '@/server/credential-expiry';
 import { parseFilter, type SearchParams } from '@/server/filter-params';
 import {
   getMetrics,
@@ -156,6 +157,10 @@ export default async function SummaryPage({
     getReprocessCauses(db),
   ]);
   const { summary } = metrics;
+  const expiring = credentialWarnings({
+    certificate: status.certExpiresAt,
+    loginSecret: readClientSecretExpiry(),
+  });
   const originTotal = ORIGINS.reduce((sum, origin) => sum + metrics.origin[origin], 0);
 
   return (
@@ -167,6 +172,20 @@ export default async function SummaryPage({
       <FiltersForm filter={filter} action="/" />
 
       <div className="space-y-6">
+        {expiring.map((w) => (
+          <Notice
+            key={w.name}
+            tone={w.days < 0 ? 'error' : 'warning'}
+            title={
+              w.days < 0
+                ? `${w.name} ha caducado`
+                : `${w.name} caduca en ${w.days === 1 ? '1 día' : `${w.days} días`}`
+            }
+          >
+            Si caduca, {w.consequence}. Renuévalo según{' '}
+            <code>docs/operacion/credenciales-y-caducidades.md</code>.
+          </Notice>
+        ))}
         <ServiceCard status={status} causes={causes} />
 
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

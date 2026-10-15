@@ -40,3 +40,15 @@ export function readSyncStaleSeconds(env: Env = process.env): number {
   const value = Number(env.SYNC_STALE_SECONDS);
   return Number.isInteger(value) && value > 0 ? value : 300;
 }
+
+/**
+ * Fecha de caducidad del secreto de cliente de login (`MS_CLIENT_SECRET_EXPIRES`, `AAAA-MM-DD`,
+ * válido todo ese día). Entra ID no la expone de forma fiable, así que la aporta quien crea el
+ * secreto. Sin valor o con un valor no válido devuelve null.
+ */
+export function readClientSecretExpiry(env: Env = process.env): Date | null {
+  const value = env.MS_CLIENT_SECRET_EXPIRES?.trim();
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T23:59:59Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}

@@ -163,6 +163,8 @@ const PASSTHROUGH: Record<ServiceKey, { key: string; secret: boolean }[]> = {
     { key: 'MS_CLIENT_ID', secret: false },
     { key: 'MS_CLIENT_SECRET', secret: true },
     { key: 'MS_TENANT_ID', secret: false },
+    // Opcional: fecha (AAAA-MM-DD) de caducidad del secreto de login, para el aviso del panel.
+    { key: 'MS_CLIENT_SECRET_EXPIRES', secret: false },
   ],
   worker: [
     { key: 'GRAPH_TENANT_ID', secret: false },
