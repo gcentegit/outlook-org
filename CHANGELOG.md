@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/gcentegit/outlook-org/compare/v0.12.0...v0.12.1) (2026-10-15)
+
+
+### 🔧 Correcciones
+
+* 🛡️ arreglos de la revisión del código del 2026-10-13 ([#63](https://github.com/gcentegit/outlook-org/issues/63)) ([7265c32](https://github.com/gcentegit/outlook-org/commit/7265c32f965837bfb2babca3a55bc9e734152f76))
+
 ## [0.12.0](https://github.com/gcentegit/outlook-org/compare/v0.11.0...v0.12.0) (2026-10-15)
 
 
