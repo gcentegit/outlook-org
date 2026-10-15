@@ -673,8 +673,10 @@ export interface ServiceStatus {
 }
 
 /** Por qué está un correo pendiente de reprocesar; decide qué se le dice a quien mira el panel. */
-export type ReprocessCause = 'llm-unavailable' | 'llm-failed' | 'extraction' | 'retries';
+export type ReprocessCause =
+  'llm-budget' | 'llm-unavailable' | 'llm-failed' | 'extraction' | 'retries';
 export const REPROCESS_CAUSES: readonly ReprocessCause[] = [
+  'llm-budget',
   'llm-unavailable',
   'llm-failed',
   'extraction',
@@ -683,12 +685,14 @@ export const REPROCESS_CAUSES: readonly ReprocessCause[] = [
 
 /**
  * Causa a partir del correo y de su decisión vigente. El worker anota en el motivo «LLM no
+ * disponible» con el tope de gasto diario superado (se reprocesa al día siguiente o al subir el tope), «LLM no
  * disponible» (sin clave o sin proveedor: reprocesar no sirve hasta configurarlo) o «LLM fallido»
  * (error pasajero); una decisión degradada sin ninguno de los dos se debe a los adjuntos (docling o
  * la descarga). Sin decisión, el trabajo agotó los reintentos.
  */
 export function reprocessCause(latest: { reason: string | null } | null): ReprocessCause {
   if (!latest) return 'retries';
+  if (latest.reason?.includes('tope de gasto diario')) return 'llm-budget';
   if (latest.reason?.includes('LLM no disponible')) return 'llm-unavailable';
   if (latest.reason?.includes('LLM fallido')) return 'llm-failed';
   return 'extraction';

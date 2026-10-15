@@ -13,6 +13,7 @@ import type { LlmClassifier, LlmOutcome, LlmUsage, LlmVerdict } from './llm';
 import { evaluateRules, type RuleRepository } from './rules';
 import { inheritFromThread, type ThreadRepository } from './thread';
 
+export * from './budget';
 export * from './category-settings';
 export * from './default-rules';
 export * from './evaluation';

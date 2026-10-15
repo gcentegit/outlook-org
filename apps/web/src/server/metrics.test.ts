@@ -636,6 +636,9 @@ describe('reprocessCause', () => {
     expect(
       reprocessCause({ reason: 'LLM no disponible (Falta ANTHROPIC_API_KEY); categorías en duda' }),
     ).toBe('llm-unavailable');
+    expect(
+      reprocessCause({ reason: 'LLM no disponible: tope de gasto diario del LLM superado' }),
+    ).toBe('llm-budget');
     expect(reprocessCause({ reason: 'LLM fallido (timeout); categorías en duda' })).toBe(
       'llm-failed',
     );

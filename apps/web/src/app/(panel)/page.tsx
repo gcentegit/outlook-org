@@ -50,6 +50,8 @@ const ORIGIN_LABELS: Record<Origin, string> = {
 
 /** Qué le pasó a cada grupo de correos pendientes y qué hacer con ellos. */
 const CAUSE_TEXT: Record<ReprocessCause, (n: string) => string> = {
+  'llm-budget': (n) =>
+    `${n}: se superó el tope de gasto diario del modelo de lenguaje y quedaron como dudosos sin llamarlo. Se pueden reprocesar mañana o tras subir el tope.`,
   'llm-unavailable': (n) =>
     `${n}: necesitan el modelo de lenguaje, que no está configurado (falta la clave o el proveedor). Reprocesarlos no servirá hasta configurarlo en Modelos.`,
   'llm-failed': (n) =>

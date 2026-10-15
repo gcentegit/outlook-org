@@ -8,6 +8,8 @@ import { applySeed } from '@clasificador/db/seed';
 import {
   classify,
   createLlmClassifier,
+  createPrismaDailySpend,
+  withDailyBudget,
   createPrismaLlmSettingRepository,
   createPrismaRuleRepository,
   createLiveModeWarner,
@@ -176,10 +178,13 @@ export async function startWorker(
   } else {
     const mailbox = graphSettings.settings.mailbox;
     const availableCategories = createMasterCategoriesProvider({ graph, mailbox });
-    const llm = createLlmClassifier({
+    const baseLlm = createLlmClassifier({
       settings: createPrismaLlmSettingRepository(db),
       keys: config,
     });
+    const llm = config.LLM_DAILY_BUDGET_USD
+      ? withDailyBudget(baseLlm, config.LLM_DAILY_BUDGET_USD, createPrismaDailySpend(db))
+      : baseLlm;
     const rules = createPrismaRuleRepository(db);
     const threads = createPrismaThreadRepository(db);
     const warnLiveCategories = createLiveModeWarner();

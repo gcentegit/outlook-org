@@ -119,7 +119,7 @@ caracteres) sale hacia el proveedor elegido. [ADR 0003](adr/0003-llm-configurabl
 - Un cambio de categorías del equipo mientras su correo se procesa no cuenta como corrección.
 - La sesión del panel no se puede invalidar en el servidor antes de las 8 horas; el acceso sí se
   corta al instante quitando al usuario de la lista.
-- Sin tope de gasto diario del LLM, sin aviso automático de caducidad del certificado ni del secreto
+- Sin aviso automático de caducidad del certificado ni del secreto
   de login, y sin plazo de conservación de remitentes, asuntos y decisiones: están planificados.
 - La imagen del worker pesa algo más de 1 GB: lleva el CLI de Prisma porque migra al arrancar.
 
