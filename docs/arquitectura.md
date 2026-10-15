@@ -18,6 +18,7 @@ real ni está desplegado**. Solo funciona en modo sombra.
 | Microsoft Graph | Buzón de Proveedores (lectura) y categorías maestras. | `apps/worker/src/graph/` |
 | Proveedor de LLM | Resuelve los casos que las reglas no deciden. Elegible desde el panel. | `apps/worker/src/classify/` |
 | Uptime Kuma | Recibe un latido tras cada ronda de sincronización correcta (opcional). | `apps/worker/src/heartbeat.ts` |
+| Registro de caídas | Tabla `Outage`: paradas de la sincronización (inicio, fin, causa), que el panel muestra junto al estado del servicio. Un worker caído se detecta al arrancar por el hueco desde la última sincronización. | `apps/worker/src/sync/outages.ts` |
 
 Código compartido: `packages/shared` (esquema de la decisión, categorías, CIF, sociedades) y
 `packages/db` (esquema, migraciones, semilla, cliente).

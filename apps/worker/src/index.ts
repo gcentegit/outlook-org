@@ -51,6 +51,7 @@ import {
 } from './sync/folders';
 import { acquireInstanceLock, type InstanceLock } from './sync/instance-lock';
 import { createMasterCategoriesProvider } from './sync/master-categories';
+import { createOutageTracker, createPrismaOutageStore } from './sync/outages';
 import { createPoller, type Poller } from './sync/poller';
 import { createPrismaSyncStore } from './sync/prisma-store';
 
@@ -254,7 +255,13 @@ export async function startWorker(
       }),
     );
 
+    const outages = createOutageTracker({
+      store: createPrismaOutageStore(db),
+      gapMs: config.SYNC_STALE_SECONDS * 1000,
+    });
+    await outages.checkGap((await syncStore.getState())?.lastSyncAt ?? null);
     poller = createPoller({
+      outages,
       intervalMs: config.POLL_INTERVAL_SECONDS * 1000,
       heartbeat: createHeartbeat({ url: config.UPTIME_KUMA_PUSH_URL }),
       runCycle: () =>

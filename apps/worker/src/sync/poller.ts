@@ -1,10 +1,13 @@
 import type { Heartbeat } from '../heartbeat';
 import type { SyncResult } from './delta';
+import type { OutageTracker } from './outages';
 
 export interface PollerOptions {
   runCycle: () => Promise<SyncResult>;
   intervalMs: number;
   heartbeat: Heartbeat;
+  /** Registro de caídas; sin él no se guardan. */
+  outages?: OutageTracker;
   log?: (message: string) => void;
   /** Espera abortable entre rondas; inyectable para las pruebas. */
   wait?: (ms: number, signal: AbortSignal) => Promise<void>;
@@ -55,10 +58,12 @@ export function createPoller(options: PollerOptions): Poller {
         if (result.enqueued || result.changed || result.removed || result.resynced) {
           log(`sincronización ${summarize(result)}${result.resynced ? ' (resincronizada)' : ''}`);
         }
+        await options.outages?.recovered();
         await options.heartbeat.ping('up', summarize(result));
       } catch (err) {
         error = err instanceof Error ? err.message : String(err);
         console.error('Fallo en la sincronización con el buzón:', err);
+        await options.outages?.failed(error);
         await options.heartbeat.ping('down', error);
       }
       activityAt = new Date();
