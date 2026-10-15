@@ -23,6 +23,11 @@ RUN pnpm --filter @clasificador/db generate
 FROM node:${NODE_VERSION}-bookworm-slim AS deps
 ARG PNPM_VERSION
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+# openssl: Prisma elige al instalar el motor de migraciones según la versión de OpenSSL que ve. Sin
+# él baja el de OpenSSL 1.1, el runtime (con OpenSSL 3) intenta bajar el bueno al arrancar y falla
+# porque node_modules es de root.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/worker/package.json ./apps/worker/
