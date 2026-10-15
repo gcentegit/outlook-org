@@ -177,6 +177,7 @@ const PASSTHROUGH: Record<ServiceKey, { key: string; secret: boolean }[]> = {
     { key: 'UPTIME_KUMA_PUSH_URL', secret: true },
     // Dominios de correo del grupo (sin valor por defecto: sin ellos no hay remitentes internos).
     { key: 'INTERNAL_EMAIL_DOMAINS', secret: false },
+    { key: 'LLM_DAILY_BUDGET_USD', secret: false },
     // Opcionales: sin ellas el worker usa sus valores por defecto.
     { key: 'ATTACHMENT_MAX_BYTES', secret: false },
     { key: 'ATTACHMENT_MAX_PAGES', secret: false },

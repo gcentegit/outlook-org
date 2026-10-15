@@ -55,6 +55,8 @@ const configSchema = z.object({
   UPTIME_KUMA_PUSH_URL: z.url().optional(),
   /** Confianza mínima para proponer una categoría; por debajo queda sin categoría y en revisión. */
   CLASSIFY_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.8),
+  /** Tope de gasto diario del LLM en USD (hora de Madrid); superado, los correos quedan como dudosos. Sin valor, sin tope. */
+  LLM_DAILY_BUDGET_USD: z.coerce.number().positive().optional(),
   /**
    * Administrador inicial del panel: se da de alta al arrancar solo si no hay ningún usuario
    * autorizado. Sin valor y con la lista vacía no se crea ningún administrador.

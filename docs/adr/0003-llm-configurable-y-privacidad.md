@@ -30,7 +30,9 @@ redesplegar y no debe usar los datos de la empresa para entrenar (RGPD).
 ## Consecuencias
 
 - Los modelos gratuitos de OpenRouter tienen cupo diario y no son aptos para producción.
-- Se registran tokens, coste estimado y latencia por decisión. Hoy no hay tope de gasto diario
-  (tarea pendiente en el plan).
+- Se registran tokens, coste estimado y latencia por decisión. Con `LLM_DAILY_BUDGET_USD`
+  hay un tope de gasto diario (suma de `Decision.costUsd` desde las 00:00 de Madrid): superado, no
+  se llama al LLM y los correos quedan dudosos y marcados para reprocesar, con el motivo en la
+  decisión y un aviso en el panel. Sin la variable no hay tope.
 - Una clave que falta no rompe el servicio: el LLM queda «no disponible» y la decisión se guarda
   degradada ([0007](0007-fallos-tecnicos-y-reproceso.md)).
