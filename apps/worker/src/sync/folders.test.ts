@@ -290,6 +290,32 @@ describe('checkFolders', () => {
     expect(checkedAt()).not.toBeNull();
   });
 
+  it('si el trabajo caduca, se detiene y deja el resto para la siguiente ronda', async () => {
+    const graph = fakeMailbox([
+      { conversationId: 'c1', receivedDateTime: '2026-10-10T09:00:00Z', parentFolderId: 'inbox' },
+    ]);
+    const { store, saved, recordCategories, checkedAt } = memoryStore([
+      msg('m1', 'c1', '2026-10-10T09:00:00Z'),
+      msg('m2', 'c1', '2026-10-10T09:00:00Z'),
+    ]);
+    const controller = new AbortController();
+    store.saveLocation = async (id, location) => {
+      saved.set(id, location);
+      controller.abort();
+    };
+    const result = await checkFolders({
+      graph,
+      mailbox: 'buzon@ejemplo.com',
+      store,
+      recordCategories,
+      signal: controller.signal,
+      log: () => {},
+    });
+    expect(result).toEqual({ checked: 1, archived: 0, failed: 0 });
+    expect([...saved.keys()]).toEqual(['m1']);
+    expect(checkedAt()).not.toBeNull();
+  });
+
   it('si fallan todas las búsquedas no anota la ronda, para que el panel no diga «comparado»', async () => {
     const graph = fakeMailbox([], ['c1']);
     const { store, recordCategories, checkedAt } = memoryStore([

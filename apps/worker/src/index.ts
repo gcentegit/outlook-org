@@ -234,9 +234,10 @@ export async function startWorker(
 
     const syncStore = createPrismaSyncStore(db);
     const folderStore = createPrismaFolderCheckStore(db);
-    await registerCheckFoldersWorker(boss, () =>
+    await registerCheckFoldersWorker(boss, (signal) =>
       checkFolders({
         graph,
+        signal,
         mailbox,
         store: folderStore,
         recordCategories: (messageId, categories) =>
