@@ -14,7 +14,7 @@ import { basename, join, resolve } from 'node:path';
 
 import { normalizeCif } from '@clasificador/shared';
 
-import { convertWithDocling, detectAttachmentKind } from '../src/extract/docling';
+import { convertAttachment, detectAttachmentKind } from '../src/extract/docling';
 
 const repoRoot = resolve(import.meta.dirname, '../../..');
 
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
     const bytes = await readFile(join(dir, name));
     const started = performance.now();
     try {
-      const { markdown, method } = await convertWithDocling(
+      const { markdown, method } = await convertAttachment(
         { ...detected, bytes },
         { url, maxPages, timeoutSeconds: 180 },
       );

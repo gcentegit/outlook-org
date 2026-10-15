@@ -14,7 +14,7 @@ real ni está desplegado**. Solo funciona en modo sombra.
 | Worker | Sincroniza la Bandeja de entrada, extrae adjuntos, clasifica, guarda decisiones y atiende las peticiones del panel. Es el único que tiene el certificado de Graph y las claves de LLM. | `apps/worker/src/` |
 | Web (panel) | Métricas, correos con su decisión, discrepancias, reglas (solo lectura), modelo de LLM, categorías del buzón y configuración. Sin credenciales del buzón: pide al worker por la cola. | `apps/web/src/` |
 | PostgreSQL | Datos de la aplicación y la cola de trabajos (pg-boss). | `packages/db/prisma/schema.prisma` |
-| docling-serve | Convierte PDF, imágenes, DOCX y XLSX a texto (con OCR si hace falta). Servicio aparte, solo CPU. | imagen de terceros |
+| docling-serve | Convierte a texto lo que el worker no lee solo: PDF sin capa de texto e imágenes (con OCR), DOCX y XLSX. Servicio aparte, solo CPU. | imagen de terceros |
 | Microsoft Graph | Buzón de Proveedores (lectura) y categorías maestras. | `apps/worker/src/graph/` |
 | Proveedor de LLM | Resuelve los casos que las reglas no deciden. Elegible desde el panel. | `apps/worker/src/classify/` |
 | Uptime Kuma | Recibe un latido tras cada ronda de sincronización correcta (opcional). | `apps/worker/src/heartbeat.ts` |
@@ -30,7 +30,7 @@ flowchart TD
     B -->|correo desconocido| C[Se registra Message como pendiente y se encola process-message]
     B -->|correo conocido con otras categorías| K[Se compara con la última decisión: posible corrección]
     C --> D[Worker: lee el correo y descarga adjuntos válidos]
-    D --> E[docling convierte a texto; caché por SHA-256]
+    D --> E[Texto del PDF en el worker, o docling si no lo trae; caché por SHA-256]
     E --> F[Clasificador: reglas fuertes, hilo, reglas medias, LLM]
     F --> G{Fallo técnico?}
     G -->|pasajero, quedan reintentos| C
