@@ -37,6 +37,21 @@ Si esa máquina está apagada el día 1, la prueba se hace al encenderla (`Persi
 Toma una copia manual (desde Dokploy o con `pg_dump`) y compruébala con
 `restore-check.sh --from-file`. Es una regla del proyecto: ninguna migración sin copia previa.
 
+## Antes de activar el borrado a los 12 meses
+
+La limpieza diaria del worker borra los correos con más de 12 meses (remitente, asunto, decisiones,
+correcciones y categorías aplicadas; el plazo está en [ADR 0010](../adr/0010-retencion-y-datos-de-terceros.md)).
+El borrado **no se puede deshacer** salvo restaurando una copia, y viene desactivado
+(`RETENTION_DELETE_ENABLED=false`): mientras tanto el registro dice cada noche cuántos correos
+«se borrarían». Para activarlo la primera vez:
+
+1. Toma una copia manual de `clasificador-db` y compruébala con `restore-check.sh --from-file`.
+2. Revisa en el registro del worker que la cifra de «se borrarían» es la esperada.
+3. Pon `RETENTION_DELETE_ENABLED=true` en el worker y reinícialo; la siguiente limpieza borra.
+
+El histórico importado no está en la base de datos: vive en `data/history/`, fuera del control de
+versiones y de este borrado.
+
 ## Restaurar sobre producción
 
 La API de Dokploy no permite restaurar: se hace desde su interfaz.

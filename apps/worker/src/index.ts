@@ -140,7 +140,9 @@ export async function startWorker(
   inactiveReason = 'iniciando la cola de trabajos';
   const boss = createBoss(config.DATABASE_URL);
   await setupQueues(boss);
-  await registerCleanupWorker(boss, db);
+  await registerCleanupWorker(boss, db, {
+    deleteOldMessages: config.RETENTION_DELETE_ENABLED,
+  });
   // La prueba de modelos del panel funciona aunque aún no haya credenciales de Graph.
   await registerTestClassifyWorker(boss, {
     keys: config,

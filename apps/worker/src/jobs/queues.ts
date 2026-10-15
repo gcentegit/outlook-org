@@ -11,7 +11,12 @@ import {
 } from '@clasificador/shared';
 import { PgBoss } from 'pg-boss';
 
-import { deleteExpiredAttachmentTexts, type AttachmentTextStore } from '../cleanup';
+import {
+  deleteExpiredAttachmentTexts,
+  deleteExpiredMessages,
+  type AttachmentTextStore,
+  type MessageRetentionStore,
+} from '../cleanup';
 import {
   runCreateMasterCategory,
   runListMasterCategories,
@@ -99,12 +104,19 @@ export async function enqueueMessage(boss: PgBoss, messageId: string): Promise<v
 
 export async function registerCleanupWorker(
   boss: PgBoss,
-  db: AttachmentTextStore,
+  db: AttachmentTextStore & MessageRetentionStore,
+  options: { deleteOldMessages: boolean },
   log: (message: string) => void = console.log,
 ): Promise<void> {
   await boss.work(CLEANUP_QUEUE, async () => {
     const deleted = await deleteExpiredAttachmentTexts(db);
     log(`limpieza: ${deleted} texto(s) de adjuntos caducados borrados`);
+    const messages = await deleteExpiredMessages(db, { enabled: options.deleteOldMessages });
+    log(
+      messages.deleted
+        ? `limpieza: ${messages.count} correo(s) de más de 12 meses borrados con sus decisiones`
+        : `limpieza: ${messages.count} correo(s) de más de 12 meses se borrarían (borrado desactivado: RETENTION_DELETE_ENABLED)`,
+    );
   });
 }
 

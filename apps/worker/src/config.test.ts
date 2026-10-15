@@ -3,6 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { assertSupportedMode, loadConfig, resolveGraphSettings } from './config';
 
 describe('loadConfig', () => {
+  it('el borrado a los 12 meses está desactivado salvo que se active', () => {
+    const base = { DATABASE_URL: 'postgresql://u:p@localhost:5442/db' };
+    expect(loadConfig(base).RETENTION_DELETE_ENABLED).toBe(false);
+    expect(loadConfig({ ...base, RETENTION_DELETE_ENABLED: 'true' }).RETENTION_DELETE_ENABLED).toBe(
+      true,
+    );
+    expect(() => loadConfig({ ...base, RETENTION_DELETE_ENABLED: 'si' })).toThrow(
+      /RETENTION_DELETE_ENABLED/,
+    );
+  });
+
   it('aplica los valores por defecto', () => {
     const c = loadConfig({ DATABASE_URL: 'postgresql://u:p@localhost:5442/db' });
     expect(c.HEALTH_PORT).toBe(8080);

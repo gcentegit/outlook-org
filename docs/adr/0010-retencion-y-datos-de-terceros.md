@@ -25,8 +25,11 @@ importes). El repositorio es público y el RGPD aplica.
 
 ## Consecuencias
 
-- **Pendiente:** el borrado a los 12 meses todavía no está implementado (es una tarea del plan):
-  hoy remitentes, asuntos y decisiones se guardan sin límite. El plazo debe anotarse en el registro
+- El mismo trabajo diario borra los correos con más de 12 meses (y, en cascada, sus decisiones,
+  correcciones y categorías aplicadas). Viene **desactivado** (`RETENTION_DELETE_ENABLED`) y solo
+  registra cuántos borraría hasta que se haga y compruebe la copia
+  ([copias y restauración](../operacion/copias-y-restauracion.md#antes-de-activar-el-borrado-a-los-12-meses)).
+  El plazo debe anotarse en el registro
   de actividades de tratamiento de la empresa.
 - El panel muestra extractos de facturas: solo a usuarios autorizados
   ([0014](0014-panel-sesion-y-acceso.md)).
