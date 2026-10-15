@@ -27,6 +27,15 @@ export interface OutageTrackerOptions {
 
 const MAX_CAUSE_LENGTH = 200;
 
+/** Quita rutas, URL y direcciones de correo: la causa se guarda y se muestra en el panel. */
+export function sanitizeCause(cause: string): string {
+  return cause
+    .replace(/\S*\/users\/\S*/gi, '<ruta>')
+    .replace(/https?:\/\/\S+/gi, '<url>')
+    .replace(/\S*(?:@|%40)\S*/gi, '<buzón>')
+    .slice(0, MAX_CAUSE_LENGTH);
+}
+
 /**
  * Registro de caídas. Nunca lanza: un fallo al guardar no debe parar la sincronización.
  * Un worker caído no puede registrarse a sí mismo, así que su parada se deduce al arrancar.
@@ -50,7 +59,7 @@ export function createOutageTracker(options: OutageTrackerOptions): OutageTracke
           await options.store.open(lastSyncAt, 'el worker estuvo parado');
         }
       }),
-    failed: (cause) => guard(() => options.store.open(now(), cause.slice(0, MAX_CAUSE_LENGTH))),
+    failed: (cause) => guard(() => options.store.open(now(), sanitizeCause(cause))),
     recovered: () => guard(() => options.store.close(now())),
   };
 }

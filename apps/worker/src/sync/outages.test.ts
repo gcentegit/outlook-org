@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createOutageTracker, type OutageStore } from './outages';
+import { createOutageTracker, sanitizeCause, type OutageStore } from './outages';
 
 function fakeStore() {
   const rows: { startedAt: Date; endedAt: Date | null; cause: string }[] = [];
@@ -66,5 +66,17 @@ describe('createOutageTracker', () => {
     await tracker.failed('x');
     await tracker.recovered();
     expect(logs).toHaveLength(2);
+  });
+
+  it('la causa guardada no lleva la dirección del buzón', async () => {
+    const { rows, store } = fakeStore();
+    const tracker = createOutageTracker({ store, gapMs: 1 });
+    await tracker.failed(
+      'Graph 503 en https://graph.microsoft.com/v1.0/users/buzon%40ejemplo.com/mailFolders/inbox/messages/delta: servicio no disponible',
+    );
+    const cause = rows[0]?.cause ?? '';
+    expect(cause).toContain('Graph 503');
+    expect(cause).not.toMatch(/buzon|ejemplo|%40|@/);
+    expect(sanitizeCause('fallo con ana@ejemplo.com')).toBe('fallo con <buzón>');
   });
 });
