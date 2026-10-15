@@ -549,6 +549,7 @@ describe('getServiceStatus', () => {
     const status = await getServiceStatus(db as never, 300, new Date('2026-10-02T12:00:00Z'));
     expect(status).toMatchObject({ state: 'ok', pending: 4, failed: 2, needsReprocess: 5 });
     expect(status.lastFolderCheckAt).toEqual(new Date('2026-10-02T11:59:00Z'));
+    expect(status.certExpiresAt).toEqual(new Date('2026-10-02T11:59:00Z'));
   });
 });
 

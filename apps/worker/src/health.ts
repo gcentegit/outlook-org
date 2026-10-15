@@ -1,5 +1,7 @@
 import { createServer, type Server } from 'node:http';
 
+import { daysUntil } from '@clasificador/shared';
+
 export interface HealthReport {
   /** `disabled`: la sincronización no está en marcha (p. ej. faltan las credenciales de Graph). */
   status: 'ok' | 'stale' | 'error' | 'disabled';
@@ -8,6 +10,8 @@ export interface HealthReport {
   commit: string;
   lastSyncAt: string | null;
   mode?: string;
+  /** Días que faltan para que caduque el certificado de Graph (negativo si ya caducó); nunca la fecha. */
+  certificateDaysRemaining?: number;
   /** Modo por categoría fijado en el panel (informativo: el worker sigue en sombra). */
   categoryModes?: Record<string, string>;
   /** Por qué no está sano; ausente si `status` es `ok`. */
@@ -60,6 +64,8 @@ export interface HealthServerOptions {
   /** Última sincronización correcta con el buzón (SyncState en la base de datos). */
   getLastSyncAt: () => Promise<Date | null>;
   mode?: string;
+  /** Caducidad del certificado de Graph, leída al arrancar; null si no se conoce. */
+  getCertificateExpiresAt?: () => Date | null;
   /** Si devuelve un texto, la sincronización no está en marcha: 503 `disabled` con ese motivo. */
   getInactiveReason?: () => string | null;
   /** Error de la última ronda de sincronización; se muestra como motivo cuando hay retraso. */
@@ -100,10 +106,12 @@ export function createHealthServer(opts: HealthServerOptions): Server {
       } catch (err) {
         console.error('Fallo al leer CategorySetting en /health:', err);
       }
+      const certExpiresAt = opts.getCertificateExpiresAt?.() ?? null;
       const base = {
         version: opts.version,
         commit: opts.commit,
         ...(opts.mode ? { mode: opts.mode } : {}),
+        ...(certExpiresAt ? { certificateDaysRemaining: daysUntil(certExpiresAt, now()) } : {}),
         ...(categoryModes ? { categoryModes } : {}),
       };
       let report: HealthReport;

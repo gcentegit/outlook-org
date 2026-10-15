@@ -25,6 +25,7 @@ import {
 import { extractEmail } from './extract/extract-email';
 import { applyCategories, categoriesToApply } from './graph/apply-categories';
 import { createGraphClient, type GraphClient } from './graph/client';
+import { recordCertificateExpiry } from './cert-expiry';
 import { createHealthServer, evaluateLoopLiveness } from './health';
 import { createHeartbeat } from './heartbeat';
 import { createPrismaAppliedCategoryStore } from './jobs/applied-category-store';
@@ -83,6 +84,8 @@ export async function startWorker(
   // `/livez` no responde bien hasta que están aplicadas las migraciones y listas las colas.
   let ready = false;
   let poller: Poller | null = null;
+  // Caducidad del certificado de Graph, leída al arrancar (renovarlo exige reiniciar el worker).
+  let certExpiresAt: Date | null = null;
   const db = prisma();
   const server = createHealthServer({
     version: config.APP_VERSION,
@@ -99,6 +102,7 @@ export async function startWorker(
             Math.max(config.POLL_INTERVAL_SECONDS * 10_000, MIN_LOOP_STALL_MS),
           )
         : { ok: false, reason: inactiveReason ?? 'arrancando' },
+    getCertificateExpiresAt: () => certExpiresAt,
     getLastError: () => poller?.lastError() ?? null,
     getLastSyncAt: async () =>
       (await db.syncState.findUnique({ where: { id: INBOX_SYNC_ID } }))?.lastSyncAt ?? null,
@@ -144,6 +148,9 @@ export async function startWorker(
   });
 
   const graphSettings = resolveGraphSettings(config);
+  if ('settings' in graphSettings) {
+    certExpiresAt = await recordCertificateExpiry(db, graphSettings.settings.certPath);
+  }
   // El certificado de Graph solo lo tiene el worker: las categorías del buzón que pide el panel
   // (leer, crear) y el reproceso pasan por aquí, aunque no haya credenciales.
   const graph: GraphClient | null =

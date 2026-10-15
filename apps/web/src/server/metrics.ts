@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@clasificador/db';
 import {
   CATEGORIES,
+  CERT_EXPIRY_SYNC_ID,
   canonicalCategory,
   decisionSourceSchema,
   FOLDER_CATEGORIES,
@@ -654,6 +655,8 @@ export interface ServiceStatus {
   lastDecisionAt: Date | null;
   /** Última comprobación de en qué carpeta está cada correo (null: nunca). */
   lastFolderCheckAt: Date | null;
+  /** Caducidad del certificado de Graph que el worker deja en la base de datos (null: no se conoce). */
+  certExpiresAt: Date | null;
 }
 
 /** Por qué está un correo pendiente de reprocesar; decide qué se le dice a quien mira el panel. */
@@ -713,9 +716,10 @@ export async function getServiceStatus(
   staleSeconds: number,
   now: Date = new Date(),
 ): Promise<ServiceStatus> {
-  const [sync, folders, pending, failed, needsReprocess, lastDecision] = await Promise.all([
+  const [sync, folders, cert, pending, failed, needsReprocess, lastDecision] = await Promise.all([
     db.syncState.findUnique({ where: { id: 'inbox' }, select: { lastSyncAt: true } }),
     db.syncState.findUnique({ where: { id: FOLDERS_SYNC_ID }, select: { lastSyncAt: true } }),
+    db.syncState.findUnique({ where: { id: CERT_EXPIRY_SYNC_ID }, select: { lastSyncAt: true } }),
     db.message.count({ where: { status: 'pending' } }),
     db.message.count({ where: { status: 'failed' } }),
     db.message.count({ where: { needsReprocess: true } }),
@@ -731,5 +735,6 @@ export async function getServiceStatus(
     needsReprocess,
     lastDecisionAt: lastDecision?.createdAt ?? null,
     lastFolderCheckAt: folders?.lastSyncAt ?? null,
+    certExpiresAt: cert?.lastSyncAt ?? null,
   };
 }

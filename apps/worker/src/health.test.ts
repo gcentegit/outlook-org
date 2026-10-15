@@ -64,6 +64,26 @@ describe('createHealthServer', () => {
     expect(((await res.json()) as { status: string }).status).toBe('ok');
   });
 
+  it('informa de los días que faltan para caducar el certificado, sin la fecha', async () => {
+    const res = await fetch(
+      `${await start(async () => new Date('2026-10-02T11:59:00Z'), {
+        getCertificateExpiresAt: () => new Date('2026-11-01T12:00:00Z'),
+      })}/health`,
+    );
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.certificateDaysRemaining).toBe(30);
+    expect(JSON.stringify(body)).not.toContain('2026-11-01');
+  });
+
+  it('omite los días del certificado si no se conoce su caducidad', async () => {
+    const res = await fetch(
+      `${await start(async () => new Date('2026-10-02T11:59:00Z'), {
+        getCertificateExpiresAt: () => null,
+      })}/health`,
+    );
+    expect(await res.json()).not.toHaveProperty('certificateDaysRemaining');
+  });
+
   it('responde 503 con status error si falla la base de datos', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await fetch(

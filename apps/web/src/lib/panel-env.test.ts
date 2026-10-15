@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { isDevBypassActive, readMicrosoftLogin, readSyncStaleSeconds } from './panel-env';
+import {
+  isDevBypassActive,
+  readClientSecretExpiry,
+  readMicrosoftLogin,
+  readSyncStaleSeconds,
+} from './panel-env';
 
 describe('isDevBypassActive', () => {
   it('solo se activa con AUTH_DEV_BYPASS=true y NODE_ENV=development', () => {
@@ -39,5 +44,19 @@ describe('readSyncStaleSeconds', () => {
     expect(readSyncStaleSeconds({})).toBe(300);
     expect(readSyncStaleSeconds({ SYNC_STALE_SECONDS: '120' })).toBe(120);
     expect(readSyncStaleSeconds({ SYNC_STALE_SECONDS: '-5' })).toBe(300);
+  });
+});
+
+describe('readClientSecretExpiry', () => {
+  it('lee la fecha como válida todo ese día', () => {
+    expect(readClientSecretExpiry({ MS_CLIENT_SECRET_EXPIRES: '2027-03-01' })).toEqual(
+      new Date('2027-03-01T23:59:59Z'),
+    );
+  });
+
+  it('devuelve null sin valor o con uno no válido', () => {
+    expect(readClientSecretExpiry({})).toBeNull();
+    expect(readClientSecretExpiry({ MS_CLIENT_SECRET_EXPIRES: '01/03/2027' })).toBeNull();
+    expect(readClientSecretExpiry({ MS_CLIENT_SECRET_EXPIRES: '2027-13-45' })).toBeNull();
   });
 });
