@@ -6,7 +6,7 @@ import { createCategoryAction } from '@/app/(panel)/categorias/actions';
 import { IDLE, type ActionState } from '@/lib/action-state';
 import { OUTLOOK_COLORS, newCategorySchema } from '@/lib/outlook-colors';
 
-import { buttonClass, inputClass, labelClass, Notice } from './ui';
+import { ActionFeedback, buttonClass, inputClass, labelClass, Notice } from './ui';
 
 /** Crear una categoría es visible para todo el equipo: se pide confirmar en un segundo paso. */
 export function CategoryForm({ disabled }: { disabled: boolean }) {
@@ -138,10 +138,7 @@ export function CategoryForm({ disabled }: { disabled: boolean }) {
         </button>
       )}
 
-      <div aria-live="polite">
-        {state.status === 'ok' && <Notice tone="success">{state.message}</Notice>}
-        {state.status === 'error' && <Notice tone="error">{state.message}</Notice>}
-      </div>
+      <ActionFeedback state={state} />
     </form>
   );
 }

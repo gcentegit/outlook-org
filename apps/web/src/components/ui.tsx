@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import type { ActionState } from '@/lib/action-state';
+
 /** Une clases ignorando los valores vacíos. */
 export function cn(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(' ');
@@ -75,6 +77,16 @@ export function Notice({
     >
       {title && <p className="font-semibold">{title}</p>}
       <div className={title ? 'mt-1' : undefined}>{children}</div>
+    </div>
+  );
+}
+
+/** Resultado de una acción del servidor (`useActionState`), anunciado a los lectores de pantalla. */
+export function ActionFeedback({ state, className }: { state: ActionState; className?: string }) {
+  return (
+    <div aria-live="polite" className={className}>
+      {state.status === 'ok' && <Notice tone="success">{state.message}</Notice>}
+      {state.status === 'error' && <Notice tone="error">{state.message}</Notice>}
     </div>
   );
 }

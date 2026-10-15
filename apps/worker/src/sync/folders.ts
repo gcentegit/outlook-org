@@ -7,7 +7,7 @@ import {
 } from '@clasificador/shared';
 
 import { evaluateCategoryChange } from '../corrections';
-import { GraphError, type GraphClient } from '../graph/client';
+import type { GraphClient } from '../graph/client';
 import { listAllFolders } from '../history/graph-import';
 import type { SyncStore } from './delta';
 
@@ -57,8 +57,8 @@ export interface MessageLocation extends FolderInfo {
 
 export interface FolderCheckStore {
   /**
-   * Primero los que aún no se han comprobado o siguen en la Bandeja; después, una vez al día, los
-   * archivados en el último mes. Los que ya no están en el buzón no se vuelven a buscar.
+   * Los que aún no se han comprobado, los que siguen en la Bandeja y, una vez al día, los archivados
+   * hace poco; los que llevan más tiempo sin mirar primero. Los que ya no están no se buscan más.
    */
   listToCheck(now: Date, limit: number): Promise<MessageToLocate[]>;
   /** Si el correo se ha borrado mientras tanto (p. ej. dio 404 al procesarlo), no hace nada. */
@@ -106,7 +106,6 @@ export async function loadFolderMap(
     const kind = folder.id === inbox.id ? 'inbox' : (tree?.folder ?? 'other');
     byId.set(folder.id, { folder: kind, path: folder.path });
   }
-  if (!byId.has(inbox.id)) byId.set(inbox.id, { folder: 'inbox', path: inboxPath });
   return (folderId) => byId.get(folderId) ?? { folder: 'other', path: null };
 }
 
@@ -199,7 +198,7 @@ export interface CheckFoldersDeps {
 }
 
 /**
- * Una ronda: localiza los correos pendientes de comprobar y guarda su carpeta. Un fallo de Graph
+ * Una ronda: localiza los correos pendientes de comprobar y guarda su carpeta. Un fallo
  * con un correo no detiene la ronda: ese correo se vuelve a intentar en la siguiente.
  */
 export async function checkFolders(deps: CheckFoldersDeps): Promise<CheckFoldersResult> {
@@ -207,24 +206,26 @@ export async function checkFolders(deps: CheckFoldersDeps): Promise<CheckFolders
   const log = deps.log ?? console.log;
   const pending = await deps.store.listToCheck(now, MAX_MESSAGES_PER_CHECK);
   const result: CheckFoldersResult = { checked: 0, archived: 0, failed: 0 };
-  if (pending.length > 0) {
-    const folderOf = await loadFolderMap(deps.graph, deps.mailbox);
-    for (const message of pending) {
-      try {
-        const location = await locateMessage(deps.graph, deps.mailbox, message, folderOf);
-        await deps.store.saveLocation(message.id, location, now);
-        if (location.categories) await deps.recordCategories(message.id, location.categories);
-        result.checked++;
-        if (location.folder === 'foodbox' || location.folder === 'lateral') result.archived++;
-      } catch (err) {
-        if (!(err instanceof GraphError)) throw err;
-        result.failed++;
-        log(`carpetas: no se pudo localizar ${message.id}: ${err.message}`);
-      }
+  if (pending.length === 0) {
+    await deps.store.markChecked(now);
+    return result;
+  }
+  const folderOf = await loadFolderMap(deps.graph, deps.mailbox);
+  for (const message of pending) {
+    try {
+      const location = await locateMessage(deps.graph, deps.mailbox, message, folderOf);
+      await deps.store.saveLocation(message.id, location, now);
+      if (location.categories) await deps.recordCategories(message.id, location.categories);
+      result.checked++;
+      if (location.folder === 'foodbox' || location.folder === 'lateral') result.archived++;
+    } catch (err) {
+      // Cualquier fallo (Graph, red, base de datos) se queda en ese correo: no tira la ronda.
+      result.failed++;
+      log(`carpetas: no se pudo localizar ${message.id}: ${String(err)}`);
     }
   }
   // Si todas las búsquedas fallan (permisos, Graph caído), el panel no debe decir «comparado ahora».
-  if (pending.length === 0 || result.checked > 0) await deps.store.markChecked(now);
+  if (result.checked > 0) await deps.store.markChecked(now);
   return result;
 }
 
@@ -232,36 +233,26 @@ export function createPrismaFolderCheckStore(
   db: Pick<PrismaClient, 'message' | 'syncState'>,
 ): FolderCheckStore {
   return {
-    async listToCheck(now, limit) {
-      const select = { id: true, conversationId: true, receivedAt: true } as const;
-      const withConversation = { conversationId: { not: '' } };
-      const urgent = await db.message.findMany({
+    listToCheck(now, limit) {
+      // Una sola lista, los que llevan más tiempo sin mirar primero: un archivado pendiente de su
+      // repaso diario no se queda atrás aunque haya muchos correos en la Bandeja.
+      return db.message.findMany({
         where: {
-          ...withConversation,
+          conversationId: { not: '' },
           OR: [
             { folderCheckedAt: null },
             { folder: 'inbox' },
-            // Comprobados antes de guardar la ruta: se completan en la siguiente ronda.
-            { folder: { in: ['foodbox', 'lateral', 'other'] }, folderPath: null },
+            {
+              folder: { in: ['foodbox', 'lateral', 'other'] },
+              folderCheckedAt: { lt: new Date(now.getTime() - SETTLED_RECHECK_MS) },
+              receivedAt: { gte: new Date(now.getTime() - SETTLED_RECHECK_HORIZON_MS) },
+            },
           ],
         },
         orderBy: { folderCheckedAt: { sort: 'asc', nulls: 'first' } },
         take: limit,
-        select,
+        select: { id: true, conversationId: true, receivedAt: true },
       });
-      if (urgent.length >= limit) return urgent;
-      const settled = await db.message.findMany({
-        where: {
-          ...withConversation,
-          folder: { in: ['foodbox', 'lateral', 'other'] },
-          folderCheckedAt: { lt: new Date(now.getTime() - SETTLED_RECHECK_MS) },
-          receivedAt: { gte: new Date(now.getTime() - SETTLED_RECHECK_HORIZON_MS) },
-        },
-        orderBy: { folderCheckedAt: 'asc' },
-        take: limit - urgent.length,
-        select,
-      });
-      return [...urgent, ...settled];
     },
     async saveLocation(messageId, { folder, path }, checkedAt) {
       await db.message.updateMany({

@@ -7,7 +7,7 @@ import { IDLE, type ActionState } from '@/lib/action-state';
 import { LLM_PROVIDERS, privacyNotice, type LlmProviderId } from '@/lib/llm-providers';
 
 import { TestResultView } from './test-result';
-import { buttonClass, inputClass, labelClass, Notice } from './ui';
+import { ActionFeedback, buttonClass, inputClass, labelClass, Notice } from './ui';
 
 export function ModelForm({
   initialProvider,
@@ -145,10 +145,7 @@ export function ModelForm({
         {!testing && test.status === 'done' && <TestResultView result={test.result} />}
       </div>
 
-      <div aria-live="polite">
-        {state.status === 'ok' && <Notice tone="success">{state.message}</Notice>}
-        {state.status === 'error' && <Notice tone="error">{state.message}</Notice>}
-      </div>
+      <ActionFeedback state={state} />
     </form>
   );
 }

@@ -112,7 +112,7 @@ export default async function MessagesPage({
 
       <Card>
         <div className="mb-4">
-          <FolderCheckButton lastCheck={formatDateTime(folderCheck?.lastSyncAt ?? null)} />
+          <FolderCheckButton lastCheck={folderCheck?.lastSyncAt ?? null} />
         </div>
         <ul className="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Correos por estado">
           {MESSAGE_STATES.map((s) => (

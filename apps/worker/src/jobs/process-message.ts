@@ -83,8 +83,8 @@ const inFlight = new Set<string>();
 
 /**
  * Extrae, clasifica y guarda la decisión de un correo. Idempotente por `messageId`: si ya hay
- * una decisión válida del mismo modo no hace nada. Un correo que ya no existe en el buzón (404)
- * se da por terminado.
+ * una decisión válida del mismo modo no hace nada. Un correo que sigue sin existir en el buzón (404)
+ * en el último intento se da por terminado.
  *
  * Distingue una decisión válida de una degradada por un fallo técnico (docling caído, LLM fallido
  * o sin modelo disponible):
@@ -109,6 +109,10 @@ export async function processMessage(
     // id con el que lo conocemos, que es al que se asocia la decisión.
     const mailboxEmail = await extractOrRelocate(messageId, deps, log);
     if (!mailboxEmail) {
+      // Un 404 puede ser pasajero (réplica de Exchange atrasada): solo el último intento lo da por
+      // desaparecido, para no dejar como definitiva una decisión que había que repetir.
+      if (!attempt.isLast)
+        throw new GraphError(`el correo ${messageId} no aparece en el buzón`, 404);
       log(`el correo ${messageId} ya no está en el buzón; se omite`);
       await deps.store.forget(messageId);
       return 'gone';

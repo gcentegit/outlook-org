@@ -111,7 +111,11 @@ function ServiceCard({
         <div className="mt-4">
           <Notice
             tone="warning"
-            title={`${formatInt(status.needsReprocess)} correo(s) pendientes de reprocesar`}
+            title={
+              status.needsReprocess === 1
+                ? '1 correo pendiente de reprocesar'
+                : `${formatInt(status.needsReprocess)} correos pendientes de reprocesar`
+            }
           >
             <ul className="list-disc space-y-1 pl-4">
               {REPROCESS_CAUSES.filter((cause) => causes[cause] > 0).map((cause) => (
@@ -125,7 +129,9 @@ function ServiceCard({
               </Link>
             </p>
           </Notice>
-          <ReprocessButton count={status.needsReprocess} waitingLlm={causes['llm-unavailable']} />
+          <div className="mt-3">
+            <ReprocessButton count={status.needsReprocess} waitingLlm={causes['llm-unavailable']} />
+          </div>
         </div>
       )}
       <p className="mt-3 text-xs text-muted">
@@ -202,7 +208,7 @@ export default async function SummaryPage({
           description="Frente a lo que hizo el equipo: la carpeta donde archivó el correo (árbol Foodbox → FOOD BOX, árbol Lateral → LATERAL) y las categorías que le puso en Outlook. Solo cuentan los correos ya archivados o etiquetados; los demás no suman ni como acierto ni como fallo y se cuentan aparte como «sin contrastar». Los que el equipo eliminó tampoco cuentan. La carpeta no dice nada de ARCOBETA, que se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone la categoría."
         >
           <div className="mb-4">
-            <FolderCheckButton lastCheck={formatDateTime(status.lastFolderCheckAt)} />
+            <FolderCheckButton lastCheck={status.lastFolderCheckAt} />
           </div>
           <DataTable
             caption="Precisión y cobertura por categoría"

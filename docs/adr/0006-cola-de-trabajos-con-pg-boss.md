@@ -17,7 +17,8 @@ procesado. Código: `apps/worker/src/jobs/`.
   del proceso un mismo correo no se procesa dos veces a la vez. Ante un 404 de Graph, el correo
   se busca por su conversación y su fecha de recepción, porque moverlo le cambia el id: si está en
   otra carpeta se decide con el id actual y la decisión se guarda con el que ya conocíamos. Si no
-  aparece (borrado), el trabajo termina sin error.
+  aparece, se reintenta como cualquier error, por si es pasajero, y en el último intento se da por
+  borrado y el trabajo termina sin error.
 - **`Message` desde la detección:** la delta registra el correo como `pending` (remitente y asunto
   vacíos hasta procesarlo) antes de encolarlo; al terminar pasa a `processed` (o `failed`). Así
   «pendientes» y «fallidos» son reales y los cambios del equipo durante el procesado no se pierden.

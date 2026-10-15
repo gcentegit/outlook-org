@@ -1,36 +1,39 @@
-'use client';
-
-import { useActionState } from 'react';
+import Link from 'next/link';
 
 import { reprocessFlaggedAction } from '@/app/(panel)/actions';
-import { IDLE, type ActionState } from '@/lib/action-state';
+import { formatInt } from '@/lib/format';
 
-import { buttonClass, Notice } from './ui';
+import { ActionButton } from './action-button';
 
 /**
- * Vuelve a encolar los correos marcados para reprocesar y muestra cuántos eran. Los que esperan al
- * modelo de lenguaje se cuentan aparte: sin él configurado, reprocesarlos los deja igual.
+ * Vuelve a encolar los correos marcados para reprocesar. Los que esperan al modelo de lenguaje se
+ * cuentan aparte: sin él configurado, reprocesarlos los deja igual.
  */
 export function ReprocessButton({ count, waitingLlm }: { count: number; waitingLlm: number }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(
-    reprocessFlaggedAction,
-    IDLE,
-  );
+  const waiting =
+    waitingLlm === count
+      ? count === 1
+        ? 'Espera'
+        : 'Todos esperan'
+      : waitingLlm === 1
+        ? '1 de ellos espera'
+        : `${formatInt(waitingLlm)} esperan`;
   return (
-    <form action={action} className="mt-3">
-      <button type="submit" disabled={pending || count === 0} className={buttonClass.primary}>
-        {pending ? 'Pidiendo el reproceso...' : `Reprocesar los ${count} marcados`}
-      </button>
+    <ActionButton
+      action={reprocessFlaggedAction}
+      label={count === 1 ? 'Reprocesar el marcado' : `Reprocesar los ${formatInt(count)} marcados`}
+      pendingLabel="Pidiendo el reproceso..."
+    >
       {waitingLlm > 0 && (
-        <p className="mt-2 text-sm text-muted">
-          {waitingLlm === count ? 'Todos esperan' : `${waitingLlm} de ellos esperan`} al modelo de
-          lenguaje, que está apagado: seguirán marcados hasta configurarlo en Modelos.
-        </p>
+        <span className="text-sm text-muted">
+          {waiting} al modelo de lenguaje, que no está configurado:{' '}
+          {waitingLlm === 1 ? 'seguirá marcado' : 'seguirán marcados'} hasta configurarlo en{' '}
+          <Link href="/modelos" className="underline">
+            Modelos
+          </Link>
+          .
+        </span>
       )}
-      <div aria-live="polite" className="mt-2">
-        {state.status === 'ok' && <Notice tone="success">{state.message}</Notice>}
-        {state.status === 'error' && <Notice tone="error">{state.message}</Notice>}
-      </div>
-    </form>
+    </ActionButton>
   );
 }
