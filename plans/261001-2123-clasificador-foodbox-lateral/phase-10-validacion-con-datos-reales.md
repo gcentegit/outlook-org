@@ -85,7 +85,7 @@ Riesgos de operación que tocan código:
 - [ ] Implementar el borrado automático de remitentes, asuntos y decisiones con más de 12 meses (plazo decidido el 2026-10-03), con copia de seguridad previa en la primera ejecución
 - [x] Adjuntos `.eml` y `.msg`: soportarlos o descartarlos de forma informada, según lo medido en la fase 9 (descartados: 4 de 149 correos, 2,7 %; quedan registrados como omitidos, ADR 0012)
 - [ ] Pruebas de navegador del panel en el repositorio, y pruebas de integración (PostgreSQL y docling) en CI
-- [ ] Reducir la imagen del worker (hoy unos 2 GB): compilar el worker y separar las migraciones
+- [x] Reducir la imagen del worker: de 2,09 GB a 1,06 GB (medido el 2026-10-15) instalando las dependencias en una etapa aparte, sin pnpm ni su caché en la imagen final y sin `chown -R`. Se descartó compilar el worker (`tsx` y esbuild pesan unos 20 MB) y el CLI de Prisma se queda porque el worker migra al arrancar
 - [x] Páginas «Correos» (cada correo con su decisión, estado y motivo) y «Reglas» (solo lectura, con los correos que decidió cada una) en el panel (decisión del 2026-10-12)
 - [ ] Registro de caídas en el panel (decisión del 2026-10-12): guardar cuándo empieza y termina cada parada de la sincronización y mostrar el historial junto al estado del servicio; los avisos siguen en Uptime Kuma
 

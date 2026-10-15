@@ -18,15 +18,11 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --filter @clasificador/worker...
 RUN pnpm --filter @clasificador/db generate
 
-# ── Runtime: solo dependencias de producción ─────────────────────────────────
-FROM node:${NODE_VERSION}-bookworm-slim AS runner
+# ── Dependencias de producción ───────────────────────────────────────────────
+# En una etapa aparte para que ni pnpm ni su caché (cientos de MB) lleguen a la imagen final.
+FROM node:${NODE_VERSION}-bookworm-slim AS deps
 ARG PNPM_VERSION
-ENV NODE_ENV=production \
-    HEALTH_PORT=8080
-# openssl: lo necesita el motor de migraciones de Prisma.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/worker/package.json ./apps/worker/
@@ -35,6 +31,16 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --prod --filter @clasificador/worker...
+
+# ── Runtime ──────────────────────────────────────────────────────────────────
+FROM node:${NODE_VERSION}-bookworm-slim AS runner
+ENV NODE_ENV=production \
+    HEALTH_PORT=8080
+# openssl: lo necesita el motor de migraciones de Prisma.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=deps /app ./
 COPY --from=builder /repo/apps/worker/src ./apps/worker/src
 # Reproceso manual de correos marcados: docker exec <contenedor> node_modules/.bin/tsx scripts/reprocess.ts
 COPY --from=builder /repo/apps/worker/scripts/reprocess.ts ./apps/worker/scripts/reprocess.ts
@@ -42,7 +48,6 @@ COPY --from=builder /repo/packages/db/src ./packages/db/src
 COPY --from=builder /repo/packages/db/prisma ./packages/db/prisma
 COPY --from=builder /repo/packages/db/prisma.config.ts ./packages/db/
 COPY --from=builder /repo/packages/shared/src ./packages/shared/src
-RUN chown -R node:node /app
 ARG APP_VERSION=dev
 ARG APP_COMMIT=dev
 ENV APP_VERSION=${APP_VERSION} \
