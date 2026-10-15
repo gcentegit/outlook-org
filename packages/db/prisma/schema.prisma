@@ -60,6 +60,18 @@ model SyncState {
   updatedAt  DateTime  @updatedAt
 }
 
+/// Parada de la sincronización con el buzón. `endedAt` es nulo mientras dura; la cierra la
+/// siguiente sincronización correcta.
+model Outage {
+  id        String    @id @default(cuid())
+  startedAt DateTime
+  endedAt   DateTime?
+  /// Motivo breve: el error de la ronda o que el worker estuvo parado.
+  cause     String
+
+  @@index([startedAt])
+}
+
 /// El correo se crea al detectarlo (con remitente y asunto vacíos hasta que se procesa).
 model Message {
   /// Id del mensaje en Microsoft Graph.

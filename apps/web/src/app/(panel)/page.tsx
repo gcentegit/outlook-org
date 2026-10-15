@@ -135,9 +135,41 @@ function ServiceCard({
           </div>
         </div>
       )}
+      <h3 className="mt-6 text-sm font-medium">Historial de caídas</h3>
+      {status.outages.length === 0 ? (
+        <p className="mt-2 text-sm text-muted">No se ha registrado ninguna caída.</p>
+      ) : (
+        <DataTable
+          caption="Últimas caídas de la sincronización"
+          headers={[
+            { label: 'Inicio' },
+            { label: 'Fin' },
+            { label: 'Duración', align: 'right' },
+            { label: 'Causa' },
+          ]}
+        >
+          {status.outages.map((outage) => (
+            <tr key={outage.id}>
+              <th scope="row" className={`${cellClass} whitespace-nowrap font-medium`}>
+                {formatDateTime(outage.startedAt)}
+              </th>
+              <td className={cellClass}>
+                {outage.endedAt ? (
+                  formatDateTime(outage.endedAt)
+                ) : (
+                  <Badge tone="danger">En curso</Badge>
+                )}
+              </td>
+              <td className={numberCellClass}>{formatAge(outage.durationSeconds)}</td>
+              <td className={`${cellClass} break-words`}>{outage.cause}</td>
+            </tr>
+          ))}
+        </DataTable>
+      )}
       <p className="mt-3 text-xs text-muted">
-        Se considera parado tras {formatAge(status.staleSeconds)} sin sincronizar. Los errores del
-        worker no se guardan en la base de datos: están en sus logs.
+        Se considera parado tras {formatAge(status.staleSeconds)} sin sincronizar. Las caídas se
+        registran aquí; el detalle de los errores está en los logs del worker y los avisos, en
+        Uptime Kuma.
       </p>
     </Card>
   );

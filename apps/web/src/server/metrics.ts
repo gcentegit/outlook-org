@@ -640,6 +640,17 @@ export async function getMessageList(
 
 // --- Estado del servicio --------------------------------------------------------------------
 
+export interface OutageEntry {
+  id: string;
+  startedAt: Date;
+  /** Null mientras la parada dura. */
+  endedAt: Date | null;
+  durationSeconds: number;
+  cause: string;
+}
+
+export const OUTAGE_HISTORY_LIMIT = 10;
+
 export interface ServiceStatus {
   /** `never`: el worker aún no ha sincronizado; `stale`: lleva más de `staleSeconds` parado. */
   state: 'ok' | 'stale' | 'never';
@@ -653,6 +664,8 @@ export interface ServiceStatus {
   /** Correos marcados para reprocesar (fallidos o decididos con docling o el LLM caídos). */
   needsReprocess: number;
   lastDecisionAt: Date | null;
+  /** Últimas paradas de la sincronización, la más reciente primero. */
+  outages: OutageEntry[];
   /** Última comprobación de en qué carpeta está cada correo (null: nunca). */
   lastFolderCheckAt: Date | null;
   /** Caducidad del certificado de Graph que el worker deja en la base de datos (null: no se conoce). */
@@ -712,19 +725,21 @@ export function classifySync(
 }
 
 export async function getServiceStatus(
-  db: Pick<PrismaClient, 'syncState' | 'message' | 'decision'>,
+  db: Pick<PrismaClient, 'syncState' | 'message' | 'decision' | 'outage'>,
   staleSeconds: number,
   now: Date = new Date(),
 ): Promise<ServiceStatus> {
-  const [sync, folders, cert, pending, failed, needsReprocess, lastDecision] = await Promise.all([
-    db.syncState.findUnique({ where: { id: 'inbox' }, select: { lastSyncAt: true } }),
-    db.syncState.findUnique({ where: { id: FOLDERS_SYNC_ID }, select: { lastSyncAt: true } }),
-    db.syncState.findUnique({ where: { id: CERT_EXPIRY_SYNC_ID }, select: { lastSyncAt: true } }),
-    db.message.count({ where: { status: 'pending' } }),
-    db.message.count({ where: { status: 'failed' } }),
-    db.message.count({ where: { needsReprocess: true } }),
-    db.decision.findFirst({ orderBy: { createdAt: 'desc' }, select: { createdAt: true } }),
-  ]);
+  const [sync, folders, cert, pending, failed, needsReprocess, lastDecision, outages] =
+    await Promise.all([
+      db.syncState.findUnique({ where: { id: 'inbox' }, select: { lastSyncAt: true } }),
+      db.syncState.findUnique({ where: { id: FOLDERS_SYNC_ID }, select: { lastSyncAt: true } }),
+      db.syncState.findUnique({ where: { id: CERT_EXPIRY_SYNC_ID }, select: { lastSyncAt: true } }),
+      db.message.count({ where: { status: 'pending' } }),
+      db.message.count({ where: { status: 'failed' } }),
+      db.message.count({ where: { needsReprocess: true } }),
+      db.decision.findFirst({ orderBy: { createdAt: 'desc' }, select: { createdAt: true } }),
+      db.outage.findMany({ orderBy: { startedAt: 'desc' }, take: OUTAGE_HISTORY_LIMIT }),
+    ]);
   const lastSyncAt = sync?.lastSyncAt ?? null;
   return {
     ...classifySync(lastSyncAt, now, staleSeconds),
@@ -734,6 +749,16 @@ export async function getServiceStatus(
     failed,
     needsReprocess,
     lastDecisionAt: lastDecision?.createdAt ?? null,
+    outages: outages.map((o) => ({
+      id: o.id,
+      startedAt: o.startedAt,
+      endedAt: o.endedAt,
+      durationSeconds: Math.max(
+        0,
+        Math.round(((o.endedAt ?? now).getTime() - o.startedAt.getTime()) / 1000),
+      ),
+      cause: o.cause,
+    })),
     lastFolderCheckAt: folders?.lastSyncAt ?? null,
     certExpiresAt: cert?.lastSyncAt ?? null,
   };

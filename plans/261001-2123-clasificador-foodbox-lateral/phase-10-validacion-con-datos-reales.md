@@ -87,7 +87,7 @@ Riesgos de operación que tocan código:
 - [ ] Pruebas de navegador del panel en el repositorio, y pruebas de integración (PostgreSQL y docling) en CI
 - [x] Reducir la imagen del worker: de 2,09 GB a 1,06 GB (medido el 2026-10-15) instalando las dependencias en una etapa aparte, sin pnpm ni su caché en la imagen final y sin `chown -R`. Se descartó compilar el worker (`tsx` y esbuild pesan unos 20 MB) y el CLI de Prisma se queda porque el worker migra al arrancar
 - [x] Páginas «Correos» (cada correo con su decisión, estado y motivo) y «Reglas» (solo lectura, con los correos que decidió cada una) en el panel (decisión del 2026-10-12)
-- [ ] Registro de caídas en el panel (decisión del 2026-10-12): guardar cuándo empieza y termina cada parada de la sincronización y mostrar el historial junto al estado del servicio; los avisos siguen en Uptime Kuma
+- [x] Registro de caídas en el panel (decisión del 2026-10-12): guardar cuándo empieza y termina cada parada de la sincronización y mostrar el historial junto al estado del servicio; los avisos siguen en Uptime Kuma. Tabla `Outage`: el worker la abre al fallar una ronda o al arrancar tras un hueco mayor que `SYNC_STALE_SECONDS`, y la cierra con la siguiente ronda correcta; el panel muestra las últimas 10
 
 Velocidad de la extracción (decisión del 2026-10-09). En la fase 9, docling en CPU tardó unos 20 s
 por correo y pasó por OCR 62 de 68 adjuntos, casi siempre por logos y sellos. Cada cambio se mide
