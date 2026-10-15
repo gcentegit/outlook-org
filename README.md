@@ -96,7 +96,7 @@ Si docling o el LLM fallan, el correo queda marcado para reprocesar ([ADR 0007](
 | `pnpm format` / `pnpm format:check` | Prettier                                                            |
 | `pnpm db:migrate:dev`               | Crea una migración nueva a partir del esquema (requiere PostgreSQL) |
 
-Las pruebas de integración (necesitan PostgreSQL y docling locales) se lanzan a mano; el comando está en la cabecera de `apps/worker/src/shadow-service.integration.test.ts`.
+Las pruebas de integración (necesitan PostgreSQL local) se lanzan a mano; el comando está en la cabecera de `apps/worker/src/shadow-service.integration.test.ts`. Las de navegador del panel están en `apps/web/e2e` (`pnpm --filter @clasificador/web test:e2e`, con la base migrada y sembrada con `ADMIN_EMAIL=<ADMIN_EMAIL> pnpm db:seed`).
 
 ## Imágenes
 
