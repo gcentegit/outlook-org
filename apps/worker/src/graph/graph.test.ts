@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { GraphClient, GraphError, retryDelayMs } from './client';
-import { downloadAttachment, getMessage, listFileAttachments } from './messages';
+import { downloadAttachment, getMessage, listAttachments } from './messages';
 
 const json = (body: unknown, init?: ResponseInit): Response =>
   new Response(JSON.stringify(body), { status: 200, ...init });
@@ -91,7 +91,7 @@ describe('GraphClient', () => {
 });
 
 describe('adjuntos', () => {
-  it('lista solo fileAttachment no inline, a través de varias páginas', async () => {
+  it('lista los adjuntos no inline (marcando los de tipo elemento), a través de varias páginas', async () => {
     const att = (id: string, extra: object) => ({
       id,
       name: `${id}.pdf`,
@@ -114,8 +114,12 @@ describe('adjuntos', () => {
         ],
       }),
     ]);
-    const list = await listFileAttachments(client, 'p@x.es', 'm1');
-    expect(list.map((a) => a.id)).toEqual(['a', 'b']);
+    const list = await listAttachments(client, 'p@x.es', 'm1');
+    expect(list.map((a) => [a.id, a.isItem])).toEqual([
+      ['a', false],
+      ['item', true],
+      ['b', false],
+    ]);
   });
 
   it('descarga el contenido binario por /$value', async () => {

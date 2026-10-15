@@ -32,10 +32,13 @@ texto y a veces un escaneo. Código: `apps/worker/src/extract/` y `apps/worker/s
 
 ## Consecuencias
 
-- **Límite conocido:** los adjuntos que son un correo (`.eml`, `.msg`, `itemAttachment`) no están
-  soportados: no se leen ni se avisa de ellos. Un reenvío que adjunta el correo original pierde el
-  PDF que lleva dentro. No se ha medido cuántos casos hay; el descubrimiento con datos reales
-  debe contarlos para decidir si se soportan o se descartan de forma informada.
+- **Descartados a propósito:** los adjuntos que son un correo (`.eml`, `.msg`, `itemAttachment`) no
+  se leen. En la muestra real de la fase 9 solo 4 de 149 correos (2,7 %) los traían, y en la
+  evaluación contra carpetas únicamente 5 de los 166 no detectados (todos de LATERAL) tenían solo
+  adjuntos no leídos, entre `.eml`, `.msg` y ficheros demasiado grandes. Soportarlos exigiría leer el
+  correo anidado y sus adjuntos con otro camino de Graph para un caso marginal. Cada uno queda
+  registrado como adjunto omitido (`method: skipped`) y en el log, de modo que el correo sigue por
+  el resto de señales. Se reabre si el seguimiento en producción muestra más casos.
 - Si los escaneos dan mal resultado con RapidOCR, la alternativa a probar es PP-OCRv5 mobile.
 - pdf.js corre en el propio proceso del worker: un PDF muy pesado ocupa su CPU mientras se lee. Lo
   acotan el tamaño máximo, el límite de páginas y el tiempo máximo (`DOCLING_TIMEOUT_SECONDS`).

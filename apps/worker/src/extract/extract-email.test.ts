@@ -40,6 +40,14 @@ describe('extractEmail', () => {
               isInline: false,
             },
             {
+              '@odata.type': '#microsoft.graph.itemAttachment',
+              id: 'item',
+              name: 'Fwd factura.pdf',
+              contentType: null,
+              size: null,
+              isInline: false,
+            },
+            {
               '@odata.type': f,
               id: 'big',
               name: 'grande.pdf',
@@ -101,8 +109,12 @@ describe('extractEmail', () => {
     expect(email.attachments.map((a) => [a.name, a.method])).toEqual([
       ['f.pdf', 'text'],
       ['a.zip', 'skipped'],
+      ['Fwd factura.pdf', 'skipped'],
       ['grande.pdf', 'skipped'],
     ]);
+    expect(fetchImpl.mock.calls.some(([u]) => String(u).includes('/attachments/item/'))).toBe(
+      false,
+    );
     expect(email.attachments[0]!.markdown).toBe('CIF A87240420');
     // El adjunto grande no se descargó.
     expect(fetchImpl.mock.calls.some(([u]) => String(u).includes('/attachments/big/'))).toBe(false);

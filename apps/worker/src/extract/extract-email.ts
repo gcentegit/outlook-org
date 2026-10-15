@@ -1,7 +1,7 @@
 import type { ExtractedEmail } from '@clasificador/shared';
 
 import { GraphError, type GraphClient } from '../graph/client';
-import { downloadAttachment, getMessage, listFileAttachments } from '../graph/messages';
+import { downloadAttachment, getMessage, listAttachments } from '../graph/messages';
 import {
   extractAttachmentText,
   skippedAttachment,
@@ -29,7 +29,8 @@ export interface ExtractEmailDeps {
  * Si un adjunto falta por un fallo pasajero (docling caído, descarga con error de servidor o de
  * red) se anota en `degradedReasons`, para que quien decide sepa que el resultado no es definitivo.
  * Un adjunto que no se deja convertir o que ya no existe se omite sin más. Los adjuntos que son
- * un correo (`.eml`, `.msg`, `itemAttachment`) no se leen: no están soportados.
+ * un correo (`.eml`, `.msg`, `itemAttachment`) se descartan a propósito y quedan registrados como
+ * omitidos (ADR 0012).
  */
 export async function extractEmail(
   messageId: string,
@@ -41,7 +42,12 @@ export async function extractEmail(
   const attachments: ExtractedEmail['attachments'] = [];
   const degradedReasons: string[] = [];
   if (message.hasAttachments) {
-    for (const att of await listFileAttachments(deps.graph, deps.mailbox, messageId)) {
+    for (const att of await listAttachments(deps.graph, deps.mailbox, messageId)) {
+      if (att.isItem) {
+        log(`adjunto omitido (correo adjunto, no soportado): ${att.name}`);
+        attachments.push(skippedAttachment(att.name, att.contentType));
+        continue;
+      }
       if (!detectAttachmentKind(att.name, att.contentType)) {
         log(`adjunto omitido (tipo no soportado): ${att.name}`);
         attachments.push(skippedAttachment(att.name, att.contentType));

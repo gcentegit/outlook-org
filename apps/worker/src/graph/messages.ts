@@ -34,11 +34,13 @@ export interface GraphMessage {
   conversationId?: string | null;
 }
 
-export interface GraphFileAttachment {
+export interface GraphAttachment {
   id: string;
   name: string;
   contentType: string;
   size: number;
+  /** Correo o elemento adjunto (`itemAttachment`): no tiene contenido descargable como fichero. */
+  isItem: boolean;
 }
 
 const userPath = (mailbox: string): string => `/users/${encodeURIComponent(mailbox)}`;
@@ -56,20 +58,27 @@ export function getMessage(
 }
 
 /**
- * Adjuntos de tipo fichero del mensaje, sin los inline (firmas, logos, imágenes incrustadas).
- * No descarga el contenido: eso lo decide quien llama según tipo y tamaño.
+ * Adjuntos del mensaje, sin los inline (firmas, logos, imágenes incrustadas). Los de tipo elemento
+ * (un correo adjunto) se devuelven marcados con `isItem` para que quien llama los registre como
+ * omitidos. No descarga el contenido: eso lo decide quien llama según tipo y tamaño.
  */
-export async function listFileAttachments(
+export async function listAttachments(
   client: GraphClient,
   mailbox: string,
   messageId: string,
-): Promise<GraphFileAttachment[]> {
+): Promise<GraphAttachment[]> {
   const all = await client.getAll<
-    GraphFileAttachment & { '@odata.type'?: string; isInline?: boolean }
+    Omit<GraphAttachment, 'isItem'> & { '@odata.type'?: string; isInline?: boolean }
   >(`${messagePath(mailbox, messageId)}/attachments?$select=${ATTACHMENT_SELECT}`);
   return all
-    .filter((a) => a['@odata.type'] === FILE_ATTACHMENT_TYPE && !a.isInline)
-    .map(({ id, name, contentType, size }) => ({ id, name, contentType, size }));
+    .filter((a) => !a.isInline)
+    .map(({ id, name, contentType, size, '@odata.type': type }) => ({
+      id,
+      name,
+      contentType: contentType ?? '',
+      size: size ?? 0,
+      isItem: type !== FILE_ATTACHMENT_TYPE,
+    }));
 }
 
 /** Contenido binario de un adjunto (`/$value` evita el límite de tamaño del base64 en JSON). */
