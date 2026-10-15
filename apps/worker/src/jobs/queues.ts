@@ -78,7 +78,9 @@ export async function setupQueues(boss: PgBoss): Promise<void> {
   await boss.createQueue(CREATE_MASTER_CATEGORY_QUEUE, PANEL_QUEUE_OPTIONS);
   await boss.createQueue(REPROCESS_FLAGGED_QUEUE, PANEL_QUEUE_OPTIONS);
   // `stately`: como mucho una comprobación esperando y otra en marcha, pidan las que pidan el
-  // panel y la programación. Una ronda larga no debe solaparse con la siguiente.
+  // panel y la programación. Una ronda que pasa de la caducidad queda fallida y la siguiente puede
+  // empezar, pero pg-boss no para el código en marcha: la ronda vieja se detiene con la señal del
+  // trabajo (`checkFolders`), así que no se solapan.
   await boss.createQueue(CHECK_FOLDERS_QUEUE, {
     policy: 'stately',
     retryLimit: 0,
@@ -188,11 +190,11 @@ export async function registerPanelWorkers(
  */
 export async function registerCheckFoldersWorker(
   boss: PgBoss,
-  run: () => Promise<CheckFoldersResult>,
+  run: (signal?: AbortSignal) => Promise<CheckFoldersResult>,
   log: (message: string) => void = console.log,
 ): Promise<void> {
-  await boss.work(CHECK_FOLDERS_QUEUE, { localConcurrency: 1, batchSize: 1 }, async () => {
-    const result = await run();
+  await boss.work(CHECK_FOLDERS_QUEUE, { localConcurrency: 1, batchSize: 1 }, async ([job]) => {
+    const result = await run(job?.signal);
     log(
       `carpetas: ${result.checked} correo(s) comprobado(s), ${result.archived} archivado(s) en ` +
         `Foodbox o Lateral, ${result.failed} sin localizar`,

@@ -195,6 +195,8 @@ export interface CheckFoldersDeps {
   recordCategories: (messageId: string, categories: string[]) => Promise<void>;
   now?: () => Date;
   log?: (message: string) => void;
+  /** Se aborta si el trabajo caduca: la ronda se detiene para no solaparse con la siguiente. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -212,6 +214,12 @@ export async function checkFolders(deps: CheckFoldersDeps): Promise<CheckFolders
   }
   const folderOf = await loadFolderMap(deps.graph, deps.mailbox);
   for (const message of pending) {
+    if (deps.signal?.aborted) {
+      log(
+        'carpetas: la ronda pasó de su caducidad; los correos que faltan quedan para la siguiente',
+      );
+      break;
+    }
     try {
       const location = await locateMessage(deps.graph, deps.mailbox, message, folderOf);
       await deps.store.saveLocation(message.id, location, now);

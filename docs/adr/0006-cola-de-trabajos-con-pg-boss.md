@@ -33,7 +33,9 @@ procesado. Código: `apps/worker/src/jobs/`.
 - **Limpieza:** cola `cleanup-attachment-text`, programada cada día a las 03:30 (Europe/Madrid).
 - **Carpeta de cada correo:** cola `check-folders`, programada cada hora y que también encola el
   panel. Política `stately`: como mucho una ronda esperando y otra en marcha, así que pulsar el botón
-  varias veces o coincidir con la programada no las solapa. El panel no espera al resultado.
+  varias veces o coincidir con la programada no las solapa. Una ronda que pasa de su caducidad (1 h)
+  queda fallida y deja empezar otra, pero pg-boss no detiene el código en marcha: la ronda se para
+  sola con la señal del trabajo. El panel no espera al resultado.
 - Las peticiones del panel (probar modelo, categorías, reprocesar) usan colas propias
   ([0015](0015-web-sin-credenciales-del-buzon.md)).
 
