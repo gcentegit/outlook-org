@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/gcentegit/outlook-org/compare/v0.11.0...v0.12.0) (2026-10-15)
+
+
+### 🚀 Novedades
+
+* **worker:** ⚡ el texto de los PDF se lee sin docling ([#72](https://github.com/gcentegit/outlook-org/issues/72)) ([70f7aaf](https://github.com/gcentegit/outlook-org/commit/70f7aafe1d6ed4fa3b840ee832e1fd9e7faad976))
+
 ## [0.11.0](https://github.com/gcentegit/outlook-org/compare/v0.10.0...v0.11.0) (2026-10-14)
 
 
