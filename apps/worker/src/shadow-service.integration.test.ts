@@ -4,11 +4,12 @@
  * simulado que se inyecta como `fetch` del cliente.
  *
  * Dos variables de entorno eligen qué se ejecuta (sin ellas, todo se salta):
- *   - `RUN_INTEGRATION=1`: las pruebas que solo necesitan PostgreSQL (son las que corre la CI).
- *   - `RUN_DOCLING_INTEGRATION=1` (además de la anterior): las que también necesitan docling
- *     levantado (extracción de adjuntos); la imagen pesa 7 GB y no se usa en la CI.
+ *   - `RUN_INTEGRATION=1`: las pruebas que necesitan PostgreSQL.
+ *   - `RUN_ATTACHMENT_INTEGRATION=1` (además de la anterior): la prueba con PDF de capa de texto.
+ *     Esos PDF los lee pdf.js, no docling, así que no necesita el servicio de docling (la CI la corre
+ *     con `DOCLING_URL` apuntando a un puerto cerrado, para que una llamada a docling falle).
  *
- *   RUN_INTEGRATION=1 RUN_DOCLING_INTEGRATION=1 pnpm --filter @clasificador/worker exec vitest run src/shadow-service.integration.test.ts
+ *   RUN_INTEGRATION=1 RUN_ATTACHMENT_INTEGRATION=1 pnpm --filter @clasificador/worker exec vitest run src/shadow-service.integration.test.ts
  *
  * Usa `DATABASE_URL` y `DOCLING_URL` del entorno (con `--env-file`, los de `.env`) y borra al
  * terminar todo lo que crea (filas con id `it-*`, el estado de sincronización y el esquema de pg-boss).
@@ -31,7 +32,7 @@ import { startWorker, type RunningWorker } from './index';
 import { tryAcquireInstanceLock } from './sync/instance-lock';
 
 const enabled = process.env.RUN_INTEGRATION === '1';
-const withDocling = enabled && process.env.RUN_DOCLING_INTEGRATION === '1';
+const withAttachments = enabled && process.env.RUN_ATTACHMENT_INTEGRATION === '1';
 const MAILBOX = 'buzon@ejemplo.com';
 const GRAPH = `https://graph.test/v1.0/users/${encodeURIComponent(MAILBOX)}`;
 
@@ -175,7 +176,7 @@ async function waitFor<T>(
   }
 }
 
-describe.skipIf(!withDocling)('servicio en modo sombra con docling (integración)', () => {
+describe.skipIf(!withAttachments)('servicio en modo sombra con adjuntos PDF (integración)', () => {
   const mailbox = new FakeMailbox();
   let db: PrismaClient;
   let worker: RunningWorker;
