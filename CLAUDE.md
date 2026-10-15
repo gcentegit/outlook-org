@@ -48,9 +48,14 @@ Los scripts de la raíz generan antes el cliente de Prisma. Si lanzas un paquete
 recién hecho, ejecuta primero `pnpm db:generate` (el cliente va a `packages/db/src/generated/`, fuera
 de git).
 
-Pruebas de integración (con PostgreSQL y docling locales): el comando está en la cabecera de
+Pruebas de integración (con PostgreSQL local; la CI también las corre): el comando está en la cabecera de
 `apps/worker/src/shadow-service.integration.test.ts`. Migraciones: `pnpm db:migrate:dev`
 (nueva) y `pnpm db:migrate:deploy` (aplicar).
+
+Pruebas de navegador del panel (Playwright, `apps/web/e2e`; la CI también): con `DATABASE_URL` migrada
+y sembrada (`ADMIN_EMAIL=<ADMIN_EMAIL> pnpm db:seed`), `pnpm --filter @clasificador/web test:e2e`. Arranca
+`next dev` con `AUTH_DEV_BYPASS` en el 3110 y no reutiliza un servidor ya levantado: si el puerto está
+ocupado, falla. La primera vez, `pnpm --filter @clasificador/web exec playwright install chromium`.
 
 Puertos locales: PostgreSQL **5442**, docling **5101**, web **3110** (`WEB_HOST_PORT`). El 3000,
 3001 y 5432 son de otros proyectos de la máquina: no los toques.
