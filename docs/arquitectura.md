@@ -120,7 +120,7 @@ caracteres) sale hacia el proveedor elegido. [ADR 0003](adr/0003-llm-configurabl
   corta al instante quitando al usuario de la lista.
 - Sin tope de gasto diario del LLM, sin aviso automático de caducidad del certificado ni del secreto
   de login, y sin plazo de conservación de remitentes, asuntos y decisiones: están planificados.
-- La imagen del worker pesa unos 2 GB.
+- La imagen del worker pesa algo más de 1 GB: lleva el CLI de Prisma porque migra al arrancar.
 
 ## Salud y operación
 
