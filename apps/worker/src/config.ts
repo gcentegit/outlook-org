@@ -62,6 +62,14 @@ const configSchema = z.object({
   ADMIN_EMAIL: z.email().optional(),
   /** Dominios de correo del grupo (separados por comas, sin valor por defecto): sus remitentes son internos. */
   INTERNAL_EMAIL_DOMAINS: csv,
+  /**
+   * Borra los correos (remitente, asunto y decisiones) de más de 12 meses en la limpieza diaria.
+   * Desactivado por defecto: activarlo solo tras la copia de seguridad (docs/operacion/copias-y-restauracion.md).
+   */
+  RETENTION_DELETE_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 });
 
 export type Config = z.infer<typeof configSchema>;

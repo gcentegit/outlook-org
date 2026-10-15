@@ -181,6 +181,8 @@ const PASSTHROUGH: Record<ServiceKey, { key: string; secret: boolean }[]> = {
     { key: 'ATTACHMENT_MAX_BYTES', secret: false },
     { key: 'ATTACHMENT_MAX_PAGES', secret: false },
     { key: 'DOCLING_TIMEOUT_SECONDS', secret: false },
+    // Borrado a los 12 meses: desactivado salvo que se ponga a true tras la copia previa.
+    { key: 'RETENTION_DELETE_ENABLED', secret: false },
   ],
   docling: [],
 };
