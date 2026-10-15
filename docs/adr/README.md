@@ -32,7 +32,7 @@ valores por defecto) no va aquí: se enlaza al fichero que lo define.
 | [0009](0009-modelo-de-datos.md) | Modelo de datos |
 | [0010](0010-retencion-y-datos-de-terceros.md) | Retención de datos y datos de terceros |
 | [0011](0011-candidatas-de-reglas-del-historico.md) | Reglas candidatas a partir del histórico |
-| [0012](0012-adjuntos-y-extraccion.md) | Extracción de adjuntos con docling y límites conocidos |
+| [0012](0012-adjuntos-y-extraccion.md) | Extracción de adjuntos: capa de texto, docling y límites conocidos |
 | [0013](0013-acceso-al-buzon-con-certificado-y-rbac.md) | Acceso al buzón con certificado y RBAC de Exchange |
 | [0014](0014-panel-sesion-y-acceso.md) | Panel: sesión sin estado y acceso por lista de usuarios |
 | [0015](0015-web-sin-credenciales-del-buzon.md) | La web no tiene credenciales del buzón |

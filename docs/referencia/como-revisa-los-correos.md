@@ -35,19 +35,19 @@ escaneado, una foto o una imagen. En las pruebas con correos reales se usó en 2
    cuerpo (logos, firmas) se saltan.
 3. Si el mismo fichero ya se leyó en los últimos 90 días (por ejemplo, una factura reenviada), se
    reutiliza su texto y no se vuelve a leer.
-4. Cada adjunto se lee con docling según su tipo:
+4. Cada adjunto se lee según su tipo. El texto propio de los PDF lo lee el worker; lo demás, docling:
 
 | Tipo de adjunto | Cómo se lee | ¿OCR? |
 | --- | --- | --- |
-| PDF con texto (factura generada por un programa) | Se lee su texto directamente, solo las primeras páginas (2 por defecto) | No |
-| PDF sin texto (escaneado o foto) | Primero se intenta sin OCR; si sale casi vacío (menos de 50 letras y números), se repite con OCR | Sí |
+| PDF con texto (factura generada por un programa) | El worker lee su texto directamente, sin docling, solo las primeras páginas (2 por defecto) | No |
+| PDF sin texto (escaneado o foto) | Si el texto propio sale casi vacío (menos de 50 letras y números), docling lo lee con OCR | Sí |
 | Imagen (PNG, JPG, TIFF) | Siempre con OCR | Sí |
-| Word (DOCX) y Excel (XLSX) | Se lee su texto directamente | No |
+| Word (DOCX) y Excel (XLSX) | docling lee su texto directamente | No |
 | ZIP, CSV, correos adjuntos (EML, MSG) y otros | No se leen; quedan anotados como omitidos | — |
 | Ficheros más grandes que el límite (15 MB por defecto) | No se descargan | — |
 
-Un PDF con texto tarda unos 3–4 segundos; con OCR puede tardar 20 segundos o más. Si docling no
-responde, el correo queda pendiente de reprocesar y no se pierde.
+Un PDF con texto se lee en centésimas de segundo; un Excel tarda unos 2 segundos y un PDF con OCR,
+20 segundos o más. Si docling no responde, el correo queda pendiente de reprocesar y no se pierde.
 
 ## Paso 3. Decidir cada categoría
 

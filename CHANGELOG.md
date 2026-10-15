@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.12.0](https://github.com/gcentegit/outlook-org/compare/v0.11.0...v0.12.0) (2026-10-15)
+
+
+### 🚀 Novedades
+
+* **worker:** ⚡ el texto de los PDF se lee sin docling ([#72](https://github.com/gcentegit/outlook-org/issues/72)) ([70f7aaf](https://github.com/gcentegit/outlook-org/commit/70f7aafe1d6ed4fa3b840ee832e1fd9e7faad976))
+
+## [0.11.0](https://github.com/gcentegit/outlook-org/compare/v0.10.0...v0.11.0) (2026-10-14)
+
+
+### 🚀 Novedades
+
+* **web:** 🗑️ el resumen cuenta aparte los correos que el equipo eliminó ([#69](https://github.com/gcentegit/outlook-org/issues/69)) ([26ee8aa](https://github.com/gcentegit/outlook-org/commit/26ee8aa2849d47fbec55d5460a52d30f45050963))
+
+## [0.10.0](https://github.com/gcentegit/outlook-org/compare/v0.9.2...v0.10.0) (2026-10-14)
+
+
+### 🚀 Novedades
+
+* **worker:** 📮 el reproceso encuentra los correos que el equipo ya archivó ([#67](https://github.com/gcentegit/outlook-org/issues/67)) ([9792ed8](https://github.com/gcentegit/outlook-org/commit/9792ed8ca64b1ae0347ff1fab1ba42fdbfa2a991))
+
+## [0.9.2](https://github.com/gcentegit/outlook-org/compare/v0.9.1...v0.9.2) (2026-10-14)
+
+
+### 🔧 Correcciones
+
+* 🏷️ «Grupo Lateral» en los conceptos de una factura da LATERAL ([#64](https://github.com/gcentegit/outlook-org/issues/64)) ([f7a9da6](https://github.com/gcentegit/outlook-org/commit/f7a9da6b3d605dfefcfdb0fde2df77a4cac10d61))
+
 ## [0.9.1](https://github.com/gcentegit/outlook-org/compare/v0.9.0...v0.9.1) (2026-10-13)
 
 

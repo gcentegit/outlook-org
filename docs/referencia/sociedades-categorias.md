@@ -25,6 +25,9 @@ Regla del negocio: FOODBOX va a **FOOD BOX**, ARCO BETA va a **ARCOBETA**, y tod
    negocio, 2026-10-12):
    - FOODBOX también como **FOOD BOX**
    - ARCO BETA también como **ARCOBETA**
+   - **GRUPO LATERAL** cuenta como LATERAL (criterio del equipo, 2026-10-14): las facturas lo usan
+     en los conceptos, y cada sociedad nombrada en ellos lleva su categoría aunque la factura vaya
+     a otra.
 
    Las variantes están en [`packages/shared/src/sociedades.ts`](../../packages/shared/src/sociedades.ts)
    y cada una es una regla fuerte más.

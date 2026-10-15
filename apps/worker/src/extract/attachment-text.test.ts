@@ -81,7 +81,7 @@ describe('extractAttachmentText', () => {
     });
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     const sha = sha256Hex(file.bytes);
-    expect([...rows.keys()].sort()).toEqual([`${sha}:p2`, `${sha}:p5`]);
+    expect([...rows.keys()].sort()).toEqual([`${sha}:p2:v2`, `${sha}:p5:v2`]);
   });
 
   it('vuelve a convertir si la entrada de caché ha caducado', async () => {
@@ -114,7 +114,7 @@ describe('extractAttachmentText', () => {
       log,
     });
     expect(r).toMatchObject({ markdown: '', method: 'skipped' });
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('docling falló'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('extracción fallida'));
     expect(rows.size).toBe(0);
   });
 

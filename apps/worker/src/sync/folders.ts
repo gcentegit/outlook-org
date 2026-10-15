@@ -72,6 +72,7 @@ interface GraphFolderRef {
 }
 
 interface GraphMessageLocation {
+  id: string;
   receivedDateTime: string;
   parentFolderId: string;
   categories?: string[];
@@ -117,22 +118,43 @@ const FOLDER_RANK: Record<MessageFolder, number> = {
   missing: 3,
 };
 
+/** Las copias del correo en todo el buzón: misma conversación y misma fecha de recepción. */
+async function findCopies(
+  graph: GraphClient,
+  mailbox: string,
+  message: MessageToLocate,
+): Promise<GraphMessageLocation[]> {
+  const filter = `conversationId eq '${message.conversationId.replaceAll("'", "''")}'`;
+  const items = await graph.getAll<GraphMessageLocation>(
+    `${userPath(mailbox)}/messages?$filter=${encodeURIComponent(filter)}` +
+      '&$select=id,receivedDateTime,parentFolderId,categories&$top=50',
+  );
+  const received = message.receivedAt.getTime();
+  return items.filter(
+    (item) => Math.abs(Date.parse(item.receivedDateTime) - received) < RECEIVED_TOLERANCE_MS,
+  );
+}
+
+/**
+ * Id actual de un correo que ya no se encuentra por el suyo: al archivarlo, Graph le da otro. Null
+ * si ya no está en el buzón.
+ */
+export async function findCurrentMessageId(
+  graph: GraphClient,
+  mailbox: string,
+  message: MessageToLocate,
+): Promise<string | null> {
+  const [copy] = await findCopies(graph, mailbox, message);
+  return copy?.id ?? null;
+}
+
 export async function locateMessage(
   graph: GraphClient,
   mailbox: string,
   message: MessageToLocate,
   folderOf: (folderId: string) => FolderInfo,
 ): Promise<MessageLocation> {
-  const filter = `conversationId eq '${message.conversationId.replaceAll("'", "''")}'`;
-  const items = await graph.getAll<GraphMessageLocation>(
-    `${userPath(mailbox)}/messages?$filter=${encodeURIComponent(filter)}` +
-      '&$select=receivedDateTime,parentFolderId,categories&$top=50',
-  );
-  const received = message.receivedAt.getTime();
-  const matches = items
-    .filter(
-      (item) => Math.abs(Date.parse(item.receivedDateTime) - received) < RECEIVED_TOLERANCE_MS,
-    )
+  const matches = (await findCopies(graph, mailbox, message))
     .map((item) => ({ item, ...folderOf(item.parentFolderId) }))
     .sort((a, b) => FOLDER_RANK[a.folder] - FOLDER_RANK[b.folder]);
   const best = matches[0];

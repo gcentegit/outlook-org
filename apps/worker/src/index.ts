@@ -45,6 +45,7 @@ import { INBOX_SYNC_ID, syncInbox } from './sync/delta';
 import {
   checkFolders,
   createPrismaFolderCheckStore,
+  findCurrentMessageId,
   recordArchivedCategories,
 } from './sync/folders';
 import { acquireInstanceLock, type InstanceLock } from './sync/instance-lock';
@@ -192,6 +193,7 @@ export async function startWorker(
             },
             maxAttachmentBytes: config.ATTACHMENT_MAX_BYTES,
           }),
+        relocate: (message) => findCurrentMessageId(graph, mailbox, message),
         classify: async (email, categories) => {
           // Solo informativo: un fallo al leer el modo por categoría no debe frenar la clasificación.
           await readCategoryModes(db).then(warnLiveCategories, (err: unknown) =>

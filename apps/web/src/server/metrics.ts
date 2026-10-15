@@ -38,6 +38,9 @@ import { madridDay } from './dates';
  * - Solo se comparan las tres categorías automatizadas (las demás no son de este clasificador).
  * - Las decisiones degradadas (se tomaron con docling o el LLM caídos) no cuentan en nada: ni en el
  *   acierto, ni en la cobertura, ni por modelo. Quedan pendientes de reprocesar.
+ * - Los correos que el equipo eliminó (ya no están en el buzón) se cuentan aparte y no entran en el
+ *   acierto, la cobertura ni las discrepancias: casi todos son publicidad y avisos que el equipo
+ *   descarta, y contarlos haría pasar por fallos del clasificador lo que el equipo no quiere.
  */
 
 export interface MetricsFilter {
@@ -106,6 +109,8 @@ export interface EvaluatedMessage {
   compared: Category[];
   /** El equipo ya ha mirado el correo: tiene categoría en Outlook, corrección o carpeta de sociedad. */
   reviewed: boolean;
+  /** El equipo lo eliminó: ya no está en el buzón. No se compara con nada. */
+  deleted: boolean;
 }
 
 function toCategories(names: readonly string[]): Category[] {
@@ -152,9 +157,11 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
       archivedAs === 'LATERAL' &&
       [...labels, ...toCategories(latest?.categories ?? [])].includes('ARCOBETA');
     const folderTruth = arcobetaInLateral ? null : archivedAs;
+    const deleted = message.folder === 'missing';
     // Sin carpeta, unas categorías ajenas al grupo también dicen que el equipo no puso ninguna.
-    const base =
-      labelled || (!archivedAs && message.seenCategories.length > 0)
+    const base = deleted
+      ? []
+      : labelled || (!archivedAs && message.seenCategories.length > 0)
         ? CATEGORIES
         : archivedAs
           ? FOLDER_CATEGORIES
@@ -187,6 +194,7 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
       folderPath: message.folderPath,
       compared,
       reviewed: compared.length > 0,
+      deleted,
     };
   });
 }
@@ -240,6 +248,10 @@ export interface Metrics {
     awaitingReview: number;
     /** classified / (classified + doubtful); null si aún no hay decisiones. */
     coverage: number | null;
+    /** Eliminados por el equipo: no cuentan en nada de lo anterior salvo en `read`. */
+    deleted: number;
+    /** De los eliminados, los que no tenían ninguna categoría propuesta (o aún sin decisión). */
+    deletedUnclassified: number;
   };
   perCategory: CategoryMetrics[];
   /** De la semana más reciente a la más antigua. */
@@ -306,12 +318,20 @@ export function computeMetrics(
   let doubtful = 0;
   let pending = 0;
   let awaitingReview = 0;
+  let deleted = 0;
+  let deletedUnclassified = 0;
   const origin: Record<Origin, number> = { thread: 0, rule: 0, llm: 0, none: 0 };
   const cells = emptyCells(categories);
   const weeks = new Map<string, { reviewed: number; cells: Cells }>();
 
   for (const item of evaluated) {
     const decision = item.decision;
+    // El equipo lo descartó: no dice nada del acierto del clasificador.
+    if (item.deleted) {
+      deleted++;
+      if (!decision || decision.proposed.length === 0) deletedUnclassified++;
+      continue;
+    }
     if (!decision) {
       pending++;
       continue;
@@ -382,6 +402,8 @@ export function computeMetrics(
       pending,
       awaitingReview,
       coverage: ratio(classified, classified + doubtful),
+      deleted,
+      deletedUnclassified,
     },
     perCategory,
     perWeek,

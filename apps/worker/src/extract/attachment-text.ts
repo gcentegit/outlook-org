@@ -4,7 +4,7 @@ import type { ExtractedAttachment } from '@clasificador/shared';
 
 import {
   DoclingUnavailableError,
-  convertWithDocling,
+  convertAttachment,
   detectAttachmentKind,
   type DoclingOptions,
 } from './docling';
@@ -43,9 +43,15 @@ export interface AttachmentTextDeps {
   onDegraded?: (reason: string) => void;
 }
 
-/** Clave de la caché: el mismo fichero con otro límite de páginas da otro texto. */
+/**
+ * Versión del método de extracción. Cambia cuando un mismo fichero pasa a dar otro texto (por
+ * ejemplo, la capa de texto de los PDF leída sin docling) para no mezclar textos de dos métodos.
+ */
+const EXTRACTION_VERSION = 2;
+
+/** Clave de la caché: el mismo fichero con otro límite de páginas u otro método da otro texto. */
 export function attachmentCacheKey(sha256: string, maxPages: number): string {
-  return `${sha256}:p${maxPages}`;
+  return `${sha256}:p${maxPages}:v${EXTRACTION_VERSION}`;
 }
 
 export function sha256Hex(bytes: Buffer): string {
@@ -62,8 +68,8 @@ export function skippedAttachment(
 }
 
 /**
- * Texto de un adjunto ya descargado. Si su SHA-256 (con el límite de páginas) está en la caché y no ha caducado no se
- * llama a docling. Un fallo de docling nunca se propaga: el adjunto queda con markdown vacío,
+ * Texto de un adjunto ya descargado (`convertAttachment`). Si su SHA-256 (con el límite de páginas)
+ * está en la caché y no ha caducado no se vuelve a extraer. Un fallo nunca se propaga: el adjunto queda con markdown vacío,
  * se registra y no se cachea (para reintentarlo si el mismo fichero llega otra vez). Si docling no
  * responde (a diferencia de un fichero que no se deja convertir) se avisa con `onDegraded`: la
  * decisión del correo no es definitiva.
@@ -93,11 +99,11 @@ export async function extractAttachmentText(
 
   try {
     const started = Date.now();
-    const { markdown, method } = await convertWithDocling(
+    const { markdown, method } = await convertAttachment(
       { ...detected, bytes: file.bytes },
       deps.docling,
     );
-    log(`docling: ${file.name} (${method}) en ${Date.now() - started} ms`);
+    log(`extracción: ${file.name} (${method}) en ${Date.now() - started} ms`);
     // Un resultado vacío no se cachea: no se quiere fijar 90 días un fallo de lectura.
     if (markdown) {
       const expiresAt = new Date(now.getTime() + ATTACHMENT_TEXT_TTL_DAYS * 86_400_000);
@@ -111,7 +117,7 @@ export async function extractAttachmentText(
     return { name: file.name, contentType: file.contentType, sha256, markdown, method };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    log(`docling falló con ${file.name}: ${reason}`);
+    log(`extracción fallida de ${file.name}: ${reason}`);
     if (err instanceof DoclingUnavailableError) {
       deps.onDegraded?.(`${file.name}: ${reason}`);
     }

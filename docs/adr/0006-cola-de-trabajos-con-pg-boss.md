@@ -14,15 +14,17 @@ procesado. Código: `apps/worker/src/jobs/`.
 - **Cola `process-message`:** un trabajo en espera por correo (`policy: short` y
   `singletonKey = messageId`), 5 reintentos con retroceso exponencial desde 30 s y caducidad de
   30 minutos. Es idempotente: no hace nada si ya hay una decisión válida del mismo modo, y dentro
-  del proceso un mismo correo no se procesa dos veces a la vez. Un 404 de Graph (correo movido o
-  borrado) se reintenta como cualquier error, por si es pasajero, y en el último intento termina el
-  trabajo sin error.
+  del proceso un mismo correo no se procesa dos veces a la vez. Ante un 404 de Graph, el correo
+  se busca por su conversación y su fecha de recepción, porque moverlo le cambia el id: si está en
+  otra carpeta se decide con el id actual y la decisión se guarda con el que ya conocíamos. Si no
+  aparece, se reintenta como cualquier error, por si es pasajero, y en el último intento se da por
+  borrado y el trabajo termina sin error.
 - **`Message` desde la detección:** la delta registra el correo como `pending` (remitente y asunto
   vacíos hasta procesarlo) antes de encolarlo; al terminar pasa a `processed` (o `failed`). Así
   «pendientes» y «fallidos» son reales y los cambios del equipo durante el procesado no se pierden.
-  Un correo conocido que sigue pendiente se vuelve a encolar. Un correo que da 404 se borra si
-  nunca tuvo decisión; si ya la tenía (lo normal es que el equipo lo archivara, y moverlo cambia el
-  id), la conserva, vuelve a `processed` y se le quita la marca de reprocesar.
+  Un correo conocido que sigue pendiente se vuelve a encolar. Un correo que ya no aparece en el
+  buzón se borra si nunca tuvo decisión; si ya la tenía, la conserva, vuelve a `processed` y se le
+  quita la marca de reprocesar.
 - **Qué se guarda:** al terminar, `Message` y `Decision` en una transacción; `Decision` lleva modelo,
   tokens, coste y latencia del LLM (null si no hubo llamada) y el modo de la ejecución.
 - **Cambios del equipo durante el procesado:** actualizan `seenCategories` y el trabajo no los pisa
