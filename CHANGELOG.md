@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.13.0](https://github.com/gcentegit/outlook-org/compare/v0.12.1...v0.13.0) (2026-10-15)
+
+
+### 🚀 Novedades
+
+* 📉 registro de caídas de la sincronización en el panel ([#76](https://github.com/gcentegit/outlook-org/issues/76)) ([b22afd7](https://github.com/gcentegit/outlook-org/commit/b22afd7e4cf42a101688bd0dd73bded564d14dab))
+* **worker:** ⏳ aviso de caducidad del certificado de Graph y del secreto de login ([#78](https://github.com/gcentegit/outlook-org/issues/78)) ([bbda923](https://github.com/gcentegit/outlook-org/commit/bbda923034efe036985eb89342f2b79596afa3f3))
+* **worker:** 💶 tope de gasto diario del LLM ([#80](https://github.com/gcentegit/outlook-org/issues/80)) ([5042352](https://github.com/gcentegit/outlook-org/commit/504235241812d61dfb15711829a3ce9bdce852b3))
+* **worker:** 📎 los correos adjuntos se descartan de forma informada ([#75](https://github.com/gcentegit/outlook-org/issues/75)) ([0bfa21f](https://github.com/gcentegit/outlook-org/commit/0bfa21f077520b0060a123bf91a437c73800e825))
+* **worker:** 🧹 borrado de correos con más de 12 meses, desactivado hasta la copia ([#77](https://github.com/gcentegit/outlook-org/issues/77)) ([a40a954](https://github.com/gcentegit/outlook-org/commit/a40a9540bc9133b94df25198ee9aa71aff008d1d))
+
+
+### 🔧 Correcciones
+
+* **worker:** ⏱️ una ronda de carpetas que caduca se detiene y no se solapa con la siguiente ([#81](https://github.com/gcentegit/outlook-org/issues/81)) ([f01aa97](https://github.com/gcentegit/outlook-org/commit/f01aa971742cba69953e4a558d29a4c081f56f7c))
+
+
+### ⚡ Rendimiento
+
+* **worker:** 📦 la imagen del worker baja de 2,09 GB a 1,06 GB ([#79](https://github.com/gcentegit/outlook-org/issues/79)) ([2bf6421](https://github.com/gcentegit/outlook-org/commit/2bf6421e1ea1d88a2c98df9b7b2b5b2ff0df9977))
+
 ## [0.12.1](https://github.com/gcentegit/outlook-org/compare/v0.12.0...v0.12.1) (2026-10-15)
 
 
