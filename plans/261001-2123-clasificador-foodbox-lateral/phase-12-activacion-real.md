@@ -46,7 +46,7 @@ Crear: `src/graph/apply-categories.ts`. Cambiar el worker para que acepte `MODE=
 
 - [ ] Discrepancias del informe de sombra revisadas y reglas ajustadas
 - [x] `PATCH` con fusión de categorías y control de concurrencia (`If-Match`), registro de lo escrito en `AppliedCategory` para no volver a poner lo que quite el equipo, y solo las categorías en live: preparado el 2026-10-12 y desplegado en la 0.7.0 el 2026-10-13, bloqueado mientras `MODE=live` no arranque
-- [ ] Comprobar en el buzón real, con un correo de prueba, que Graph devuelve el etag con `$select=categories` y qué responde un `PATCH` con un etag viejo (412 o 409). Script preparado el 2026-10-16: `apps/worker/scripts/write-check.ts` (escribe en el correo de prueba y lo deja como estaba; necesita autorización)
+- [x] Comprobar en el buzón real, con un correo de prueba, que Graph devuelve el etag con `$select=categories` y qué responde un `PATCH` con un etag viejo (412 o 409). Hecho el 2026-10-16 con `apps/worker/scripts/write-check.ts`: Graph devuelve el etag, el `PATCH` con etag viejo responde 412 sin cambiar nada y el `PATCH` con el etag actual añade la categoría y conserva las demás; el correo quedó como estaba
 - [ ] Decidir si se piden ids inmutables (`Prefer: IdType="ImmutableId"`): un correo que sale de la Bandeja de entrada y vuelve cambia de id y pierde su registro de categorías escritas
 - [x] Anotación de lo escrito (2026-10-16): si el `PATCH` acaba de forma incierta (red, token, 5xx, 429, conflictos agotados), se relee el correo y solo queda anotado lo que tiene; lo demás se reintenta en el reproceso. Sin migración
 - [ ] Revisar que una corrección vigente se actualice si el equipo vuelve a poner una categoría que el servicio escribió y luego quitó (`corrections.ts`)
