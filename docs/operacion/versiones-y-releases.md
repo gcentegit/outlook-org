@@ -105,8 +105,8 @@ actualización es urgente (seguridad), cambia el título a `fix(deps): ...` ante
 
 ## Del cambio al despliegue, paso a paso
 
-1. Abres un PR con título convencional. La CI (`Lint · Typecheck · Test · Build` e
-   `Integración · PostgreSQL`) debe estar en verde. Se fusiona con «squash».
+1. Abres un PR con título convencional. La CI ([`ci.yml`](../../.github/workflows/ci.yml), que
+   también arranca la imagen del worker) debe estar en verde. Se fusiona con «squash».
 2. En el push a `main`, [`release.yml`](../../.github/workflows/release.yml) **construye las imágenes
    arm64 una sola vez** y las publica en GHCR con la etiqueta del sha corto, con la versión del
    `package.json` y el commit horneados. No despliega nada.
