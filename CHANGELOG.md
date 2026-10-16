@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1](https://github.com/gcentegit/outlook-org/compare/v0.14.0...v0.14.1) (2026-10-16)
+
+
+### 🔧 Correcciones
+
+* **web:** 📱 versión bajo el título y botones a la derecha en móvil ([#91](https://github.com/gcentegit/outlook-org/issues/91)) ([c2d89bd](https://github.com/gcentegit/outlook-org/commit/c2d89bd5cf8d5896df849538edae9f109e3ba98c))
+
 ## [0.14.0](https://github.com/gcentegit/outlook-org/compare/v0.13.1...v0.14.0) (2026-10-16)
 
 
