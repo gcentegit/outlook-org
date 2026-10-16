@@ -43,7 +43,9 @@ export type LlmOutcome =
       /** Milisegundos de la llamada al modelo. */
       latencyMs: number;
     }
-  /** No se llamó: no hay modelo activo o falta la clave del proveedor. */
+  /** No hay modelo activo: se desactivó en el panel y se decide solo con reglas. */
+  | { status: 'off' }
+  /** No se llamó aunque hay modelo activo: falta la clave del proveedor o se agotó el presupuesto. */
   | { status: 'unavailable'; reason: string }
   /** Se llamó y falló: error, tiempo agotado, cuota o respuesta que no cumple el esquema. */
   | {
@@ -119,7 +121,7 @@ export function createLlmClassifier(options: LlmClassifierOptions): LlmClassifie
 
   return async (email, categories) => {
     const setting = await options.settings.getActive();
-    if (!setting) return { status: 'unavailable', reason: 'no hay modelo de LLM activo' };
+    if (!setting) return { status: 'off' };
 
     let model: LanguageModel;
     try {

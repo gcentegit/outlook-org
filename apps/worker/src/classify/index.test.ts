@@ -379,9 +379,9 @@ describe('classify: LLM', () => {
     expect(fine.degraded).toBeNull();
   });
 
-  it('proveedor no configurado: duda, sin llamada ni coste', async () => {
-    const llm = llmReturning({ status: 'unavailable', reason: 'no hay modelo de LLM activo' });
-    const { decision, usage, llmCalled } = await classify(noSignal, makeCtx({ llm }).ctx);
+  it('sin modelo activo: duda sin fallo técnico, sin llamada ni coste', async () => {
+    const llm = llmReturning({ status: 'off' });
+    const { decision, usage, llmCalled, degraded } = await classify(noSignal, makeCtx({ llm }).ctx);
     expect(decision).toMatchObject({
       categories: [],
       needsReview: true,
@@ -389,7 +389,8 @@ describe('classify: LLM', () => {
       ruleId: null,
       model: null,
     });
-    expect(decision.reason).toContain('no hay modelo de LLM activo');
+    expect(decision.reason).toContain('sin LLM configurado');
+    expect(degraded).toBeNull();
     expect(usage).toBeNull();
     expect(llmCalled).toBe(false);
   });

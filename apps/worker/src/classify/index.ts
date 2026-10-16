@@ -318,9 +318,9 @@ export async function classify(
 
   return {
     decision,
-    usage: outcome && outcome.status !== 'unavailable' ? outcome.usage : null,
-    latencyMs: outcome && outcome.status !== 'unavailable' ? outcome.latencyMs : null,
-    llmCalled: outcome !== null && outcome.status !== 'unavailable',
+    usage: outcome && 'usage' in outcome ? outcome.usage : null,
+    latencyMs: outcome && 'latencyMs' in outcome ? outcome.latencyMs : null,
+    llmCalled: outcome?.status === 'ok' || outcome?.status === 'failed',
     degraded,
   };
 }

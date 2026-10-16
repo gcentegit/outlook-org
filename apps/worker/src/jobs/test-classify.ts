@@ -76,10 +76,10 @@ export async function runTestClassify(
   });
 
   const final = outcome as LlmOutcome | null;
-  if (final?.status === 'unavailable') {
+  if (final?.status === 'unavailable' || final?.status === 'off') {
     return {
       status: 'unavailable',
-      message: final.reason,
+      message: final.status === 'off' ? 'no hay modelo de LLM activo' : final.reason,
       decision: null,
       usage: null,
       latencyMs: null,

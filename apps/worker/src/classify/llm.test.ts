@@ -162,12 +162,9 @@ describe('createLlmClassifier', () => {
     expect(out.status).toBe('failed');
   });
 
-  it('sin modelo activo: unavailable y no se crea ningún modelo', async () => {
+  it('sin modelo activo: off y no se crea ningún modelo', async () => {
     const { llm, createModel } = classifierWith(mockModel('{}'), null);
-    expect(await llm(email, ['LATERAL'])).toEqual({
-      status: 'unavailable',
-      reason: 'no hay modelo de LLM activo',
-    });
+    expect(await llm(email, ['LATERAL'])).toEqual({ status: 'off' });
     expect(createModel).not.toHaveBeenCalled();
   });
 
