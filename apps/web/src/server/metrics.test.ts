@@ -356,6 +356,12 @@ describe('verdad por carpeta', () => {
       }),
     ]);
     expect(emptyCorrection?.compared).toEqual(['FOOD BOX']);
+    // Quien archiva ARCOBETA en Lateral le pone a veces la etiqueta LATERAL por comodidad: tampoco
+    // desmiente la propuesta de ARCOBETA.
+    const [labelledLateral] = evaluateMessages([
+      lateral(['ARCOBETA'], { seenCategories: ['LATERAL'] }),
+    ]);
+    expect(labelledLateral).toMatchObject({ compared: ['FOOD BOX'], reviewed: true });
   });
 
   it('una categoría ajena al grupo no hace comparar ARCOBETA en un correo archivado', () => {

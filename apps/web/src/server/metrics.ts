@@ -151,9 +151,9 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
     // Con categorías del grupo o una corrección, el equipo ha dicho algo de las tres.
     const labelled = lastCorrection !== undefined || labels.length > 0;
     const archivedAs = folderCategory(message.folder);
-    // Provisional hasta que el equipo diga cómo archiva ARCOBETA: va al árbol Lateral, así que esa
-    // carpeta vale por «LATERAL o ARCOBETA». Si el correo es de ARCOBETA según la propuesta o el
-    // equipo, la carpeta no dice si además es de LATERAL.
+    // ARCOBETA no tiene árbol propio: la misma persona lleva ARCOBETA y LATERAL y lo archiva todo en
+    // Lateral, así que esa carpeta vale por «LATERAL o ARCOBETA». Si el correo es de ARCOBETA según
+    // la propuesta o el equipo, la carpeta no dice si además es de LATERAL.
     const arcobetaInLateral =
       archivedAs === 'LATERAL' &&
       [...labels, ...toCategories(latest?.categories ?? [])].includes('ARCOBETA');
@@ -167,8 +167,9 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
         : archivedAs
           ? FOLDER_CATEGORIES
           : [];
-    // Si el equipo no dijo cuál de las dos, el árbol Lateral no aclara LATERAL ni ARCOBETA.
-    const undecided = arcobetaInLateral && !labels.some((c) => c === 'LATERAL' || c === 'ARCOBETA');
+    // Solo la etiqueta ARCOBETA aclara cuál de las dos es: en ese árbol se pone a veces LATERAL a lo
+    // que es de ARCOBETA, por comodidad (la regla del negocio es que el CIF de ARCO BETA manda).
+    const undecided = arcobetaInLateral && !labels.includes('ARCOBETA');
     const compared = base.filter((c) => !(undecided && (c === 'LATERAL' || c === 'ARCOBETA')));
     return {
       id: message.id,

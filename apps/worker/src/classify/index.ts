@@ -124,7 +124,12 @@ export async function classify(
   const evidence = evaluateRules(email, rules, {
     internalDomains: ctx.internalDomains ?? [],
   });
-  const billedCompanyFound = CATEGORIES.some((c) => evidence[c].strong.length > 0);
+  // Varias sociedades nombradas solo por su razón social (pagos, informes, rapeles) no se reparten
+  // las categorías: quedan en duda. Con algún CIF, cada sociedad identificada da la suya.
+  const named = CATEGORIES.filter((c) => evidence[c].strong.length > 0);
+  const anyCif = named.some((c) => evidence[c].strong.some((hit) => hit.type === 'cif'));
+  const identified = named.length > 1 && !anyCif ? [] : named;
+  const billedCompanyFound = named.length > 0;
 
   // 1. Regla fuerte > hilo > regla media > duda, por categoría.
   const verdicts = new Map<Category, Verdict>();
@@ -132,7 +137,7 @@ export async function classify(
     const inherited = threadCategories.get(category);
     const { strong, medium } = evidence[category];
     let verdict: Verdict;
-    if (strong[0]) {
+    if (strong[0] && identified.includes(category)) {
       verdict = {
         answer: 'yes',
         confidence: RULE_CONFIDENCE.strong,
@@ -140,6 +145,10 @@ export async function classify(
         ruleId: strong[0].ruleId,
         note: `${category} por ${strong.map((h) => h.description).join(', ')}`,
       };
+    } else if (strong[0] && identified.length === 0) {
+      verdict = doubt(
+        `${category} nombrada junto a otras sociedades del grupo y sin CIF (${strong.map((h) => h.description).join(', ')})`,
+      );
     } else if (billedCompanyFound) {
       // Hay una sociedad del grupo identificada y es de otra categoría: no se mira nada más.
       verdict = {
@@ -286,7 +295,7 @@ export async function classify(
     source = 'llm';
   } else {
     // Sin propuestas ni LLM: si una regla descartó categorías, es la que decide; si no, ninguna.
-    const excludingRule = CATEGORIES.map((c) => evidence[c].strong[0]).find(Boolean);
+    const excludingRule = identified.map((c) => evidence[c].strong[0]).find(Boolean);
     if (excludingRule) {
       source = 'rule';
       ruleId = excludingRule.ruleId;

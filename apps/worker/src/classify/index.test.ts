@@ -84,13 +84,14 @@ describe('classify: reglas', () => {
     expect(decision.needsReview).toBe(false);
   });
 
-  it('la razón social vale también escrita «FOOD BOX» o «ARCOBETA», con o sin forma societaria', async () => {
+  it('la razón social vale también escrita «FOOD BOX» o «ARCOBETA», con forma societaria', async () => {
     const foodbox = makeEmail({ attachments: [makeAttachment('Cliente: FOOD BOX, S.A.')] });
     expect((await classify(foodbox, makeCtx().ctx)).decision.categories).toEqual(['FOOD BOX']);
     const arcobeta = makeEmail({ attachments: [makeAttachment('Cliente: ARCOBETA S.L.')] });
     expect((await classify(arcobeta, makeCtx().ctx)).decision.categories).toEqual(['ARCOBETA']);
     const sinForma = makeEmail({ attachments: [makeAttachment('Cliente: Food Box')] });
-    expect((await classify(sinForma, makeCtx().ctx)).decision.categories).toEqual(['FOOD BOX']);
+    const { decision } = await classify(sinForma, makeCtx().ctx);
+    expect(decision).toMatchObject({ categories: [], needsReview: true });
   });
 
   it('cada sociedad nombrada en los conceptos da su categoría, aunque la factura vaya a otra', async () => {
@@ -98,14 +99,31 @@ describe('classify: reglas', () => {
       attachments: [
         makeAttachment(
           'ARCO BETA SL NIF: ESB87694121\n' +
-            'Asesoramiento y Compra Energía Grupo Lateral 100,00 €\n' +
-            'Asesoramiento y Compra Energía Food Box 200,00 €',
+            'Asesoramiento y Compra Energía Grupo Restauración Lateral, S.L. 100,00 €\n' +
+            'Asesoramiento y Compra Energía Food Box, S.A. 200,00 €',
         ),
       ],
     });
     const { decision } = await classify(email, makeCtx().ctx);
     expect(decision.categories).toEqual(['FOOD BOX', 'LATERAL', 'ARCOBETA']);
     expect(decision.needsReview).toBe(false);
+  });
+
+  it('cada sociedad identificada por su CIF da su categoría', async () => {
+    const email = makeEmail({
+      attachments: [makeAttachment('Cliente A87240420\nCliente B87694121')],
+    });
+    const { decision } = await classify(email, makeCtx().ctx);
+    expect(decision.categories).toEqual(['FOOD BOX', 'ARCOBETA']);
+  });
+
+  it('varias sociedades nombradas sin CIF quedan en duda, sin repartir las categorías', async () => {
+    const email = makeEmail({
+      bodyText: 'Ficheros de pago de LATERAL IBERIA, S.L. y de ARCO BETA, S.L.',
+    });
+    const { decision } = await classify(email, makeCtx().ctx);
+    expect(decision).toMatchObject({ categories: [], needsReview: true, source: 'none' });
+    expect(decision.reason).toContain('nombrada junto a otras sociedades del grupo y sin CIF');
   });
 
   it('el CIF del proveedor no cuenta: sin señales queda en duda', async () => {

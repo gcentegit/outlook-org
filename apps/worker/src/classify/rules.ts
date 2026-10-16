@@ -19,6 +19,7 @@ export interface RuleRepository {
 
 export interface RuleHit {
   ruleId: string;
+  type: RuleType;
   /** Texto legible para el campo `reason`. */
   description: string;
 }
@@ -51,7 +52,9 @@ const BOUNDARY_AFTER = '(?![A-Z0-9])';
 /** Hasta tres separadores (espacio, punto, guion) entre los caracteres de un CIF. */
 const CIF_SEPARATOR = '[\\s.\\-]{0,3}';
 /** Forma societaria: "S.L.", "SL", "S.A.", "SA" (y su variante unipersonal) una vez normalizada. */
-const LEGAL_FORM_AT_END = /\s+S\s?[AL]U?$/;
+const LEGAL_FORM_AT_END = /\s+S\s?[AL]\s?U?$/;
+/** Cualquier forma societaria detrás del nombre en el texto normalizado: "S A", "SL", "S L U"... */
+const LEGAL_FORM = String.raw`\s+S\s?[AL](?:\s?U)?`;
 
 /**
  * Direcciones de correo y webs ("ana@foodbox.es", "www.foodbox.es", "https://foodbox.es/x"). Una vez
@@ -76,16 +79,20 @@ export function cifPattern(rawCif: string): RegExp | null {
 }
 
 /**
- * Expresión para una razón social. La forma societaria del valor (S.L., SL, S.A., SA...) no se exige
- * en el texto (regla del negocio, 2026-10-12): basta el nombre como palabra completa, así que
- * "foodboxes" no cuenta pero "Equipo Foodbox" sí. Dentro de una dirección de correo o una web no
- * cuenta: `evaluateRules` las quita antes (`withoutAddresses`). La firma de un remitente del grupo no cuenta
- * porque en ese caso solo se mira en adjuntos y reenvíos (`evaluateRules`).
+ * Expresión para una razón social. Si el valor lleva forma societaria (S.L., SL, S.A., SA...), el
+ * texto también tiene que llevar una, escrita de cualquier forma (regla del negocio, 2026-10-16):
+ * el nombre suelto ("colaboración Fergofrio-Foodbox", "Factura Amazon Foodbox") se cita en correos
+ * que no son de esa sociedad. El nombre va como palabra completa, así que "foodboxes SA" no cuenta.
+ * Dentro de una dirección de correo o una web no cuenta: `evaluateRules` las quita antes
+ * (`withoutAddresses`). La firma de un remitente del grupo no cuenta porque en ese caso solo se mira
+ * en adjuntos y reenvíos (`evaluateRules`).
  */
 export function razonSocialPattern(rawName: string): RegExp | null {
-  const folded = foldText(rawName).replace(LEGAL_FORM_AT_END, '');
-  if (!folded) return null;
-  return new RegExp(`${BOUNDARY_BEFORE}${wordsPattern(folded)}${BOUNDARY_AFTER}`);
+  const full = foldText(rawName);
+  const name = full.replace(LEGAL_FORM_AT_END, '');
+  if (!name) return null;
+  const legalForm = name === full ? '' : LEGAL_FORM;
+  return new RegExp(`${BOUNDARY_BEFORE}${wordsPattern(name)}${legalForm}${BOUNDARY_AFTER}`);
 }
 
 function keywordPattern(rawKeyword: string): RegExp | null {
@@ -212,7 +219,7 @@ export function evaluateRules(
 
     if (description) {
       const hits = rule.weight === 'fuerte' ? evidence[category].strong : evidence[category].medium;
-      hits.push({ ruleId: rule.id, description });
+      hits.push({ ruleId: rule.id, type: rule.type, description });
     }
   }
   return evidence;

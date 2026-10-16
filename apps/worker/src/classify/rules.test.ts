@@ -65,10 +65,10 @@ describe('razonSocialPattern', () => {
     expect(test(foodbox, text)).toBe(true);
   });
 
-  it.each(['Equipo Foodbox', 'FOODBOX', 'factura a Foodbox Madrid'])(
-    'reconoce %s: la forma societaria no se exige',
+  it.each(['Equipo Foodbox', 'FOODBOX', 'Posible colaboración Fergofrio-Foodbox', 'Foodbox SAN'])(
+    'no reconoce %s: sin forma societaria el nombre suelto no cuenta',
     (text) => {
-      expect(test(foodbox, text)).toBe(true);
+      expect(test(foodbox, text)).toBe(false);
     },
   );
 
@@ -79,6 +79,7 @@ describe('razonSocialPattern', () => {
   it('ignora acentos y mayúsculas', () => {
     const re = razonSocialPattern('GRUPO RESTAURACION LATERAL, S.L.') as RegExp;
     expect(test(re, 'Grupo Restauración Lateral SL')).toBe(true);
+    expect(test(re, 'Grupo Restauración Lateral')).toBe(false);
   });
 
   it('un valor sin forma societaria no la exige', () => {
@@ -124,8 +125,8 @@ describe('evaluateRules', () => {
       attachments: [makeAttachment('Cliente\nLATERAL CONSELL\nCIF: B-86.898.491')],
     });
     const ev = evaluateRules(email, rules);
-    // El CIF y la razón social (sin forma societaria) coinciden los dos.
-    expect(ev.LATERAL.strong.map((h) => h.ruleId)).toEqual(['cif-B86898491', 'rs-B86898491']);
+    // La razón social sin forma societaria no coincide; el CIF sí.
+    expect(ev.LATERAL.strong.map((h) => h.ruleId)).toEqual(['cif-B86898491']);
     expect(ev['FOOD BOX'].strong).toEqual([]);
     expect(ev.ARCOBETA.strong).toEqual([]);
   });
