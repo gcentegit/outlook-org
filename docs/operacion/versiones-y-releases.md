@@ -15,7 +15,7 @@ nadie los consume por versión y se quedan en `0.0.0`: sincronizarlos con `extra
 ficheros que cambiar en cada release sin que nada los lea. Si algún día se publica un paquete, se revisa.
 
 `/api/health` (web), `/health` y `/livez` (worker) devuelven `version` (`X.Y.Z`) y `commit` (sha corto,
-7 caracteres). El pie del panel muestra los dos. Con `docker compose` en local salen como `dev`.
+7 caracteres). El encabezado del panel muestra los dos, debajo del título. Con `docker compose` en local salen como `dev`.
 
 ## Reglas SemVer del proyecto
 
