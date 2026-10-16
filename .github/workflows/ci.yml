@@ -165,3 +165,58 @@ jobs:
             apps/web/playwright-report/
             apps/web/test-results/
           retention-days: 7
+
+  # Arranque de la imagen del worker tal como se publica: misma arquitectura que producción (arm64),
+  # usuario `node` y migraciones contra una base vacía. Las pruebas de código no la ejecutan, así que
+  # un fallo del Dockerfile (p. ej. un motor de Prisma que no se puede escribir) solo aparecería al
+  # desplegar.
+  worker-image:
+    name: Imagen del worker · arranque
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: clasificador
+          POSTGRES_PASSWORD: ci-clasificador
+          POSTGRES_DB: clasificador
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clasificador -d clasificador"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://clasificador:ci-clasificador@127.0.0.1:5432/clasificador
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build image
+        run: docker build -f apps/worker/Dockerfile -t clasificador-worker:ci .
+
+      # Sin credenciales de Graph el worker arranca igual (no sincroniza): basta para probar
+      # migraciones, semilla y colas. `/livez` solo responde bien cuando todo eso ha terminado.
+      - name: Start and wait for /livez
+        run: |
+          docker run -d --name worker --network host -e DATABASE_URL \
+            -e MODE=shadow -e MAILBOX=buzon@ejemplo.com clasificador-worker:ci
+          for _ in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Running}}' worker)" != true ]; then
+              echo "::error::el worker se paró al arrancar"; docker logs --tail 100 worker; exit 1
+            fi
+            if curl -fsS http://127.0.0.1:8080/livez; then echo; docker logs --tail 100 worker; exit 0; fi
+            sleep 3
+          done
+          echo "::error::el worker no respondió en /livez en 3 minutos"
+          docker logs --tail 100 worker
+          exit 1
+
+      - name: Migrations applied
+        run: |
+          expected=$(find packages/db/prisma/migrations -mindepth 1 -maxdepth 1 -type d | wc -l)
+          applied=$(docker run --rm --network host postgres:16-alpine psql -At "$DATABASE_URL" \
+            -c 'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL')
+          echo "migraciones: $applied aplicadas de $expected"
+          [ "$applied" = "$expected" ]
