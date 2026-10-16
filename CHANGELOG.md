@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/gcentegit/outlook-org/compare/v0.14.2...v0.15.0) (2026-10-16)
+
+
+### 🚀 Novedades
+
+* **worker:** 🎯 razón social con forma societaria y varias sociedades sin CIF en duda ([#96](https://github.com/gcentegit/outlook-org/issues/96)) ([c241e43](https://github.com/gcentegit/outlook-org/commit/c241e43fec6ec78df5833687073b5aa16f0b1c7c))
+
 ## [0.14.2](https://github.com/gcentegit/outlook-org/compare/v0.14.1...v0.14.2) (2026-10-16)
 
 
