@@ -46,7 +46,8 @@ flowchart TD
 1. **Detección** (`sync/delta.ts`). Una ronda de delta query sobre la Bandeja de entrada, secuencial y
    con un bloqueo de PostgreSQL que garantiza una sola instancia. Un correo desconocido se registra
    como `pending` y se encola; uno conocido con categorías distintas se compara con su última
-   decisión y puede generar una corrección. Un correo que sale de la carpeta solo se cuenta.
+   decisión y puede generar una corrección. Un correo que sale de la carpeta solo se cuenta. Tras
+   una parada se recuperan los que llegaron y el equipo archivó mientras tanto.
    [ADR 0005](adr/0005-sincronizacion-delta-e-instancia-unica.md).
 2. **Cola** (`jobs/`). Un trabajo `process-message` por correo, idempotente, con 5 reintentos y
    retroceso. [ADR 0006](adr/0006-cola-de-trabajos-con-pg-boss.md).

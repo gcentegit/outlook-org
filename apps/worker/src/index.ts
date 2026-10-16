@@ -44,6 +44,7 @@ import {
 } from './jobs/queues';
 import { createPrismaReprocessStore } from './jobs/reprocess';
 import { describeSeed } from './seed-report';
+import { catchUpArchived } from './sync/catch-up';
 import { INBOX_SYNC_ID, syncInbox } from './sync/delta';
 import {
   checkFolders,
@@ -275,6 +276,20 @@ export async function startWorker(
           mailbox,
           store: syncStore,
           enqueue: (messageId) => enqueueMessage(boss, messageId),
+          // Más de dos intervalos sin una ronda correcta: se perdió al menos una.
+          catchUp: {
+            afterMs: 2 * config.POLL_INTERVAL_SECONDS * 1000,
+            run: (lastSyncAt) =>
+              catchUpArchived(
+                {
+                  graph,
+                  mailbox,
+                  store: syncStore,
+                  enqueue: (messageId) => enqueueMessage(boss, messageId),
+                },
+                lastSyncAt,
+              ),
+          },
         }),
     });
     poller.start();

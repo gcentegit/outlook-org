@@ -22,6 +22,13 @@ poca carga sobre Microsoft Graph. Código: `apps/worker/src/sync/`.
   los mismos cambios. Un 410 olvida el `deltaLink` y resincroniza desde la fecha de recepción del
   correo registrado más antiguo (o la última sincronización si no hay ninguno), para seguir viendo
   las correcciones de los correos ya conocidos; un segundo 410 seguido se propaga.
+- **Recuperación tras una parada:** la delta de la Bandeja no devuelve un correo que llegó y salió
+  de ella entre dos rondas. Si la última ronda correcta es de hace más de dos intervalos, después
+  de la delta se buscan en todo el buzón los recibidos desde entonces (con un minuto de margen) y se
+  registran y encolan los que estén en la Bandeja o en sus subcarpetas y no se conozcan, ni por su
+  id ni por su conversación y fecha de recepción (moverlo cambia el id). Los borrados, enviados y
+  borradores no se recuperan. Llegan con las categorías que ya les puso el equipo, que el
+  clasificador trata como puestas al llegar. Código: `sync/catch-up.ts`.
 - **Intervalo:** `POLL_INTERVAL_SECONDS` (90 por defecto, recomendado 60-120, admite 15-600), rondas
   secuenciales y nunca solapadas; el cliente respeta `Retry-After`. `WORKER_CONCURRENCY` (2) limita
   los correos en proceso.
@@ -38,4 +45,6 @@ poca carga sobre Microsoft Graph. Código: `apps/worker/src/sync/`.
   ([0018](0018-despliegue-en-dokploy.md)).
 - Un correo movido de carpeta deja de verse; la corrección que cuenta es la anterior al
   movimiento.
+- Un correo que el equipo archiva antes de la siguiente ronda, sin que haya parada (menos de dos
+  intervalos), sigue sin verse.
 - Sin credenciales de Graph no hay sincronización.
