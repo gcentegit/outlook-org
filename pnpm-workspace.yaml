@@ -10,3 +10,10 @@ allowBuilds:
   '@prisma/engines': true
   prisma: true
   esbuild: true
+
+# Versiones corregidas de dependencias indirectas con avisos de seguridad que sus paquetes padre aún
+# no han subido. Se quitan cuando el padre las traiga por sí mismo.
+overrides:
+  postcss: ^8.5.30
+  mysql2: ^3.24.6
+  '@prisma/config>deepmerge-ts': ^8.0.2
