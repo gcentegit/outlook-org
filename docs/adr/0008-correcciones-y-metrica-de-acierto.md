@@ -38,9 +38,16 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
 - **Con solo la carpeta se comparan FOOD BOX y LATERAL.** La carpeta no dice nada de ARCOBETA, que
   no tiene árbol propio y se archiva en Lateral: ARCOBETA solo se compara cuando el equipo pone una
   categoría del grupo. Las categorías del equipo se suman a la de la carpeta.
-- **El árbol Lateral vale por «LATERAL o ARCOBETA»** (provisional, hasta que el equipo diga cómo
-  archiva ARCOBETA): si la propuesta o el equipo dicen ARCOBETA, la carpeta no cuenta como LATERAL
-  ni como fallo de LATERAL.
+- **El árbol Lateral vale por «LATERAL o ARCOBETA».** La misma persona lleva las dos sociedades y
+  archiva ARCOBETA en Lateral; a veces, por comodidad, le pone también la etiqueta LATERAL. La regla
+  del negocio (2026-10-16) es que un documento con el CIF de ARCO BETA lleva ARCOBETA. Por eso, si
+  la propuesta o el equipo dicen ARCOBETA, ni la carpeta ni una etiqueta LATERAL cuentan como LATERAL
+  ni como fallo: LATERAL y ARCOBETA solo se comparan cuando el equipo pone la etiqueta ARCOBETA.
+- **El CIF decide la etiqueta; la carpeta solo orienta** (regla del negocio, 2026-10-16). Si el
+  equipo no ha puesto ninguna categoría del grupo, las categorías que la decisión propuso por CIF
+  (según su motivo) son la verdad, se archive el correo donde se archive: una factura con el CIF de
+  FOODBOX archivada en Lateral no es un fallo. Una etiqueta o corrección del equipo sí cuenta. El
+  coste: un CIF mal leído no aparece como fallo si nadie lo etiqueta.
 - El panel limita el rango de fechas a 366 días (carga en memoria los correos del periodo).
 - **La verdad de referencia es la carpeta donde el equipo archiva cada correo**, más una revisión
   a mano de los casos que la carpeta no resuelve. El descubrimiento mostró que el equipo mueve casi

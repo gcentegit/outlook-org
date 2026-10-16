@@ -13,8 +13,11 @@ orden claro cuando las señales se contradicen. El código está en `apps/worker
 Para cada categoría, de más a menos prioridad:
 
 1. **Regla fuerte** (CIF o razón social de una de las siete sociedades, en el propio correo).
-   Gana a lo heredado del hilo (decisión del usuario: en un hilo manda el CIF). Cada sociedad
-   nombrada da su categoría, también en los conceptos de una factura a otra sociedad. Si el correo
+   Gana a lo heredado del hilo (decisión del usuario: en un hilo manda el CIF). La razón social
+   solo cuenta con su forma societaria (S.A., S.L.), porque el nombre suelto se cita en correos de
+   otras sociedades. Cada sociedad nombrada da su categoría, también en los conceptos de una
+   factura a otra sociedad, salvo que el correo nombre varias y ninguna por su CIF (pagos,
+   informes, rapeles): entonces quedan en duda (decisiones del usuario, 2026-10-16). Si el correo
    identifica alguna sociedad del grupo, las categorías de las sociedades que no nombra se
    descartan sin mirar nada más.
 2. **Herencia del hilo:** una respuesta hereda la categoría de otro correo de la misma

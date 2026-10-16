@@ -19,10 +19,14 @@ Regla del negocio: FOODBOX va a **FOOD BOX**, ARCO BETA va a **ARCOBETA**, y tod
 ## Señales
 
 1. **CIF del cliente** en la factura. Es la señal más fiable. Solo cuentan estos siete CIF, porque en la factura también aparece el del proveedor.
-2. **Razón social del cliente**, con o sin forma societaria (S.A., S.L.): basta el nombre como
-   palabra completa. No cuenta dentro de una dirección de correo o una web: «ana@foodbox.es» o
-   «www.foodbox.es» no son una factura a FOODBOX. Las facturas también la escriben de otra forma, y las dos valen (reglas del
-   negocio, 2026-10-12):
+2. **Razón social del cliente**, con su forma societaria escrita de cualquier manera («FOODBOX S.A»,
+   «Foodbox, SA», «FOODBOX S.L.U.») y como palabra completa (regla del negocio, 2026-10-16). El
+   nombre suelto no cuenta: «colaboración Fergofrio-Foodbox» o «Factura Amazon Foodbox» aparecen en
+   correos que no son de FOODBOX. Tampoco cuenta dentro de una dirección de correo o una web:
+   «ana@foodbox.es» o «www.foodbox.es» no son una factura a FOODBOX. Si un correo nombra varias
+   sociedades y ninguna por su CIF (ficheros de pago, informes, rapeles), queda en duda en vez de
+   llevar todas las categorías. Las facturas también escriben la razón social de otra forma, y las
+   dos valen (reglas del negocio, 2026-10-12):
    - FOODBOX también como **FOOD BOX**
    - ARCO BETA también como **ARCOBETA**
    - **GRUPO LATERAL** cuenta como LATERAL (criterio del equipo, 2026-10-14): las facturas lo usan

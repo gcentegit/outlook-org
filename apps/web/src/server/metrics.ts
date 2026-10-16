@@ -137,6 +137,15 @@ function readDetails(json: unknown): z.infer<typeof decisionDetailsSchema> {
     : { source: 'none', reason: null, confidence: null, needsReview: false };
 }
 
+/** Categorías que la decisión propuso por un CIF, según su motivo («FOOD BOX por CIF …; …»). */
+function categoriesByCif(reason: string | null): Category[] {
+  if (!reason) return [];
+  const notes = reason.split('; ');
+  return CATEGORIES.filter((c) =>
+    notes.some((note) => note.startsWith(`${c} por `) && /(?:por |, )CIF /.test(note)),
+  );
+}
+
 /** Une la decisión vigente de cada correo con las categorías finales del equipo. */
 export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedMessage[] {
   return messages.map((message) => {
@@ -151,13 +160,16 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
     // Con categorías del grupo o una corrección, el equipo ha dicho algo de las tres.
     const labelled = lastCorrection !== undefined || labels.length > 0;
     const archivedAs = folderCategory(message.folder);
-    // Provisional hasta que el equipo diga cómo archiva ARCOBETA: va al árbol Lateral, así que esa
-    // carpeta vale por «LATERAL o ARCOBETA». Si el correo es de ARCOBETA según la propuesta o el
-    // equipo, la carpeta no dice si además es de LATERAL.
+    // ARCOBETA no tiene árbol propio: la misma persona lleva ARCOBETA y LATERAL y lo archiva todo en
+    // Lateral, así que esa carpeta vale por «LATERAL o ARCOBETA». Si el correo es de ARCOBETA según
+    // la propuesta o el equipo, la carpeta no dice si además es de LATERAL.
     const arcobetaInLateral =
       archivedAs === 'LATERAL' &&
       [...labels, ...toCategories(latest?.categories ?? [])].includes('ARCOBETA');
-    const folderTruth = arcobetaInLateral ? null : archivedAs;
+    // El CIF decide la etiqueta y la carpeta solo orienta (regla del negocio, 2026-10-16): si el
+    // equipo no puso ninguna del grupo, lo propuesto por CIF es la verdad, se archive donde se archive.
+    const cifTruth = labelled ? [] : categoriesByCif(details?.reason ?? null);
+    const folderTruth = arcobetaInLateral || cifTruth.length > 0 ? null : archivedAs;
     const deleted = message.folder === 'missing';
     // Sin carpeta, unas categorías ajenas al grupo también dicen que el equipo no puso ninguna.
     const base = deleted
@@ -167,8 +179,9 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
         : archivedAs
           ? FOLDER_CATEGORIES
           : [];
-    // Si el equipo no dijo cuál de las dos, el árbol Lateral no aclara LATERAL ni ARCOBETA.
-    const undecided = arcobetaInLateral && !labels.some((c) => c === 'LATERAL' || c === 'ARCOBETA');
+    // Solo la etiqueta ARCOBETA aclara cuál de las dos es: en ese árbol se pone a veces LATERAL a lo
+    // que es de ARCOBETA, por comodidad (la regla del negocio es que el CIF de ARCO BETA manda).
+    const undecided = arcobetaInLateral && cifTruth.length === 0 && !labels.includes('ARCOBETA');
     const compared = base.filter((c) => !(undecided && (c === 'LATERAL' || c === 'ARCOBETA')));
     return {
       id: message.id,
@@ -190,7 +203,12 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
               needsReview: details.needsReview,
             }
           : null,
-      team: folderTruth ? toCategories([...labels, folderTruth]) : labels,
+      team:
+        cifTruth.length > 0
+          ? cifTruth
+          : folderTruth
+            ? toCategories([...labels, folderTruth])
+            : labels,
       folder: message.folder,
       folderPath: message.folderPath,
       compared,

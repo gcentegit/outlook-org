@@ -356,6 +356,38 @@ describe('verdad por carpeta', () => {
       }),
     ]);
     expect(emptyCorrection?.compared).toEqual(['FOOD BOX']);
+    // Quien archiva ARCOBETA en Lateral le pone a veces la etiqueta LATERAL por comodidad: tampoco
+    // desmiente la propuesta de ARCOBETA.
+    const [labelledLateral] = evaluateMessages([
+      lateral(['ARCOBETA'], { seenCategories: ['LATERAL'] }),
+    ]);
+    expect(labelledLateral).toMatchObject({ compared: ['FOOD BOX'], reviewed: true });
+  });
+
+  it('sin etiqueta del equipo, la carpeta no desmiente lo que se propuso por CIF', () => {
+    const byCif = (reason: string) =>
+      message({
+        folder: 'lateral',
+        decisions: [
+          decision({
+            categories: ['FOOD BOX'],
+            decision: { source: 'rule', reason, confidence: 1, needsReview: false },
+          }),
+        ],
+      });
+    const [cif] = evaluateMessages([byCif('FOOD BOX por CIF A87240420; LATERAL descartada(s)')]);
+    expect(cif).toMatchObject({ team: ['FOOD BOX'], compared: ['FOOD BOX', 'LATERAL'] });
+    // Tampoco una categoría ajena al grupo en la Bandeja.
+    const [inbox] = evaluateMessages([
+      { ...byCif('FOOD BOX por CIF A87240420'), folder: 'inbox', seenCategories: ['Pagado'] },
+    ]);
+    expect(inbox).toMatchObject({ team: ['FOOD BOX'], reviewed: true });
+    // Por la razón social sola, la carpeta sigue siendo la verdad.
+    const [name] = evaluateMessages([byCif('FOOD BOX por razón social «FOODBOX, S.A.»')]);
+    expect(name?.team).toEqual(['LATERAL']);
+    // Una etiqueta del equipo sí cuenta.
+    const [labelled] = evaluateMessages([lateral(['FOOD BOX'], { seenCategories: ['LATERAL'] })]);
+    expect(labelled?.team).toEqual(['LATERAL']);
   });
 
   it('una categoría ajena al grupo no hace comparar ARCOBETA en un correo archivado', () => {
