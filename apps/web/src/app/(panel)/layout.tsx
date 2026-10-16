@@ -14,12 +14,21 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // Sin sesión redirige a /login; con sesión no autorizada, a /login con el motivo.
   const user = await requireUser();
   const { APP_VERSION, APP_COMMIT } = loadConfig();
+  const versionInfo = (
+    <>
+      Versión {APP_VERSION} · commit <code>{APP_COMMIT}</code>
+    </>
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-3 py-4">
-        <p className="text-lg font-semibold">Clasificador de Proveedores</p>
-        <div className="flex items-center gap-2">
+      {/* En móvil los botones quedan a la derecha del título y la versión va debajo de él. */}
+      <header className="flex items-start justify-between gap-3 py-4 sm:items-center">
+        <div className="min-w-0">
+          <p className="text-lg font-semibold">Clasificador de Proveedores</p>
+          <p className="mt-1 text-xs text-muted sm:hidden">{versionInfo}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           <span className="hidden text-sm text-muted sm:inline">{user.email}</span>
           <ThemeToggle />
           {!user.devBypass && <SignOutButton />}
@@ -39,8 +48,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       <main id="contenido" tabIndex={-1}>
         {children}
       </main>
-      <footer className="mt-10 border-t border-border pt-3 text-xs text-muted">
-        Versión {APP_VERSION} · commit <code>{APP_COMMIT}</code>
+      <footer className="mt-10 hidden border-t border-border pt-3 text-xs text-muted sm:block">
+        {versionInfo}
       </footer>
     </div>
   );
