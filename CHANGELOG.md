@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.2](https://github.com/gcentegit/outlook-org/compare/v0.14.1...v0.14.2) (2026-10-16)
+
+
+### 🔧 Correcciones
+
+* **worker:** 🐛 el CIF de una tabla HTML del cuerpo se reconoce ([#94](https://github.com/gcentegit/outlook-org/issues/94)) ([cc3a18f](https://github.com/gcentegit/outlook-org/commit/cc3a18f903fa7755b08ae030638d95525f194205))
+
 ## [0.14.1](https://github.com/gcentegit/outlook-org/compare/v0.14.0...v0.14.1) (2026-10-16)
 
 
