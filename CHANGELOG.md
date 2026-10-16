@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/gcentegit/outlook-org/compare/v0.16.2...v1.0.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **worker:** ✍️ activar el modo real: escribir en Outlook las categorías en live ([#104](https://github.com/gcentegit/outlook-org/issues/104))
+
+### 🚀 Novedades
+
+* **worker:** ✍️ activar el modo real: escribir en Outlook las categorías en live ([#104](https://github.com/gcentegit/outlook-org/issues/104)) ([812fb7f](https://github.com/gcentegit/outlook-org/commit/812fb7fd1d8bec3fbc72c459bcd42a61e3239b66))
+
 ## [0.16.2](https://github.com/gcentegit/outlook-org/compare/v0.16.1...v0.16.2) (2026-10-16)
 
 
