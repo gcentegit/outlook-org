@@ -43,6 +43,11 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
   del negocio (2026-10-16) es que un documento con el CIF de ARCO BETA lleva ARCOBETA. Por eso, si
   la propuesta o el equipo dicen ARCOBETA, ni la carpeta ni una etiqueta LATERAL cuentan como LATERAL
   ni como fallo: LATERAL y ARCOBETA solo se comparan cuando el equipo pone la etiqueta ARCOBETA.
+- **El CIF decide la etiqueta; la carpeta solo orienta** (regla del negocio, 2026-10-16). Si el
+  equipo no ha puesto ninguna categoría del grupo, las categorías que la decisión propuso por CIF
+  (según su motivo) son la verdad, se archive el correo donde se archive: una factura con el CIF de
+  FOODBOX archivada en Lateral no es un fallo. Una etiqueta o corrección del equipo sí cuenta. El
+  coste: un CIF mal leído no aparece como fallo si nadie lo etiqueta.
 - El panel limita el rango de fechas a 366 días (carga en memoria los correos del periodo).
 - **La verdad de referencia es la carpeta donde el equipo archiva cada correo**, más una revisión
   a mano de los casos que la carpeta no resuelve. El descubrimiento mostró que el equipo mueve casi
