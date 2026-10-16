@@ -49,6 +49,20 @@ export async function setActiveLlm(
   });
 }
 
+/**
+ * Deja sin modelo activo: el clasificador decide solo con reglas y lo que no resuelvan queda en
+ * duda, no como fallo técnico pendiente de reprocesar. Con el mismo bloqueo que `setActiveLlm`.
+ */
+export async function deactivateLlm(
+  db: Pick<PrismaClient, '$transaction'>,
+  updatedBy: string,
+): Promise<void> {
+  await db.$transaction(async (tx) => {
+    await lockSettings(tx);
+    await tx.llmSetting.updateMany({ where: { active: true }, data: { active: false, updatedBy } });
+  });
+}
+
 /** Selecciones usadas alguna vez (para sugerirlas en el formulario). */
 export async function listKnownLlms(
   db: Pick<PrismaClient, 'llmSetting'>,

@@ -1,12 +1,15 @@
 import { prisma } from '@clasificador/db';
 import type { Metadata } from 'next';
 
+import { ActionButton } from '@/components/action-button';
 import { ModelForm } from '@/components/model-form';
 import { Card, Notice, PageHeader } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { LLM_PROVIDER_IDS, LLM_PROVIDERS, type LlmProviderId } from '@/lib/llm-providers';
 import { requireUser } from '@/lib/session';
 import { getActiveLlm } from '@/server/llm-settings';
+
+import { deactivateModelAction } from './actions';
 
 export const metadata: Metadata = { title: 'Modelos' };
 
@@ -28,19 +31,31 @@ export default async function ModelsPage() {
       <div className="space-y-6">
         <Card title="Selección activa">
           {active ? (
-            <p className="text-sm">
-              <strong>{label}</strong> / <code className="break-all">{active.model}</code>
-              <span className="text-muted">
-                {' '}
-                · cambiado el {formatDateTime(active.updatedAt)}
-                {active.updatedBy ? ` por ${active.updatedBy}` : ''}
-              </span>
-              {!activeProvider && (
-                <span className="mt-2 block text-danger">
-                  El proveedor guardado no es uno de los soportados: el worker no podrá usarlo.
+            <div className="space-y-4">
+              <p className="text-sm">
+                <strong>{label}</strong> / <code className="break-all">{active.model}</code>
+                <span className="text-muted">
+                  {' '}
+                  · cambiado el {formatDateTime(active.updatedAt)}
+                  {active.updatedBy ? ` por ${active.updatedBy}` : ''}
                 </span>
-              )}
-            </p>
+                {!activeProvider && (
+                  <span className="mt-2 block text-danger">
+                    El proveedor guardado no es uno de los soportados: el worker no podrá usarlo.
+                  </span>
+                )}
+              </p>
+              <ActionButton
+                action={deactivateModelAction}
+                label="Desactivar el LLM"
+                pendingLabel="Desactivando..."
+              >
+                <span className="text-sm text-muted">
+                  Solo reglas: lo que no decidan queda en duda, no como fallo técnico para
+                  reprocesar.
+                </span>
+              </ActionButton>
+            </div>
           ) : (
             <Notice tone="warning">
               No hay ningún modelo activo: el clasificador solo usará reglas hasta que elijas uno.

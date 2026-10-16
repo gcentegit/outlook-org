@@ -8,7 +8,7 @@ import type { ActionState } from '@/lib/action-state';
 import { llmSelectionSchema } from '@/lib/llm-providers';
 import { requireUser } from '@/lib/session';
 import { getJobQueue } from '@/server/boss';
-import { setActiveLlm } from '@/server/llm-settings';
+import { deactivateLlm, setActiveLlm } from '@/server/llm-settings';
 import { buildTestRequest, runTestClassify } from '@/server/test-classify';
 
 export async function changeModelAction(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -30,6 +30,22 @@ export async function changeModelAction(_prev: ActionState, form: FormData): Pro
   return {
     status: 'ok',
     message: `Modelo activo: ${parsed.data.provider} / ${parsed.data.model}. El worker lo usará en el siguiente trabajo.`,
+  };
+}
+
+/** Deja el clasificador sin LLM: solo reglas, y lo que no decidan queda en duda. */
+export async function deactivateModelAction(): Promise<ActionState> {
+  const user = await requireUser();
+  try {
+    await deactivateLlm(prisma(), user.email);
+  } catch (error) {
+    console.error('No se pudo desactivar el modelo', error);
+    return { status: 'error', message: 'No se pudo guardar el cambio. Inténtalo de nuevo.' };
+  }
+  revalidatePath('/modelos');
+  return {
+    status: 'ok',
+    message: 'LLM desactivado. El worker decidirá solo con reglas desde el siguiente trabajo.',
   };
 }
 

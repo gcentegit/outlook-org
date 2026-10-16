@@ -15,8 +15,11 @@ faltó información. Código: `apps/worker/src/jobs/process-message.ts` y `apps/
 - Ante un fallo pasajero el trabajo **lanza** y pg-boss reintenta con retroceso (5 reintentos, unos
   15 minutos). Agotados los reintentos se guarda la decisión marcada `Decision.degraded` y el
   correo con `Message.needsReprocess`.
-- Un LLM **no disponible** (sin clave o sin modelo activo) no se arregla solo: la decisión se guarda
-  degradada a la primera, sin reintentos.
+- Un LLM **no disponible** (hay modelo activo pero falta su clave, o se agotó el presupuesto) no se
+  arregla solo: la decisión se guarda degradada a la primera, sin reintentos.
+- **Sin modelo activo** no hay fallo: el LLM se desactivó en el panel (Modelos) a propósito, se
+  decide solo con reglas y lo que no resuelvan queda en duda, sin marcar para reprocesar. Al volver
+  a activar un modelo, esas dudas no se reprocesan solas.
 - Un fichero que docling no sabe convertir (4xx, 500, `failure`) **no** es un fallo técnico: se
   omite el adjunto, sin más.
 - Un trabajo que agota los reintentos sin decisión deja el correo `failed` y marcado.

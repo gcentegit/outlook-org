@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { llmSelectionSchema, privacyNotice } from '@/lib/llm-providers';
 
-import { setActiveLlm } from './llm-settings';
+import { deactivateLlm, setActiveLlm } from './llm-settings';
 
 function fakeDb() {
   const tx = {
@@ -53,6 +53,22 @@ describe('setActiveLlm', () => {
     await expect(setActiveLlm(db, { provider: 'google', model: 'x' }, 'a@b.es')).rejects.toThrow(
       'boom',
     );
+  });
+});
+
+describe('deactivateLlm', () => {
+  it('desactiva la selección activa con el bloqueo de la configuración', async () => {
+    const { db, tx } = fakeDb();
+    // @ts-expect-error doble mínimo de PrismaClient
+    await deactivateLlm(db, 'a@b.es');
+    expect(tx.llmSetting.updateMany).toHaveBeenCalledWith({
+      where: { active: true },
+      data: { active: false, updatedBy: 'a@b.es' },
+    });
+    expect(tx.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.llmSetting.updateMany.mock.invocationCallOrder[0] as number,
+    );
+    expect(tx.llmSetting.upsert).not.toHaveBeenCalled();
   });
 });
 
