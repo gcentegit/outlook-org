@@ -9,6 +9,14 @@ describe('bodyToText', () => {
     expect(bodyToText({ contentType: 'html', content: html })).toBe('Hola,\n\nAdjunto la factura.');
   });
 
+  it('separa las celdas de una tabla para que un CIF no se pegue al texto de la celda de al lado', () => {
+    const html =
+      '<table><tr><td>FOODBOX S.A<br>A87240420</td><td>Calle Ejemplo 40</td></tr></table>';
+    const text = bodyToText({ contentType: 'html', content: html });
+    expect(text).not.toContain('A87240420Calle');
+    expect(text.split('\n')).toContain('A87240420');
+  });
+
   it('devuelve el texto plano tal cual y cadena vacía sin cuerpo', () => {
     expect(bodyToText({ contentType: 'text', content: ' hola \n' })).toBe('hola');
     expect(bodyToText(null)).toBe('');
