@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.2](https://github.com/gcentegit/outlook-org/compare/v0.16.1...v0.16.2) (2026-10-16)
+
+
+### 🔧 Correcciones
+
+* **deps:** 🔒 versiones corregidas de dependencias con avisos de seguridad ([#102](https://github.com/gcentegit/outlook-org/issues/102)) ([698b922](https://github.com/gcentegit/outlook-org/commit/698b922c234a7c3cbb203926437793be21e62b88))
+
 ## [0.16.1](https://github.com/gcentegit/outlook-org/compare/v0.16.0...v0.16.1) (2026-10-16)
 
 
