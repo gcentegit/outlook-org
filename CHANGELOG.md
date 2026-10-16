@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/gcentegit/outlook-org/compare/v0.16.0...v0.16.1) (2026-10-16)
+
+
+### 🔧 Correcciones
+
+* **worker:** 🧾 solo queda anotado como escrito lo que el correo tiene de verdad ([#100](https://github.com/gcentegit/outlook-org/issues/100)) ([566b3e3](https://github.com/gcentegit/outlook-org/commit/566b3e32833174de7e48c4a15e3b2dd98ee43168))
+
 ## [0.16.0](https://github.com/gcentegit/outlook-org/compare/v0.15.0...v0.16.0) (2026-10-16)
 
 
