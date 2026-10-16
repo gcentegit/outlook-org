@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/gcentegit/outlook-org/compare/v0.13.0...v0.13.1) (2026-10-16)
+
+
+### 🔧 Correcciones
+
+* **worker:** 🐛 la imagen trae el motor de migraciones de Prisma para OpenSSL 3 ([#84](https://github.com/gcentegit/outlook-org/issues/84)) ([05d5419](https://github.com/gcentegit/outlook-org/commit/05d541976e7c710b911b62a7600c90c7f372c0bd))
+
 ## [0.13.0](https://github.com/gcentegit/outlook-org/compare/v0.12.1...v0.13.0) (2026-10-15)
 
 
