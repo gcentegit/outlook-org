@@ -52,7 +52,7 @@ Crear: `src/graph/apply-categories.ts`. Cambiar el worker para que acepte `MODE=
 - [x] Revisar que una corrección vigente se actualice si el equipo vuelve a poner una categoría que el servicio escribió y luego quitó (`corrections.ts`): corregido el 2026-10-16; con una corrección de esa decisión, lo que reaparece lo ha puesto el equipo
 - [x] Quitar el bloqueo de `MODE=live` (`assertSupportedMode`) con la autorización del usuario (2026-10-16), copia de seguridad antes de desplegar y prueba con un correo de prueba del buzón (ver arriba)
 - [ ] Activación progresiva por categoría
-- [ ] Publicación de la versión 1.0.0 (forzada con `release-as` en `release-please-config.json`; quitarlo en cuanto se publique)
+- [x] Publicación de la versión 1.0.0 (2026-10-16)
 
 ## Success Criteria
 
