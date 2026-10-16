@@ -12,6 +12,12 @@ interface FakeMessage {
   noEtag?: boolean;
   /** El PATCH falla siempre con este estado. */
   patchStatus?: number;
+  /** El PATCH se aplica, pero la respuesta no llega: corte de red. */
+  patchLost?: boolean;
+  /** El PATCH no llega a Graph: corte de red. */
+  patchNetworkError?: boolean;
+  /** Las lecturas posteriores a un PATCH fallan (red caída). */
+  readFailsAfterPatch?: boolean;
 }
 
 /**
@@ -20,10 +26,12 @@ interface FakeMessage {
  */
 function fakeMailbox(message: FakeMessage, onRead?: () => void) {
   const patches: { categories: string[]; ifMatch: string | null }[] = [];
+  let patched = false;
   const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const u = String(url);
     expect(u.split('?')[0]).toBe(`https://graph.test${MESSAGE_PATH}`);
     if ((init?.method ?? 'GET') === 'GET') {
+      if (patched && message.readFailsAfterPatch) throw new TypeError('fetch failed');
       const body = {
         ...(message.noEtag ? {} : { '@odata.etag': `W/"${message.etag}"` }),
         categories: [...message.categories],
@@ -31,6 +39,8 @@ function fakeMailbox(message: FakeMessage, onRead?: () => void) {
       onRead?.();
       return Response.json(body);
     }
+    patched = true;
+    if (message.patchNetworkError) throw new TypeError('fetch failed');
     if (message.patchStatus) return new Response('no', { status: message.patchStatus });
     const ifMatch = new Headers(init?.headers).get('If-Match');
     if (ifMatch !== `W/"${message.etag}"`) return new Response('cambió', { status: 412 });
@@ -38,6 +48,7 @@ function fakeMailbox(message: FakeMessage, onRead?: () => void) {
     patches.push({ categories, ifMatch });
     message.categories = categories;
     message.etag++;
+    if (message.patchLost) throw new TypeError('fetch failed');
     return new Response(null, { status: 200 });
   });
   const graph = new GraphClient({
@@ -112,7 +123,7 @@ describe('applyCategories', () => {
     expect(patches).toEqual([{ categories: ['Pagado', 'Revisar', 'LATERAL'], ifMatch: 'W/"2"' }]);
   });
 
-  it('si el correo cambia en cada intento, se rinde con el error y deja lo anotado (en la duda, no se reescribe)', async () => {
+  it('si el correo cambia en cada intento, se rinde con el error y borra lo que no llegó a escribir', async () => {
     const message = { categories: [], etag: 1 };
     const { graph, patches } = fakeMailbox(message, () => {
       message.etag++;
@@ -122,7 +133,7 @@ describe('applyCategories', () => {
       applyCategories('m1', ['LATERAL'], { ...deps(graph, store), maxAttempts: 2 }),
     ).rejects.toThrow('412');
     expect(patches).toEqual([]);
-    expect(store.applied).toEqual(['LATERAL']);
+    expect(store.applied).toEqual([]);
   });
 
   it('sin etag no escribe ni anota nada', async () => {
@@ -140,11 +151,47 @@ describe('applyCategories', () => {
     expect(store.applied).toEqual([]);
   });
 
-  it('si Graph falla con un 5xx, lo anotado se queda: pudo aplicarse', async () => {
+  it('si Graph falla con un 5xx, vuelve a leer: lo que no está se borra para reintentarlo', async () => {
     const { graph } = fakeMailbox({ categories: [], etag: 1, patchStatus: 500 });
     const store = memoryStore();
     await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow('500');
+    expect(store.applied).toEqual([]);
+  });
+
+  it('si la escritura se aplicó pero la respuesta se perdió, queda anotada', async () => {
+    const message: FakeMessage = { categories: ['Pagado'], etag: 1, patchLost: true };
+    const { graph } = fakeMailbox(message);
+    const store = memoryStore();
+    await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow(
+      'fetch failed',
+    );
+    expect(message.categories).toEqual(['Pagado', 'LATERAL']);
     expect(store.applied).toEqual(['LATERAL']);
+  });
+
+  it('un corte de red antes de escribir no deja anotada una categoría que no está', async () => {
+    const { graph } = fakeMailbox({ categories: [], etag: 1, patchNetworkError: true });
+    const store = memoryStore();
+    await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow(
+      'fetch failed',
+    );
+    expect(store.applied).toEqual([]);
+  });
+
+  it('si tampoco se puede volver a leer, borra lo anotado para reintentarlo', async () => {
+    const message: FakeMessage = {
+      categories: [],
+      etag: 1,
+      patchNetworkError: true,
+      readFailsAfterPatch: true,
+    };
+    const { graph } = fakeMailbox(message);
+    const store = memoryStore(['FOOD BOX']);
+    await expect(applyCategories('m1', ['LATERAL'], deps(graph, store))).rejects.toThrow(
+      'fetch failed',
+    );
+    // Lo escrito en pasadas anteriores no se toca.
+    expect(store.applied).toEqual(['FOOD BOX']);
   });
 
   it('un 409 también se trata como conflicto: vuelve a leer y escribe', async () => {

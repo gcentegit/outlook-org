@@ -63,10 +63,11 @@ const CONFLICT_STATUS = new Set([409, 412]);
  * porque no habría forma de no pisar un cambio. Una categoría que el correo ya tiene no se toca, y
  * una que el servicio escribió antes y ya no está tampoco se vuelve a poner.
  *
- * Lo que se va a escribir se anota antes del `PATCH` y se borra solo si Graph lo rechaza con un
- * error que no sea de conflicto. Si no se sabe cómo acabó (corte de red, conflicto), queda anotado:
- * en la duda, el servicio no vuelve a poner una categoría que el correo no tiene, porque podría
- * haberla quitado el equipo.
+ * Lo que se va a escribir se anota antes del `PATCH`. Si Graph lo rechaza (4xx que no es conflicto
+ * ni 429), seguro que no se escribió y se borra lo anotado. Si no se sabe cómo acabó (red, token,
+ * 5xx, 429, conflictos agotados), se vuelve a leer el correo y solo queda anotado lo que de verdad
+ * tiene; lo demás se borra para que el reproceso lo vuelva a intentar. Si tampoco se puede leer, se
+ * borra todo: es preferible reintentar a no escribir nunca una categoría que no llegó al buzón.
  */
 export async function applyCategories(
   messageId: string,
@@ -98,20 +99,33 @@ export async function applyCategories(
         { ifMatch: etag },
       );
     } catch (err) {
-      if (!(err instanceof GraphError)) throw err;
-      // Un conflicto puede venir de un reintento de un PATCH que ya se aplicó: lo anotado se queda
-      // y, al releer, lo que ya esté en el correo cuenta como escrito por el servicio.
-      if (CONFLICT_STATUS.has(err.status)) {
-        if (attempt < maxAttempts) continue;
-        throw err;
-      }
-      // Solo un rechazo definitivo (4xx) asegura que no se escribió. Un 5xx o un 429 tras los
-      // reintentos pudo aplicarse: lo anotado se queda, para no volver a poner lo que quite el equipo.
-      if (err.status < 500 && err.status !== 429) {
-        await deps.store.forgetApplied(messageId, result.added);
-      }
+      const status = err instanceof GraphError ? err.status : null;
+      if (status !== null && CONFLICT_STATUS.has(status) && attempt < maxAttempts) continue;
+      const rejected =
+        status !== null && status < 500 && status !== 429 && !CONFLICT_STATUS.has(status);
+      if (rejected) await deps.store.forgetApplied(messageId, result.added);
+      else await keepOnlyWritten(path, messageId, result.added, deps);
       throw err;
     }
     return result;
   }
+}
+
+/** Tras una escritura de resultado incierto, deja anotado solo lo que el correo tiene de verdad. */
+async function keepOnlyWritten(
+  path: string,
+  messageId: string,
+  added: readonly string[],
+  deps: ApplyCategoriesDeps,
+): Promise<void> {
+  let notWritten = added;
+  try {
+    const { categories = [] } = await deps.graph.getJson<MessageCategories>(
+      `${path}?$select=categories`,
+    );
+    notWritten = added.filter((name) => !categories.some((c) => sameName(c, name)));
+  } catch {
+    // Sin poder comprobarlo, se reintenta todo en el siguiente reproceso.
+  }
+  if (notWritten.length > 0) await deps.store.forgetApplied(messageId, notWritten);
 }
