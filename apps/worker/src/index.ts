@@ -17,13 +17,7 @@ import {
   liveCategories,
   readCategoryModes,
 } from './classify';
-import {
-  ConfigError,
-  assertSupportedMode,
-  loadConfig,
-  resolveGraphSettings,
-  type Config,
-} from './config';
+import { ConfigError, loadConfig, resolveGraphSettings, type Config } from './config';
 import { extractEmail } from './extract/extract-email';
 import { applyCategories, categoriesToApply } from './graph/apply-categories';
 import { createGraphClient, type GraphClient } from './graph/client';
@@ -74,12 +68,11 @@ export interface RunningWorker {
   stop(): Promise<void>;
 }
 
-/** Arranca el servicio completo. Con `MODE=live` se niega a empezar. */
+/** Arranca el servicio completo. */
 export async function startWorker(
   config: Config,
   overrides: WorkerOverrides = {},
 ): Promise<RunningWorker> {
-  assertSupportedMode(config);
   // El cliente compartido lee DATABASE_URL del entorno; ya está validada arriba.
   process.env.DATABASE_URL = config.DATABASE_URL;
 
@@ -211,10 +204,13 @@ export async function startWorker(
           }),
         relocate: (message) => findCurrentMessageId(graph, mailbox, message),
         classify: async (email, categories) => {
-          // Solo informativo: un fallo al leer el modo por categoría no debe frenar la clasificación.
-          await readCategoryModes(db).then(warnLiveCategories, (err: unknown) =>
-            console.error('No se pudo leer CategorySetting:', err),
-          );
+          // En sombra avisa de las categorías en live que no se escriben. Solo informativo: un fallo
+          // al leer el modo por categoría no debe frenar la clasificación.
+          if (config.MODE === 'shadow') {
+            await readCategoryModes(db).then(warnLiveCategories, (err: unknown) =>
+              console.error('No se pudo leer CategorySetting:', err),
+            );
+          }
           return classify(email, {
             availableCategories: categories,
             mode: config.MODE,
@@ -226,7 +222,7 @@ export async function startWorker(
           });
         },
         // Escritura en el buzón: solo en modo real y solo de las categorías que el panel tiene en
-        // live. Hoy `assertSupportedMode` impide arrancar con MODE=live, así que no se ejecuta.
+        // live.
         ...(config.MODE === 'live'
           ? {
               apply: async (email, result, masterNames) => {

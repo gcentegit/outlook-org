@@ -112,6 +112,19 @@ describe('evaluateCategoryChange', () => {
     expect(evaluateCategoryChange(k, [])).toMatchObject({ kind: 'correction', final: [] });
   });
 
+  it('en modo live, volver a poner lo que el servicio escribió y el equipo quitó actualiza la corrección', () => {
+    const k = known({
+      seenCategories: [],
+      latestDecision: { id: 'd1', categories: ['LATERAL'], mode: 'live' },
+      latestCorrection: { decisionId: 'd1', final: [] },
+      appliedCategories: ['LATERAL'],
+    });
+    expect(evaluateCategoryChange(k, ['LATERAL'])).toMatchObject({
+      kind: 'correction',
+      final: ['LATERAL'],
+    });
+  });
+
   it('en modo live un cambio distinto de lo aplicado es del equipo', () => {
     const k = known({
       seenCategories: ['LATERAL'],

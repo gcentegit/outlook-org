@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Clasificador del buzón de Proveedores: propone las categorías FOOD BOX, LATERAL y ARCOBETA a partir
 del CIF y la razón social de las facturas, de la conversación y, en los casos dudosos, de un LLM.
-Hoy solo funciona en **modo sombra**, sin validar con datos reales y sin desplegar. Qué es y cómo
+Desplegado en producción; escribe en el buzón solo las categorías que el panel tenga en live y con el
+worker en `MODE=live`; el resto sigue en **modo sombra**. Qué es y cómo
 arrancarlo: [README.md](README.md). Cómo funciona: [docs/arquitectura.md](docs/arquitectura.md).
 Índice de docs: [docs/README.md](docs/README.md).
 
@@ -90,9 +91,10 @@ Lo que no se ve leyendo un solo fichero. El flujo completo de un correo está en
 
 ## Reglas innegociables
 
-1. **El worker no escribe en los correos del buzón fuera del modo real.** `MODE=live` no está soportado
-   y el worker se niega a arrancar con él. La única escritura en el buzón en sombra es crear una
-   categoría maestra pedida y confirmada desde el panel.
+1. **El worker no escribe en los correos del buzón fuera del modo real.** Solo con `MODE=live` y solo
+   las categorías que el panel tenga en live; pasar una categoría o el worker a live necesita la
+   autorización del usuario. La única escritura en el buzón en sombra es crear una categoría maestra
+   pedida y confirmada desde el panel.
 2. **Nunca se quitan las categorías que ponen las personas** ni se crean categorías por cuenta propia.
 3. **Las direcciones reales solo van por variables de entorno** (`MAILBOX`, `ADMIN_EMAIL`). En
    documentos, `<MAILBOX>` y `<ADMIN_EMAIL>`; en código y pruebas, `ejemplo.com`.

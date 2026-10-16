@@ -40,10 +40,10 @@ export default async function SettingsPage() {
           )}
           {modes.available && (
             <div className="mb-4">
-              <Notice tone="info" title="Live todavía no aplica categorías">
-                El servicio funciona solo en sombra: el modo se guarda aquí, pero el worker aún no
-                escribe categorías en Outlook y se limita a registrar un aviso si alguna está en
-                live. La activación real llega con la evaluación final.
+              <Notice tone="info" title="Live escribe en Outlook">
+                Una categoría en live se añade a los correos nuevos en cuanto se deciden, siempre
+                que el worker esté en modo real (<code>MODE=live</code>). Los correos ya decididos
+                no se tocan. Volver a sombra deja de escribirla en el siguiente correo.
               </Notice>
             </div>
           )}

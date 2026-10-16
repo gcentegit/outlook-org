@@ -4,8 +4,8 @@ Este documento describe el sistema tal como está construido. El **porqué** de 
 los [registros de decisión](adr/README.md); aquí solo se enlaza. Los detalles (campos, valores por
 defecto, rutas) los define el código, que se cita por ruta.
 
-Estado: el servicio está construido y probado con datos simulados; **no se ha validado con el buzón
-real ni está desplegado**. Solo funciona en modo sombra.
+Estado: desplegado en producción contra el buzón real. Escribe en los correos solo las categorías
+que el panel tenga en live y con el worker en `MODE=live`; el resto funciona en modo sombra.
 
 ## Piezas
 
@@ -35,12 +35,12 @@ flowchart TD
     E --> F[Clasificador: reglas fuertes, hilo, reglas medias, LLM]
     F --> G{Fallo técnico?}
     G -->|pasajero, quedan reintentos| C
-    G -->|no, o ya sin reintentos| H[Se guarda Decision en modo sombra y el correo queda procesado]
+    G -->|no, o ya sin reintentos| H[Se guarda Decision y el correo queda procesado]
     H --> I[Panel: métricas y discrepancias]
     K --> J[Se guarda Correction]
     J --> I
     L[Worker: cada hora o desde el panel, busca en qué carpeta acabó cada correo] --> I
-    H -. no se escribe nada en Outlook .-> A
+    H -. en live, se añaden en Outlook las categorías en live .-> A
 ```
 
 1. **Detección** (`sync/delta.ts`). Una ronda de delta query sobre la Bandeja de entrada, secuencial y
@@ -98,15 +98,16 @@ Lo que se envía al LLM (asunto, cuerpo y texto de las primeras páginas de los 
 caracteres) sale hacia el proveedor elegido. [ADR 0003](adr/0003-llm-configurable-y-privacidad.md) y
 [ADR 0010](adr/0010-retencion-y-datos-de-terceros.md).
 
-## Qué hace y qué no hace el modo sombra
+## Modo sombra y modo real
 
-- **Hace:** leer el buzón (delta, mensajes, adjuntos, categorías maestras), extraer, clasificar,
-  llamar al LLM, guardar decisiones y correcciones, mostrarlas en el panel y enviar el latido.
-- **No hace:** aplicar categorías a ningún correo. La escritura está programada
-  (`apps/worker/src/graph/apply-categories.ts`) pero bloqueada: con `MODE=live` el worker se niega a
-  arrancar hasta que se autorice la activación real. Los interruptores sombra/live del panel solo
-  guardan una preferencia mientras tanto.
-- **Única escritura en el buzón:** crear una categoría en la lista maestra cuando un usuario
+- **Sombra** (`MODE=shadow`, por defecto, o una categoría en sombra en el panel): lee el buzón,
+  extrae, clasifica, llama al LLM, guarda decisiones y correcciones, las muestra en el panel y envía
+  el latido. No toca ningún correo.
+- **Real** (`MODE=live` y la categoría en live en el panel): además, al decidir un correo añade en
+  Outlook las categorías en live, sin quitar ninguna y sin volver a poner las que el equipo quitó
+  (`apps/worker/src/graph/apply-categories.ts`). Volver una categoría a sombra en el panel deja de
+  escribirla en el siguiente correo.
+- **Otra escritura en el buzón:** crear una categoría en la lista maestra cuando un usuario
   autorizado lo pide y confirma en el panel; no toca ningún correo. El worker la ejecuta; la web
   no puede. [ADR 0004](adr/0004-modo-sombra-y-activacion-por-categoria.md) y
   [ADR 0015](adr/0015-web-sin-credenciales-del-buzon.md).
@@ -115,8 +116,8 @@ caracteres) sale hacia el proveedor elegido. [ADR 0003](adr/0003-llm-configurabl
 
 - **Adjuntos `.eml`, `.msg` y `itemAttachment`:** no se leen ni se avisa; un reenvío que adjunta el
   correo original pierde el PDF de dentro. No se ha medido cuántos casos hay.
-- **Sin validar con datos reales:** el cliente de Graph, el login con Microsoft, la extracción con
-  facturas reales y el acierto de las reglas y del LLM solo se han probado con datos simulados.
+- **Un correo que sale de la Bandeja y vuelve cambia de id** y pierde el registro de lo que escribió el
+  servicio: en modo real podría volver a poner una categoría que el equipo le quitó.
 - Un cambio de categorías del equipo mientras su correo se procesa no cuenta como corrección.
 - La sesión del panel no se puede invalidar en el servidor antes de las 8 horas; el acceso sí se
   corta al instante quitando al usuario de la lista.

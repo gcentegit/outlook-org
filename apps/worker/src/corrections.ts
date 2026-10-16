@@ -38,6 +38,8 @@ const sameSet = (a: readonly string[], b: readonly string[]): boolean =>
  * - En modo live, un cambio que solo añade categorías que escribió el servicio (sobre lo que ya
  *   había) es propio y se ignora; cualquier otro es del equipo. Se compara con lo escrito de
  *   verdad, no con la decisión: con la activación por categoría puede escribirse solo una parte.
+ *   Si el equipo ya corrigió esa decisión, el servicio no vuelve a escribir lo que le quitaron, así
+ *   que una categoría escrita que reaparece la ha vuelto a poner el equipo.
  * - Si el equipo vuelve a dejar lo propuesto después de haberlo corregido, también se registra
  *   (con `proposed` igual a `final`), para que la última corrección de cada correo sea la vigente.
  */
@@ -57,7 +59,10 @@ export function evaluateCategoryChange(
   if (!decision) return { kind: 'seen-only' };
   const proposed = relevantCategories(decision.categories);
 
-  if (decision.mode === 'live') {
+  const previous = known.latestCorrection;
+  const previousForThisDecision = previous?.decisionId === decision.id ? previous : null;
+
+  if (decision.mode === 'live' && !previousForThisDecision) {
     const applied = relevantCategories(known.appliedCategories);
     const appliedByUs =
       seen.every((c) => observed.includes(c)) &&
@@ -65,8 +70,6 @@ export function evaluateCategoryChange(
     if (appliedByUs) return { kind: 'seen-only' };
   }
 
-  const previous = known.latestCorrection;
-  const previousForThisDecision = previous?.decisionId === decision.id ? previous : null;
   if (sameSet(observed, proposed)) {
     // De acuerdo con la propuesta: solo interesa si antes se había registrado una discrepancia.
     return previousForThisDecision && !sameSet(previousForThisDecision.final, observed)

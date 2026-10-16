@@ -11,9 +11,8 @@ type Db = Pick<PrismaClient, 'categorySetting'>;
 export type CategoryModes = Record<Category, DecisionMode>;
 
 /**
- * Modo que el panel ha fijado por categoría. Hoy el worker solo lo expone: sin fila la categoría
- * está en sombra, y aunque alguna figure en live el worker sigue en sombra hasta que exista la
- * activación real.
+ * Modo que el panel ha fijado por categoría; sin fila la categoría está en sombra. Solo se escriben
+ * en el buzón las que estén en live y con el worker en `MODE=live`.
  */
 export async function readCategoryModes(db: Db): Promise<CategoryModes> {
   const modes = Object.fromEntries(CATEGORIES.map((c) => [c, 'shadow'])) as CategoryModes;
@@ -30,7 +29,7 @@ export const liveCategories = (modes: CategoryModes): Category[] =>
   CATEGORIES.filter((c) => modes[c] === 'live');
 
 /**
- * Avisa de que hay categorías en live que el worker no aplica. Solo repite el aviso cuando cambia
+ * Avisa de que hay categorías en live que un worker en sombra no aplica. Solo repite el aviso cuando cambia
  * el conjunto, para no inundar el log con cada correo.
  */
 export function createLiveModeWarner(
@@ -44,7 +43,7 @@ export function createLiveModeWarner(
     last = key;
     if (live.length > 0) {
       warn(
-        `El panel tiene en live: ${live.join(', ')}. Este worker solo funciona en sombra: ` +
+        `El panel tiene en live: ${live.join(', ')}. Este worker está en sombra (MODE=shadow): ` +
           'se registran decisiones sin tocar el buzón.',
       );
     }

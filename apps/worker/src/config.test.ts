@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { assertSupportedMode, loadConfig, resolveGraphSettings } from './config';
+import { loadConfig, resolveGraphSettings } from './config';
 
 describe('loadConfig', () => {
   it('el borrado a los 12 meses está desactivado salvo que se active', () => {
@@ -37,12 +37,10 @@ describe('modo y sincronización', () => {
     expect(c.POLL_INTERVAL_SECONDS).toBe(90);
     expect(c.WORKER_CONCURRENCY).toBe(2);
     expect(c.UPTIME_KUMA_PUSH_URL).toBeUndefined();
-    expect(() => assertSupportedMode(c)).not.toThrow();
   });
 
-  it('se niega a arrancar con MODE=live y lo explica', () => {
-    const c = loadConfig({ ...env, MODE: 'live' });
-    expect(() => assertSupportedMode(c)).toThrow(/MODE=live no está activado/);
+  it('acepta MODE=live', () => {
+    expect(loadConfig({ ...env, MODE: 'live' }).MODE).toBe('live');
   });
 
   it('rechaza un MODE desconocido y un polling fuera de rango', () => {
