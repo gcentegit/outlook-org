@@ -3,7 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SyncResult } from './delta';
 import { createPoller, type Poller } from './poller';
 
-const ok: SyncResult = { enqueued: 1, changed: 0, corrections: 0, removed: 0, resynced: false };
+const ok: SyncResult = {
+  enqueued: 1,
+  changed: 0,
+  corrections: 0,
+  removed: 0,
+  recovered: 0,
+  resynced: false,
+};
 
 describe('createPoller', () => {
   it('ejecuta rondas seguidas, avisa al heartbeat y para sin dejar rondas a medias', async () => {

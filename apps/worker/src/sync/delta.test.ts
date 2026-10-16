@@ -111,6 +111,49 @@ describe('syncInbox', () => {
     expect(store.saveState).toHaveBeenCalledWith(`${BASE}?$deltatoken=T2`, NOW);
   });
 
+  describe('tras una parada', () => {
+    const link = `${BASE}?$deltatoken=T1`;
+    const pages = { [link]: { value: [], '@odata.deltaLink': `${BASE}?$deltatoken=T2` } };
+    const MINUTE = 60_000;
+
+    it('recupera lo archivado durante ella, después de la delta y antes de guardar', async () => {
+      const lastSyncAt = new Date(NOW.getTime() - 10 * MINUTE);
+      const store = fakeStore({ deltaLink: link, lastSyncAt });
+      const run = vi.fn(async () => {
+        expect(store.saveState).not.toHaveBeenCalled();
+        return 2;
+      });
+      const { deps } = setup(pages, store);
+      const result = await syncInbox({ ...deps, catchUp: { afterMs: 3 * MINUTE, run } });
+      expect(run).toHaveBeenCalledWith(lastSyncAt);
+      expect(result.recovered).toBe(2);
+      expect(store.saveState).toHaveBeenCalled();
+    });
+
+    it('no la busca si la última sincronización es reciente o no hay ninguna', async () => {
+      const run = vi.fn(async () => 0);
+      for (const state of [{ deltaLink: link, lastSyncAt: NOW }, null]) {
+        const first = inboxDeltaUrl('p@x.com', new Date(NOW.getTime() - MINUTE));
+        const { deps } = setup({ ...pages, [first]: pages[link] }, fakeStore(state));
+        await syncInbox({ ...deps, catchUp: { afterMs: 3 * MINUTE, run } });
+      }
+      expect(run).not.toHaveBeenCalled();
+    });
+
+    it('si recuperar falla no avanza el deltaLink (la ronda se repetirá)', async () => {
+      const store = fakeStore({
+        deltaLink: link,
+        lastSyncAt: new Date(NOW.getTime() - 10 * MINUTE),
+      });
+      const { deps } = setup(pages, store);
+      const run = async () => Promise.reject(new Error('Graph caído'));
+      await expect(syncInbox({ ...deps, catchUp: { afterMs: 3 * MINUTE, run } })).rejects.toThrow(
+        'Graph caído',
+      );
+      expect(store.saveState).not.toHaveBeenCalled();
+    });
+  });
+
   it('encola los desconocidos y no encola los ya registrados', async () => {
     const link = `${BASE}?$deltatoken=T1`;
     const store = fakeStore({ deltaLink: link, lastSyncAt: NOW }, [knownMsg({ id: 'old' })]);

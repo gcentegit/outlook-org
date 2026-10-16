@@ -37,7 +37,8 @@ function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 function summarize(result: SyncResult): string {
-  return `ok: ${result.enqueued} nuevos, ${result.corrections} correcciones, ${result.removed} salidas`;
+  const recovered = result.recovered ? `, ${result.recovered} recuperados tras la parada` : '';
+  return `ok: ${result.enqueued} nuevos${recovered}, ${result.corrections} correcciones, ${result.removed} salidas`;
 }
 
 /** Rondas de sincronización una tras otra (nunca solapadas), cada `intervalMs`. */
@@ -55,7 +56,13 @@ export function createPoller(options: PollerOptions): Poller {
       try {
         const result = await options.runCycle();
         error = null;
-        if (result.enqueued || result.changed || result.removed || result.resynced) {
+        if (
+          result.enqueued ||
+          result.recovered ||
+          result.changed ||
+          result.removed ||
+          result.resynced
+        ) {
           log(`sincronización ${summarize(result)}${result.resynced ? ' (resincronizada)' : ''}`);
         }
         await options.outages?.recovered();

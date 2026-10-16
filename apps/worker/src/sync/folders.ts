@@ -80,6 +80,23 @@ interface GraphMessageLocation {
 
 const userPath = (mailbox: string): string => `/users/${encodeURIComponent(mailbox)}`;
 
+/** Todas las carpetas del buzón, con el id y la ruta de la Bandeja de entrada. */
+async function loadFolders(graph: GraphClient, mailbox: string) {
+  const inbox = await graph.getJson<GraphFolderRef>(
+    `${userPath(mailbox)}/mailFolders/inbox?$select=id`,
+  );
+  const folders = await listAllFolders(graph, mailbox);
+  const inboxPath = folders.find((folder) => folder.id === inbox.id)?.path;
+  if (!inboxPath) throw new Error('No se encontró la Bandeja de entrada entre las carpetas.');
+  return { inboxId: inbox.id, inboxPath, folders };
+}
+
+/** La carpeta `root` o una de sus subcarpetas, sin distinguir mayúsculas. */
+function isUnder(path: string, root: string): boolean {
+  const [p, r] = [path.toLowerCase(), root.toLowerCase()];
+  return p === r || p.startsWith(`${r}/`);
+}
+
 /**
  * Traduce el id de una carpeta a dónde está: la Bandeja de entrada, uno de los árboles de las
  * sociedades (la carpeta con su nombre directamente bajo la Bandeja y todas sus subcarpetas) u otra,
@@ -89,24 +106,20 @@ export async function loadFolderMap(
   graph: GraphClient,
   mailbox: string,
 ): Promise<(folderId: string) => FolderInfo> {
-  const inbox = await graph.getJson<GraphFolderRef>(
-    `${userPath(mailbox)}/mailFolders/inbox?$select=id`,
-  );
-  const folders = await listAllFolders(graph, mailbox);
-  const inboxPath = folders.find((folder) => folder.id === inbox.id)?.path;
-  if (!inboxPath) throw new Error('No se encontró la Bandeja de entrada entre las carpetas.');
-
+  const { inboxId, inboxPath, folders } = await loadFolders(graph, mailbox);
   const byId = new Map<string, FolderInfo>();
   for (const folder of folders) {
-    const path = folder.path.toLowerCase();
-    const tree = TREE_FOLDERS.find((t) => {
-      const root = `${inboxPath}/${t.name}`.toLowerCase();
-      return path === root || path.startsWith(`${root}/`);
-    });
-    const kind = folder.id === inbox.id ? 'inbox' : (tree?.folder ?? 'other');
+    const tree = TREE_FOLDERS.find((t) => isUnder(folder.path, `${inboxPath}/${t.name}`));
+    const kind = folder.id === inboxId ? 'inbox' : (tree?.folder ?? 'other');
     byId.set(folder.id, { folder: kind, path: folder.path });
   }
   return (folderId) => byId.get(folderId) ?? { folder: 'other', path: null };
+}
+
+/** Ids de la Bandeja de entrada y de todas sus subcarpetas, que es adonde archiva el equipo. */
+export async function loadInboxTree(graph: GraphClient, mailbox: string): Promise<Set<string>> {
+  const { inboxPath, folders } = await loadFolders(graph, mailbox);
+  return new Set(folders.filter((f) => isUnder(f.path, inboxPath)).map((f) => f.id));
 }
 
 /** Si una copia está en el árbol de una sociedad, manda esa; después la Bandeja; al final otras. */

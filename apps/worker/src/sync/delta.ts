@@ -60,6 +60,11 @@ export interface SyncDeps {
   store: SyncStore;
   /** Encola el procesado de un correo nuevo; debe ser idempotente por `messageId`. */
   enqueue: (messageId: string) => Promise<void>;
+  /**
+   * Si la última sincronización correcta es más antigua que `afterMs`, recupera los correos que
+   * llegaron y salieron de la Bandeja durante la parada (`catchUpArchived`) y devuelve cuántos.
+   */
+  catchUp?: { afterMs: number; run: (lastSyncAt: Date) => Promise<number> };
   now?: () => Date;
   log?: (message: string) => void;
 }
@@ -72,6 +77,8 @@ export interface SyncResult {
   corrections: number;
   /** Correos que salieron de la carpeta (movidos o borrados). */
   removed: number;
+  /** Correos que llegaron y salieron de la Bandeja durante una parada, registrados y encolados. */
+  recovered: number;
   /** El `deltaLink` había caducado (410) y se resincronizó desde el correo registrado más antiguo. */
   resynced: boolean;
 }
@@ -98,6 +105,9 @@ export function inboxDeltaUrl(mailbox: string, since: Date): string {
  *   último: el filtro por fecha queda fijado en el nuevo `deltaLink`, y así se siguen viendo las
  *   correcciones de los correos anteriores. Los ya conocidos solo pasan por la comparación de
  *   categorías: no se reprocesa nada.
+ * - Tras una parada, la delta no devuelve los correos que el equipo ya sacó de la Bandeja: de esos
+ *   se ocupa `catchUp`, después de la delta (que ya registró los que siguen en ella) y antes de
+ *   guardar el `deltaLink`, para que un fallo lo repita en la siguiente ronda.
  */
 export async function syncInbox(deps: SyncDeps): Promise<SyncResult> {
   const now = deps.now ?? (() => new Date());
@@ -107,6 +117,7 @@ export async function syncInbox(deps: SyncDeps): Promise<SyncResult> {
     changed: 0,
     corrections: 0,
     removed: 0,
+    recovered: 0,
     resynced: false,
   };
 
@@ -124,6 +135,14 @@ export async function syncInbox(deps: SyncDeps): Promise<SyncResult> {
   for (;;) {
     try {
       const deltaLink = await drain(url, deps, result);
+      const lastSyncAt = state?.lastSyncAt;
+      if (
+        deps.catchUp &&
+        lastSyncAt &&
+        now().getTime() - lastSyncAt.getTime() > deps.catchUp.afterMs
+      ) {
+        result.recovered = await deps.catchUp.run(lastSyncAt);
+      }
       await deps.store.saveState(deltaLink, now());
       return result;
     } catch (err) {

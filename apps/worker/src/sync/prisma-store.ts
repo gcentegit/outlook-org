@@ -3,11 +3,12 @@ import type { PrismaClient } from '@clasificador/db';
 import type { MessageStatus } from '@clasificador/db';
 
 import type { KnownMessage } from '../corrections';
+import type { CatchUpStore } from './catch-up';
 import { INBOX_SYNC_ID, type SyncStore } from './delta';
 
 type Db = Pick<PrismaClient, 'syncState' | 'message' | 'correction' | '$transaction'>;
 
-export function createPrismaSyncStore(db: Db): SyncStore {
+export function createPrismaSyncStore(db: Db): SyncStore & CatchUpStore {
   return {
     async getState() {
       const row = await db.syncState.findUnique({ where: { id: INBOX_SYNC_ID } });
@@ -33,6 +34,17 @@ export function createPrismaSyncStore(db: Db): SyncStore {
     async earliestReceivedAt() {
       const { _min } = await db.message.aggregate({ _min: { receivedAt: true } });
       return _min.receivedAt;
+    },
+
+    async hasCopy(conversationId, receivedAt, toleranceMs) {
+      const t = receivedAt.getTime();
+      const count = await db.message.count({
+        where: {
+          conversationId,
+          receivedAt: { gt: new Date(t - toleranceMs), lt: new Date(t + toleranceMs) },
+        },
+      });
+      return count > 0;
     },
 
     async registerNew({ id, conversationId, receivedAt, seenCategories }) {
