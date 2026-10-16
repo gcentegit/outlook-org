@@ -38,7 +38,9 @@ primera semana.
 - **Antes de cualquier migración, copia de seguridad reciente.** Las migraciones solo avanzan: una
   imagen anterior con un esquema posterior debe ser compatible, o se restaura la copia
   ([copias y restauración](copias-y-restauracion.md)).
-- `MODE=live` no está soportado: el worker se niega a arrancar. Producción va en `MODE=shadow`.
+- `MODE=live` hace que el worker escriba en el buzón las categorías que el panel tenga en live; con
+  `MODE=shadow` no escribe nada. Cambiarlo exige la autorización del usuario y una copia de seguridad
+  previa ([ADR 0004](../adr/0004-modo-sombra-y-activacion-por-categoria.md)).
 - `ADMIN_EMAIL` y `MAILBOX` los exige `provision.ts` en su entorno; no hay valores por defecto.
 - Las claves de LLM, el certificado y los secretos van en variables de entorno o ficheros montados de
   Dokploy, nunca en git ni en el chat ([credenciales y caducidades](credenciales-y-caducidades.md)).

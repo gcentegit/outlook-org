@@ -45,7 +45,7 @@ const configSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
   OPENAI_COMPATIBLE_BASE_URL: z.url().optional(),
   OPENAI_COMPATIBLE_API_KEY: z.string().min(1).optional(),
-  /** `shadow` registra decisiones sin tocar el buzón; `live` (PATCH de categorías) aún no existe. */
+  /** `shadow` registra decisiones sin tocar el buzón; `live` escribe las categorías que el panel tenga en live. */
   MODE: z.enum(['shadow', 'live']).default('shadow'),
   /** Segundos entre sincronizaciones de la Bandeja de entrada (recomendado 60-120). */
   POLL_INTERVAL_SECONDS: z.coerce.number().int().min(15).max(600).default(90),
@@ -89,19 +89,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new ConfigError(`Configuración del worker no válida:\n${z.prettifyError(parsed.error)}`);
   }
   return parsed.data;
-}
-
-/**
- * La escritura de categorías en el buzón está programada pero bloqueada: con `MODE=live` el worker
- * no arranca hasta que el usuario autorice la activación real y se quite este bloqueo.
- */
-export function assertSupportedMode(config: Pick<Config, 'MODE'>): void {
-  if (config.MODE === 'live') {
-    throw new ConfigError(
-      'MODE=live no está activado todavía: este worker solo funciona en modo sombra (MODE=shadow) ' +
-        'hasta que se autorice la activación real.',
-    );
-  }
 }
 
 export interface GraphSettings {

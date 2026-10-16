@@ -1,4 +1,4 @@
-# 0004. Modo sombra obligatorio y activación por categoría
+# 0004. Modo sombra por defecto y activación por categoría
 
 - **Estado:** aceptada
 
@@ -10,14 +10,14 @@ buzón hay que medir el acierto con datos reales.
 ## Decisión
 
 - `MODE=shadow` es el valor por defecto: el worker propone categorías y guarda las decisiones, pero
-  **no escribe nada en Outlook**. Con `MODE=live` el worker se niega a arrancar con un mensaje
-  claro: la escritura de categorías está programada pero no se activa hasta que el usuario lo
-  autorice (será la versión 1.0.0).
+  **no escribe nada en Outlook**. Con `MODE=live` escribe en los correos las categorías que el panel
+  tenga en live (desde la versión 1.0.0). Pasar a `MODE=live` y cada categoría a live lo autoriza el
+  usuario.
 - Los interruptores sombra/live por categoría del panel escriben en `CategorySetting` (sin fila, la
   categoría está en sombra; pasar a live exige una casilla de confirmación validada también en el
-  servidor). Hoy son solo una preferencia guardada: el worker los expone en `/health`
-  (`categoryModes`), registra un aviso si una categoría se pone en live (una vez por cambio) y
-  sigue en sombra.
+  servidor). Deciden qué categorías escribe un worker en `MODE=live`; el worker los lee en cada
+  correo y los expone en `/health` (`categoryModes`). Un worker en `MODE=shadow` no escribe ninguna
+  y registra un aviso si alguna está en live (una vez por cambio).
 - Sin credenciales de Graph el worker arranca, aplica migraciones, mantiene la limpieza diaria y
   atiende las colas del panel, pero no sincroniza. Lo dice en el log y `/health` responde 503 con
   `status: "disabled"` y el motivo.
@@ -29,16 +29,19 @@ buzón hay que medir el acierto con datos reales.
     antes y se escribe con `If-Match`. Si el correo cambió entre medias (412 o 409), se vuelve a
     leer, hasta tres veces. Sin etag no se escribe. Nunca se quita ninguna.
   - Lo que escribe el servicio se anota en `AppliedCategory` antes del `PATCH` y se borra solo si
-    Graph lo rechaza (un 4xx); tras un 5xx o un 429 pudo aplicarse y se queda. Si después el correo ya no la tiene, la quitó el equipo y no se vuelve a poner;
-    en la duda (no se sabe si se escribió), tampoco.
+    Graph lo rechaza (un 4xx). Si no se sabe si llegó (5xx, 429, red), se vuelve a leer el correo y
+    solo queda anotado lo que tiene. Si después el correo ya no la tiene, la quitó el equipo y no se
+    vuelve a poner.
   - Si la escritura falla, la decisión queda guardada y el correo marcado para reprocesar: volver a
     escribir no duplica nada.
+  - Solo se escribe al decidir un correo. Los que ya tenían decisión en sombra no se reescriben al
+    pasar a live.
 
 ## Consecuencias
 
-- La activación real es una fase propia del plan y será la versión 1.0.0
+- La versión 1.0.0 es la primera que escribe en el buzón
   ([versiones y releases](../operacion/versiones-y-releases.md)).
-- El panel muestra el modo guardado, no una activación efectiva: no hay que interpretarlo como
-  «ya está escribiendo».
-- En modo live el acierto medido sería más optimista (las categorías del servicio se mezclarían con
-  las del equipo) ([0008](0008-correcciones-y-metrica-de-acierto.md)).
+- El interruptor del panel solo escribe si además el worker está en `MODE=live`; volver una
+  categoría a sombra deja de escribirla en el siguiente correo, sin redesplegar.
+- En modo live el acierto medido es más optimista: las categorías del servicio se mezclan con las
+  del equipo, y lo fiable son las correcciones ([0008](0008-correcciones-y-metrica-de-acierto.md)).

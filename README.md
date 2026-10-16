@@ -71,7 +71,7 @@ Con PostgreSQL arriba (`docker compose ... up -d postgres`): `pnpm --filter @cla
 
 ### Arrancar el servicio en modo sombra en local
 
-El servicio solo propone categorías y guarda las decisiones; **no escribe en los correos** (`MODE=shadow`, el valor por defecto; con `MODE=live` el worker se niega a arrancar, [ADR 0004](docs/adr/0004-modo-sombra-y-activacion-por-categoria.md)).
+El servicio solo propone categorías y guarda las decisiones; **no escribe en los correos** (`MODE=shadow`, el valor por defecto; con `MODE=live` escribe las categorías que el panel tenga en live, [ADR 0004](docs/adr/0004-modo-sombra-y-activacion-por-categoria.md)).
 
 1. PostgreSQL y docling arriba y `pnpm db:migrate:deploy && pnpm db:seed`.
 2. En `.env`, las credenciales de Graph de la [guía de Entra ID y RBAC](docs/guias/entra-id-rbac.md): `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CERT_PATH` y `MAILBOX`. Sin ellas el worker arranca pero no sincroniza.
