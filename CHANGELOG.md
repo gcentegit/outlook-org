@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/gcentegit/outlook-org/compare/v0.13.1...v0.14.0) (2026-10-16)
+
+
+### 🚀 Novedades
+
+* **worker:** ✨ recupera los correos archivados durante una parada ([#88](https://github.com/gcentegit/outlook-org/issues/88)) ([b0e67d7](https://github.com/gcentegit/outlook-org/commit/b0e67d7cdbfa23ea7d8f4c2317ed68e12590282a))
+
 ## [0.13.1](https://github.com/gcentegit/outlook-org/compare/v0.13.0...v0.13.1) (2026-10-16)
 
 
