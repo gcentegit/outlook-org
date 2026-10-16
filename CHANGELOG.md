@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/gcentegit/outlook-org/compare/v0.15.0...v0.16.0) (2026-10-16)
+
+
+### 🚀 Novedades
+
+* **web:** 🔌 desactivar el LLM desde Modelos y dejar las dudas como dudas ([#98](https://github.com/gcentegit/outlook-org/issues/98)) ([acea138](https://github.com/gcentegit/outlook-org/commit/acea13870410e43f9378aba927c061f31d99f145))
+
 ## [0.15.0](https://github.com/gcentegit/outlook-org/compare/v0.14.2...v0.15.0) (2026-10-16)
 
 
