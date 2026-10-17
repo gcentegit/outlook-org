@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { FiltersForm } from '@/components/filters-form';
+import { ReferenceSource } from '@/components/reference-source';
 import { Badge, buttonClass, Card, cellClass, DataTable, PageHeader } from '@/components/ui';
 import { formatDateTime, formatInt, formatPercent } from '@/lib/format';
 import { requireUser } from '@/lib/session';
@@ -51,7 +52,7 @@ export default async function DiscrepanciesPage({
     <>
       <PageHeader
         title="Discrepancias"
-        description="Correos revisados por el equipo donde dejó categorías distintas de las que decidió el clasificador (la decisión más reciente de cada correo). Los correos aún sin revisar no aparecen: no hay con qué compararlos."
+        description="Correos revisados por el equipo donde la referencia (lo que puso el equipo o, si no puso nada, lo que se deduce del CIF o de la carpeta) no coincide con lo que decidió el clasificador (la decisión más reciente de cada correo). Los correos aún sin revisar no aparecen: no hay con qué compararlos."
       />
       <FiltersForm filter={filter} action="/discrepancias" />
       <Card>
@@ -68,7 +69,7 @@ export default async function DiscrepanciesPage({
               { label: 'Recibido' },
               { label: 'Correo' },
               { label: 'Propuesto' },
-              { label: 'Equipo' },
+              { label: 'Referencia' },
               { label: 'Origen' },
               { label: 'Motivo' },
             ]}
@@ -92,6 +93,7 @@ export default async function DiscrepanciesPage({
                 </td>
                 <td className={cellClass}>
                   <Categories names={item.team} />
+                  <ReferenceSource sources={item.teamSources} reviewed={item.reviewed} />
                 </td>
                 <td className={cellClass}>
                   {ORIGIN_LABELS[item.decision.source]}

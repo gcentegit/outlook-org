@@ -79,10 +79,20 @@ export interface LoadedMessage {
   folderPath: string | null;
   decisions: LoadedDecision[];
   corrections: { final: string[]; createdAt: Date }[];
+  /** Categorías que escribió el servicio en el correo (modo real). */
+  appliedCategories: string[];
 }
 
 export type Origin = DecisionSource;
 export const ORIGINS: readonly Origin[] = ['thread', 'rule', 'llm', 'none'];
+
+/**
+ * De dónde sale una categoría de la referencia: `people` la puso una persona en Outlook, `service`
+ * la escribió el servicio en modo real, y `cif` y `folder` se deducen del CIF de la propuesta o de
+ * la carpeta.
+ */
+export type TeamSource = 'people' | 'service' | 'cif' | 'folder';
+const TEAM_SOURCES: readonly TeamSource[] = ['people', 'service', 'cif', 'folder'];
 
 export interface EvaluatedMessage {
   id: string;
@@ -103,7 +113,14 @@ export interface EvaluatedMessage {
     confidence: number | null;
     needsReview: boolean;
   } | null;
+  /** Referencia con la que se mide el acierto: lo del equipo o, si no puso nada, lo deducido. */
   team: Category[];
+  /** De dónde salen las categorías de `team` (vacío si no tiene ninguna). */
+  teamSources: TeamSource[];
+  /** Categorías del grupo que puso una persona en Outlook: sin deducir nada ni lo del servicio. */
+  byPeople: Category[];
+  /** El equipo cambió las categorías después de la decisión (hay corrección). */
+  changedByTeam: boolean;
   folder: MessageFolder | null;
   folderPath: string | null;
   /** Categorías en las que se sabe qué quiere el equipo (vacío: sin revisar). */
@@ -171,6 +188,21 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
     const cifTruth = labelled ? [] : categoriesByCif(details?.reason ?? null);
     const folderTruth = arcobetaInLateral || cifTruth.length > 0 ? null : archivedAs;
     const deleted = message.folder === 'missing';
+    const team =
+      cifTruth.length > 0
+        ? cifTruth
+        : folderTruth
+          ? toCategories([...labels, folderTruth])
+          : labels;
+    const applied = toCategories(message.appliedCategories);
+    const byPeople = labels.filter((c) => !applied.includes(c));
+    const sources = new Set<TeamSource>(
+      cifTruth.length > 0
+        ? ['cif']
+        : team.map((c) =>
+            byPeople.includes(c) ? 'people' : applied.includes(c) ? 'service' : 'folder',
+          ),
+    );
     // Sin carpeta, unas categorías ajenas al grupo también dicen que el equipo no puso ninguna.
     const base = deleted
       ? []
@@ -203,12 +235,10 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
               needsReview: details.needsReview,
             }
           : null,
-      team:
-        cifTruth.length > 0
-          ? cifTruth
-          : folderTruth
-            ? toCategories([...labels, folderTruth])
-            : labels,
+      team,
+      teamSources: TEAM_SOURCES.filter((s) => sources.has(s)),
+      byPeople,
+      changedByTeam: lastCorrection !== undefined,
       folder: message.folder,
       folderPath: message.folderPath,
       compared,
@@ -590,10 +620,12 @@ export async function loadMessages(
         orderBy: { createdAt: 'desc' },
         take: 1,
       },
+      appliedCategories: { select: { category: true } },
     },
   });
   return rows.map((row) => ({
     ...row,
+    appliedCategories: row.appliedCategories.map((a) => a.category),
     decisions: row.decisions.map((d) => ({ ...d, costUsd: d.costUsd?.toNumber() ?? null })),
   }));
 }
