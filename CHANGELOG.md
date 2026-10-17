@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/gcentegit/outlook-org/compare/v1.0.0...v1.1.0) (2026-10-17)
+
+
+### 🚀 Novedades
+
+* **web:** 🗂️ separar lo que pone el equipo de la referencia en Correos ([#108](https://github.com/gcentegit/outlook-org/issues/108)) ([a7a0f6a](https://github.com/gcentegit/outlook-org/commit/a7a0f6a7cf936752a199fdcfde8760e400b5c287))
+
+
+### 🔧 Correcciones
+
+* **web:** 🐛 no contar como verdad del equipo lo que escribe el servicio ([#109](https://github.com/gcentegit/outlook-org/issues/109)) ([8a0e0a5](https://github.com/gcentegit/outlook-org/commit/8a0e0a5eb79eed19e337c0118cb7cc957f27fe49))
+
 ## [1.0.0](https://github.com/gcentegit/outlook-org/compare/v0.16.2...v1.0.0) (2026-10-16)
 
 
