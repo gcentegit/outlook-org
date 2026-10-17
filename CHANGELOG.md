@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/gcentegit/outlook-org/compare/v1.3.0...v1.3.1) (2026-10-17)
+
+
+### 🔧 Correcciones
+
+* **web:** 🎨 poner en una línea los botones de cada regla ([#115](https://github.com/gcentegit/outlook-org/issues/115)) ([4c6752a](https://github.com/gcentegit/outlook-org/commit/4c6752a7b8f53a9259fe0dab3614e6f5340c954b))
+
 ## [1.3.0](https://github.com/gcentegit/outlook-org/compare/v1.2.0...v1.3.0) (2026-10-17)
 
 
