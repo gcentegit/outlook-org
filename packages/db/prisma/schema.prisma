@@ -126,7 +126,11 @@ model Rule {
   weight    RuleWeight
   active    Boolean    @default(true)
   createdAt DateTime   @default(now())
+  /// Quién la creó desde el panel (null: semilla o anterior al registro).
+  createdBy String?
   updatedAt DateTime   @updatedAt
+  /// Quién la cambió por última vez desde el panel (crear, activar o desactivar).
+  updatedBy String?
 
   @@unique([type, value, category])
   @@index([active])

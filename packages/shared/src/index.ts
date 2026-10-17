@@ -8,3 +8,4 @@ export * from './test-classify';
 export * from './master-categories';
 export * from './folders';
 export * from './credential-expiry';
+export * from './rule-review';

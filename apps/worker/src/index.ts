@@ -30,6 +30,7 @@ import {
   createBoss,
   enqueueMessage,
   registerCheckFoldersWorker,
+  registerReviewInboxWorker,
   registerCleanupWorker,
   registerPanelWorkers,
   registerProcessWorker,
@@ -37,6 +38,7 @@ import {
   setupQueues,
 } from './jobs/queues';
 import { createPrismaReprocessStore } from './jobs/reprocess';
+import { createPrismaReviewInboxStore, reviewInboxWithRule } from './jobs/review-inbox-with-rule';
 import { describeSeed } from './seed-report';
 import { catchUpArchived } from './sync/catch-up';
 import { INBOX_SYNC_ID, syncInbox } from './sync/delta';
@@ -184,24 +186,26 @@ export async function startWorker(
     const warnLiveCategories = createLiveModeWarner();
     const appliedStore = createPrismaAppliedCategoryStore(db);
 
+    const extract = (messageId: string) =>
+      extractEmail(messageId, {
+        graph,
+        mailbox,
+        db,
+        docling: {
+          url: config.DOCLING_URL,
+          maxPages: config.ATTACHMENT_MAX_PAGES,
+          timeoutSeconds: config.DOCLING_TIMEOUT_SECONDS,
+        },
+        maxAttachmentBytes: config.ATTACHMENT_MAX_BYTES,
+      });
+
     await registerProcessWorker(
       boss,
       {
         mode: config.MODE,
         store: createPrismaDecisionStore(db),
         availableCategories,
-        extract: (messageId) =>
-          extractEmail(messageId, {
-            graph,
-            mailbox,
-            db,
-            docling: {
-              url: config.DOCLING_URL,
-              maxPages: config.ATTACHMENT_MAX_PAGES,
-              timeoutSeconds: config.DOCLING_TIMEOUT_SECONDS,
-            },
-            maxAttachmentBytes: config.ATTACHMENT_MAX_BYTES,
-          }),
+        extract,
         relocate: (message) => findCurrentMessageId(graph, mailbox, message),
         classify: async (email, categories) => {
           // En sombra avisa de las categorías en live que no se escriben. Solo informativo: un fallo
@@ -254,6 +258,17 @@ export async function startWorker(
         store: folderStore,
         recordCategories: (messageId, categories) =>
           recordArchivedCategories(syncStore, messageId, categories),
+      }),
+    );
+
+    const reviewStore = createPrismaReviewInboxStore(db);
+    await registerReviewInboxWorker(boss, (ruleId, signal) =>
+      reviewInboxWithRule(ruleId, {
+        store: reviewStore,
+        extract,
+        enqueue: (messageId) => enqueueMessage(boss, messageId),
+        internalDomains: config.INTERNAL_EMAIL_DOMAINS,
+        signal,
       }),
     );
 

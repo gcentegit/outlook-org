@@ -12,7 +12,7 @@ que el panel tenga en live y con el worker en `MODE=live`; el resto funciona en 
 | Pieza | Qué hace | Dónde |
 | --- | --- | --- |
 | Worker | Sincroniza la Bandeja de entrada, extrae adjuntos, clasifica, guarda decisiones y atiende las peticiones del panel. Es el único que tiene el certificado de Graph y las claves de LLM. | `apps/worker/src/` |
-| Web (panel) | Métricas, correos con su decisión, discrepancias, reglas (solo lectura), modelo de LLM, categorías del buzón y configuración. Sin credenciales del buzón: pide al worker por la cola. | `apps/web/src/` |
+| Web (panel) | Métricas, correos con su decisión, discrepancias, reglas (crear, activar, desactivar y revisar la Bandeja con una; [ADR 0023](adr/0023-reglas-desde-el-panel-y-revision-de-la-bandeja.md)), modelo de LLM, categorías del buzón y configuración. Sin credenciales del buzón: pide al worker por la cola. | `apps/web/src/` |
 | PostgreSQL | Datos de la aplicación y la cola de trabajos (pg-boss). | `packages/db/prisma/schema.prisma` |
 | docling-serve | Convierte a texto lo que el worker no lee solo: PDF sin capa de texto e imágenes (con OCR), DOCX y XLSX. Servicio aparte, solo CPU. | imagen de terceros |
 | Microsoft Graph | Buzón de Proveedores (lectura) y categorías maestras. | `apps/worker/src/graph/` |

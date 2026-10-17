@@ -5,7 +5,7 @@ export interface JobQueue {
   send(
     name: string,
     data: object,
-    options: { retryLimit: number; expireInSeconds: number },
+    options: { retryLimit: number; expireInSeconds: number; singletonKey?: string },
   ): Promise<string | null>;
   getJobById(name: string, id: string): Promise<{ state: string; output?: unknown } | null>;
   cancel(name: string, id: string): Promise<unknown>;

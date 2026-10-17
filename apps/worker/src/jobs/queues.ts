@@ -3,10 +3,13 @@ import {
   CREATE_MASTER_CATEGORY_QUEUE,
   LIST_MASTER_CATEGORIES_QUEUE,
   REPROCESS_FLAGGED_QUEUE,
+  REVIEW_INBOX_WITH_RULE_QUEUE,
+  reviewInboxWithRuleSchema,
   TEST_CLASSIFY_QUEUE,
   type CheckFoldersResult,
   type CreateMasterCategoryResult,
   type ListMasterCategoriesResult,
+  type ReviewInboxWithRuleResult,
   type TestClassifyResult,
 } from '@clasificador/shared';
 import { PgBoss } from 'pg-boss';
@@ -88,6 +91,14 @@ export async function setupQueues(boss: PgBoss): Promise<void> {
   // trabajo (`checkFolders`), así que no se solapan.
   await boss.createQueue(CHECK_FOLDERS_QUEUE, {
     policy: 'stately',
+    retryLimit: 0,
+    expireInSeconds: 3600,
+    deleteAfterSeconds: 24 * 3600,
+  });
+  // Revisión de la Bandeja con una regla: una en espera por regla (`singletonKey` al encolar) y
+  // hasta una hora para leer todos los correos.
+  await boss.createQueue(REVIEW_INBOX_WITH_RULE_QUEUE, {
+    policy: 'short',
     retryLimit: 0,
     expireInSeconds: 3600,
     deleteAfterSeconds: 24 * 3600,
@@ -213,4 +224,30 @@ export async function registerCheckFoldersWorker(
     );
     return result;
   });
+}
+
+/**
+ * Atiende las revisiones de la Bandeja con una regla que pide el panel. Solo se registra con
+ * credenciales de Graph; sin ellas los trabajos esperan y caducan.
+ */
+export async function registerReviewInboxWorker(
+  boss: PgBoss,
+  run: (ruleId: string, signal?: AbortSignal) => Promise<ReviewInboxWithRuleResult>,
+  log: (message: string) => void = console.log,
+): Promise<void> {
+  await boss.work(
+    REVIEW_INBOX_WITH_RULE_QUEUE,
+    { localConcurrency: 1, batchSize: 1 },
+    async ([job]) => {
+      const { ruleId } = reviewInboxWithRuleSchema.parse(job?.data);
+      const result = await run(ruleId, job?.signal);
+      log(
+        result.status === 'rule-inactive'
+          ? `revisión con la regla ${ruleId}: la regla ya no está activa`
+          : `revisión con la regla ${ruleId}: ${result.checked} correo(s) leído(s), ${result.matched} ` +
+              `coinciden y se vuelven a decidir, ${result.failed} sin leer`,
+      );
+      return result;
+    },
+  );
 }

@@ -1,5 +1,7 @@
 import type { PrismaClient } from '@clasificador/db';
 
+import type { NewRule } from '@/lib/rule-form';
+
 export interface RuleRow {
   id: string;
   type: 'cif' | 'razon_social' | 'remitente' | 'dominio' | 'palabra_clave';
@@ -7,6 +9,9 @@ export interface RuleRow {
   category: string;
   weight: 'fuerte' | 'medio';
   active: boolean;
+  /** Quién la cambió por última vez desde el panel (null: semilla o cambio anterior al registro). */
+  updatedBy: string | null;
+  updatedAt: Date;
   /** Correos cuya decisión vigente (sin fallo técnico) salió de esta regla. */
   decided: number;
 }
@@ -51,7 +56,16 @@ export function countDecidedByRule(
 export async function getRules(db: Pick<PrismaClient, 'rule' | 'decision'>): Promise<RuleRow[]> {
   const [rules, decisions] = await Promise.all([
     db.rule.findMany({
-      select: { id: true, type: true, value: true, category: true, weight: true, active: true },
+      select: {
+        id: true,
+        type: true,
+        value: true,
+        category: true,
+        weight: true,
+        active: true,
+        updatedBy: true,
+        updatedAt: true,
+      },
     }),
     db.decision.findMany({
       select: { messageId: true, createdAt: true, degraded: true, decision: true },
@@ -66,4 +80,51 @@ export async function getRules(db: Pick<PrismaClient, 'rule' | 'decision'>): Pro
         TYPE_ORDER[a.type] - TYPE_ORDER[b.type] ||
         a.value.localeCompare(b.value),
     );
+}
+
+export type RuleChange = { ok: true } | { ok: false; message: string };
+export type RuleCreation = { ok: true; id: string } | { ok: false; message: string };
+
+/**
+ * Da de alta una regla activa. Si ya existe la misma (tipo, valor y categoría) no se duplica: se
+ * avisa y, si estaba desactivada, se indica que basta con activarla. El worker la aplica desde el
+ * siguiente correo que clasifique; los ya decididos no cambian.
+ */
+export async function createRule(
+  db: Pick<PrismaClient, 'rule'>,
+  rule: NewRule,
+  by: string,
+): Promise<RuleCreation> {
+  const existing = await db.rule.findUnique({
+    where: {
+      type_value_category: { type: rule.type, value: rule.value, category: rule.category },
+    },
+    select: { active: true },
+  });
+  if (existing) {
+    return {
+      ok: false,
+      message: existing.active
+        ? 'Esa regla ya existe.'
+        : 'Esa regla ya existe, desactivada. Actívala en la tabla.',
+    };
+  }
+  const { id } = await db.rule.create({
+    data: { ...rule, active: true, createdBy: by, updatedBy: by },
+    select: { id: true },
+  });
+  return { ok: true, id };
+}
+
+/** Activa o desactiva una regla. El worker lo tiene en cuenta desde el siguiente correo. */
+export async function setRuleActive(
+  db: Pick<PrismaClient, 'rule'>,
+  id: string,
+  active: boolean,
+  by: string,
+): Promise<RuleChange> {
+  const { count } = await db.rule.updateMany({ where: { id }, data: { active, updatedBy: by } });
+  return count === 0
+    ? { ok: false, message: 'La regla ya no existe. Recarga la página.' }
+    : { ok: true };
 }
