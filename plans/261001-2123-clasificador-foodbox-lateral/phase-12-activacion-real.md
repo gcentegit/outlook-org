@@ -48,10 +48,11 @@ Crear: `src/graph/apply-categories.ts`. Cambiar el worker para que acepte `MODE=
 - [x] `PATCH` con fusión de categorías y control de concurrencia (`If-Match`), registro de lo escrito en `AppliedCategory` para no volver a poner lo que quite el equipo, y solo las categorías en live: preparado el 2026-10-12 y desplegado en la 0.7.0 el 2026-10-13, bloqueado mientras `MODE=live` no arranque
 - [x] Comprobar en el buzón real, con un correo de prueba, que Graph devuelve el etag con `$select=categories` y qué responde un `PATCH` con un etag viejo (412 o 409). Hecho el 2026-10-16 con `apps/worker/scripts/write-check.ts`: Graph devuelve el etag, el `PATCH` con etag viejo responde 412 sin cambiar nada y el `PATCH` con el etag actual añade la categoría y conserva las demás; el correo quedó como estaba
 - [ ] Decidir si se piden ids inmutables (`Prefer: IdType="ImmutableId"`): un correo que sale de la Bandeja de entrada y vuelve cambia de id y pierde su registro de categorías escritas
+- [ ] Medir aciertos y discrepancias con las correcciones del equipo, por categoría y por origen (CIF, razón social, herencia del hilo), y decidir con esos datos si la herencia por hilo debe limitarse a lo que salió por CIF o puso el equipo. Motivo (2026-10-17): en el barrido del 2026-10-16 un hilo interno de tesorería heredó las tres categorías de decisiones antiguas tomadas solo por razón social con varias sociedades, que la regla actual dejaría en duda; la herencia no las vuelve a comprobar
 - [x] Anotación de lo escrito (2026-10-16): si el `PATCH` acaba de forma incierta (red, token, 5xx, 429, conflictos agotados), se relee el correo y solo queda anotado lo que tiene; lo demás se reintenta en el reproceso. Sin migración
 - [x] Revisar que una corrección vigente se actualice si el equipo vuelve a poner una categoría que el servicio escribió y luego quitó (`corrections.ts`): corregido el 2026-10-16; con una corrección de esa decisión, lo que reaparece lo ha puesto el equipo
 - [x] Quitar el bloqueo de `MODE=live` (`assertSupportedMode`) con la autorización del usuario (2026-10-16), copia de seguridad antes de desplegar y prueba con un correo de prueba del buzón (ver arriba)
-- [ ] Activación progresiva por categoría
+- [x] Activación progresiva por categoría: LATERAL, FOOD BOX y ARCOBETA en live desde el 2026-10-16
 - [x] Publicación de la versión 1.0.0 (2026-10-16)
 
 ## Success Criteria
