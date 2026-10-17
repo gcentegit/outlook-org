@@ -43,3 +43,4 @@ valores por defecto) no va aquí: se enlaza al fichero que lo define.
 | [0020](0020-copias-de-seguridad-y-restauracion.md) | Copias de seguridad comprobadas |
 | [0021](0021-datos-iniciales-al-arrancar.md) | Datos iniciales aplicados en cada arranque |
 | [0022](0022-repositorio-publico-y-direcciones-reales.md) | Repositorio público: sin direcciones reales ni datos de terceros |
+| [0023](0023-reglas-desde-el-panel-y-revision-de-la-bandeja.md) | Reglas desde el panel y revisión de la Bandeja con una regla |
