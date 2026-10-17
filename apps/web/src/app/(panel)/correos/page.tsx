@@ -93,7 +93,7 @@ export default async function MessagesPage({
     <>
       <PageHeader
         title="Correos"
-        description="Cada correo del periodo con lo que propone el clasificador y por qué. En modo sombra no se escribe nada en el buzón: esto es lo que habría etiquetado. «Equipo» son solo las categorías que puso una persona en Outlook y la carpeta donde está. «Referencia» es con lo que se mide el acierto: lo del equipo y, si no puso ninguna, lo que se deduce del CIF o de la carpeta (Foodbox → FOOD BOX, Lateral → LATERAL); en modo real incluye lo que escribió el servicio."
+        description="Cada correo del periodo con lo que propone el clasificador y por qué. En modo sombra no se escribe nada en el buzón: esto es lo que habría etiquetado. «Equipo» son solo las categorías que puso una persona en Outlook y la carpeta donde está. «Referencia» es con lo que se mide el acierto: lo del equipo y, si no puso ninguna, lo que se deduce del CIF o de la carpeta (Foodbox → FOOD BOX, Lateral → LATERAL). Lo que escribe el servicio en modo real no cuenta como del equipo hasta que este lo cambia."
       />
       <FiltersForm filter={filter} action="/correos">
         <div>

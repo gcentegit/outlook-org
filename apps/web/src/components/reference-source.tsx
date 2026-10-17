@@ -2,7 +2,6 @@ import type { TeamSource } from '@/server/metrics';
 
 const TEAM_SOURCE_LABELS: Record<TeamSource, string> = {
   people: 'el equipo',
-  service: 'el servicio',
   cif: 'CIF',
   folder: 'la carpeta',
 };
