@@ -3,7 +3,7 @@ import type { MessageFolder } from '@clasificador/shared';
 const readable = (segments: readonly string[]): string => segments.join(' / ');
 
 /**
- * Dónde está un correo, para la columna «Equipo». Los árboles de las sociedades cuelgan de la
+ * Dónde está un correo, para las columnas «Equipo» y «Referencia». Los árboles de las sociedades cuelgan de la
  * Bandeja de entrada, así que de su ruta se quita el primer tramo: «Archivado en Foodbox / 2026».
  */
 export function folderLabel(folder: MessageFolder | null, path: string | null): string {

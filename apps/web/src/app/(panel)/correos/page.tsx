@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { FiltersForm } from '@/components/filters-form';
 import { FolderCheckButton } from '@/components/folder-check-button';
+import { ReferenceSource } from '@/components/reference-source';
 import {
   Badge,
   buttonClass,
@@ -24,7 +25,6 @@ import {
   getMessageList,
   MESSAGE_STATES,
   type MessageState,
-  type TeamSource,
 } from '@/server/metrics';
 
 export const metadata: Metadata = { title: 'Correos' };
@@ -41,30 +41,6 @@ const STATES: Record<
   reprocess: { label: 'Pendiente de reprocesar', tone: 'warning' },
   queued: { label: 'En cola', tone: 'neutral' },
 };
-
-const TEAM_SOURCE_LABELS: Record<TeamSource, string> = {
-  people: 'el equipo',
-  service: 'el servicio',
-  cif: 'CIF',
-  folder: 'la carpeta',
-};
-
-/** De dónde sale la referencia; en verde solo si toda la puso una persona. */
-function ReferenceSource({ sources, reviewed }: { sources: TeamSource[]; reviewed: boolean }) {
-  if (sources.length === 0) {
-    return (
-      <p className="mt-1 text-xs text-muted">
-        {reviewed ? 'El equipo no puso ninguna' : 'Sin contrastar'}
-      </p>
-    );
-  }
-  const byPeople = sources.length === 1 && sources[0] === 'people';
-  return (
-    <p className={`mt-1 text-xs font-medium ${byPeople ? 'text-success' : 'text-warning'}`}>
-      Por {sources.map((s) => TEAM_SOURCE_LABELS[s]).join(' y ')}
-    </p>
-  );
-}
 
 function parseState(params: SearchParams): MessageState | null {
   const raw = Array.isArray(params.estado) ? params.estado[0] : params.estado;
