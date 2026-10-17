@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/gcentegit/outlook-org/compare/v1.2.0...v1.3.0) (2026-10-17)
+
+
+### 🚀 Novedades
+
+* **web:** 🧩 gestionar las reglas desde el panel y revisar la Bandeja con una regla ([#113](https://github.com/gcentegit/outlook-org/issues/113)) ([99f707f](https://github.com/gcentegit/outlook-org/commit/99f707f787ccf0cd226867be1c8ac0bafbcf920b))
+
 ## [1.2.0](https://github.com/gcentegit/outlook-org/compare/v1.1.0...v1.2.0) (2026-10-17)
 
 
