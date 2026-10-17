@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/gcentegit/outlook-org/compare/v1.1.0...v1.2.0) (2026-10-17)
+
+
+### 🚀 Novedades
+
+* **web:** 🏷️ contar como acierto lo que escribe el servicio hasta que el equipo lo cambie ([#111](https://github.com/gcentegit/outlook-org/issues/111)) ([cc15923](https://github.com/gcentegit/outlook-org/commit/cc15923e199f293f7de1144e2c68a81f0a4c4a24))
+
 ## [1.1.0](https://github.com/gcentegit/outlook-org/compare/v1.0.0...v1.1.0) (2026-10-17)
 
 
