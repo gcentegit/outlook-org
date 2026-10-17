@@ -22,12 +22,12 @@ import { madridDay } from './dates';
  *
  * Definiciones:
  * - Decisión vigente de un correo: la más reciente (sombra o live).
- * - Categorías del equipo: la última `Correction.final` si existe (lo que dejó el equipo, aunque
- *   mantenga algo que escribió el servicio); si no, las categorías que el correo tiene en Outlook
- *   (`seenCategories`) menos las que escribió el servicio en modo real (`AppliedCategory`), más la
- *   de la carpeta donde lo archivó (árbol Foodbox → FOOD BOX, árbol Lateral → LATERAL). Sin esa
- *   resta, cada correo escrito y sin tocar contaría como acierto del servicio contra sí mismo.
- * - Un correo está revisado por el equipo si tiene alguna categoría suya en Outlook, una corrección o
+ * - Categorías del equipo: la última `Correction.final` si existe; si no, las categorías que el
+ *   correo tiene en Outlook (`seenCategories`), más la de la carpeta donde lo archivó (árbol
+ *   Foodbox → FOOD BOX, árbol Lateral → LATERAL). En modo live incluyen las que escribió el
+ *   servicio: lo escrito cuenta como acierto hasta que el equipo lo quita o lo cambia, y entonces
+ *   manda su corrección (regla del negocio, 2026-10-17).
+ * - Un correo está revisado por el equipo si tiene alguna categoría en Outlook, una corrección o
  *   está archivado en el árbol de una sociedad. Solo los revisados cuentan para el acierto
  *   (aciertos, falsos positivos y negativos, precisión por modelo y discrepancias): uno sin revisar
  *   no suma como acierto ni como fallo y se cuenta aparte como «sin contrastar». Con filtro de
@@ -88,11 +88,12 @@ export type Origin = DecisionSource;
 export const ORIGINS: readonly Origin[] = ['thread', 'rule', 'llm', 'none'];
 
 /**
- * De dónde sale una categoría de la referencia: `people` la puso o la dejó una persona en Outlook, y
- * `cif` y `folder` se deducen del CIF de la propuesta o de la carpeta.
+ * De dónde sale una categoría de la referencia: `people` la puso una persona en Outlook, `service`
+ * la escribió el servicio en modo real, y `cif` y `folder` se deducen del CIF de la propuesta o de
+ * la carpeta.
  */
-export type TeamSource = 'people' | 'cif' | 'folder';
-const TEAM_SOURCES: readonly TeamSource[] = ['people', 'cif', 'folder'];
+export type TeamSource = 'people' | 'service' | 'cif' | 'folder';
+const TEAM_SOURCES: readonly TeamSource[] = ['people', 'service', 'cif', 'folder'];
 
 export interface EvaluatedMessage {
   id: string;
@@ -117,10 +118,7 @@ export interface EvaluatedMessage {
   team: Category[];
   /** De dónde salen las categorías de `team` (vacío si no tiene ninguna). */
   teamSources: TeamSource[];
-  /**
-   * Categorías del grupo que puso una persona en Outlook, sin deducir nada. Sin corrección no
-   * incluye lo que escribió el servicio; con ella, sí lo que el equipo decidió dejar.
-   */
+  /** Categorías del grupo que puso una persona en Outlook: sin deducir nada ni lo del servicio. */
   byPeople: Category[];
   /** El equipo cambió las categorías después de la decisión (hay corrección). */
   changedByTeam: boolean;
@@ -176,13 +174,7 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
       (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     )[0];
     const details = latest ? readDetails(latest.decision) : null;
-    // Sin corrección, lo que escribió el servicio no es del equipo; con ella, lo que dejó sí.
-    const applied = toCategories(message.appliedCategories);
-    const ownSeen = message.seenCategories.filter((name) => {
-      const category = canonicalCategory(name);
-      return !category || !applied.includes(category);
-    });
-    const labels = toCategories(lastCorrection ? lastCorrection.final : ownSeen);
+    const labels = toCategories(lastCorrection ? lastCorrection.final : message.seenCategories);
     // Con categorías del grupo o una corrección, el equipo ha dicho algo de las tres.
     const labelled = lastCorrection !== undefined || labels.length > 0;
     const archivedAs = folderCategory(message.folder);
@@ -203,13 +195,19 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
         : folderTruth
           ? toCategories([...labels, folderTruth])
           : labels;
+    const applied = toCategories(message.appliedCategories);
+    const byPeople = labels.filter((c) => !applied.includes(c));
     const sources = new Set<TeamSource>(
-      cifTruth.length > 0 ? ['cif'] : team.map((c) => (labels.includes(c) ? 'people' : 'folder')),
+      cifTruth.length > 0
+        ? ['cif']
+        : team.map((c) =>
+            byPeople.includes(c) ? 'people' : applied.includes(c) ? 'service' : 'folder',
+          ),
     );
     // Sin carpeta, unas categorías ajenas al grupo también dicen que el equipo no puso ninguna.
     const base = deleted
       ? []
-      : labelled || (!archivedAs && ownSeen.length > 0)
+      : labelled || (!archivedAs && message.seenCategories.length > 0)
         ? CATEGORIES
         : archivedAs
           ? FOLDER_CATEGORIES
@@ -240,7 +238,7 @@ export function evaluateMessages(messages: readonly LoadedMessage[]): EvaluatedM
           : null,
       team,
       teamSources: TEAM_SOURCES.filter((s) => sources.has(s)),
-      byPeople: labels,
+      byPeople,
       changedByTeam: lastCorrection !== undefined,
       folder: message.folder,
       folderPath: message.folderPath,

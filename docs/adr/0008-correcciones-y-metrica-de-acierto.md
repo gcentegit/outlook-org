@@ -30,12 +30,11 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
   corrección. Los demás no suman ni como acierto ni como fallo (ni por categoría, ni por modelo, ni
   en las discrepancias) y se muestran aparte como «sin contrastar». Las decisiones degradadas
   tampoco cuentan.
-- **Lo que escribió el servicio no es del equipo** (modo live). Sin corrección, de las categorías
-  que tiene el correo en Outlook se quitan las que escribió el servicio (`AppliedCategory`): un
-  correo escrito y sin tocar no es una verdad, sino la propuesta contra sí misma, y queda «sin
-  contrastar» salvo que la carpeta o el CIF digan algo. Con corrección, lo que dejó el equipo es
-  suyo, incluido lo del servicio que decidió mantener. El panel enseña aparte lo que puso el equipo
-  («Equipo») y la verdad con su origen («Referencia»).
+- **Lo que escribe el servicio vale hasta que el equipo lo cambie** (modo live; regla del negocio,
+  2026-10-17). Las categorías que escribió el servicio cuentan como del equipo: el equipo solo toca
+  lo que está mal. Si quita una o pone otra, el worker registra la corrección y el acierto se
+  recalcula con ella. El panel enseña aparte lo que puso una persona («Equipo») y la verdad con su
+  origen («Referencia», con «Por el servicio» para lo que nadie ha corregido).
 - **Los correos que el equipo eliminó no cuentan** en el acierto, la cobertura ni las
   discrepancias, aunque tuvieran categorías: se muestran aparte como «Eliminados por el equipo». Casi
   todos son publicidad y avisos que nadie archiva ni etiqueta, y que el clasificador deja sin
@@ -81,5 +80,6 @@ ARCOBETA no existió hasta el 2026-10-09, así que el histórico no es una verda
   semanal en el panel.
 - Un sistema que etiquetara el 5 % de los correos con un 100 % de precisión cumpliría solo el
   primer criterio; por eso se exige también cobertura.
-- En modo live, un correo que el equipo no corrige ni archiva no cuenta: el acierto se apoya en las
-  correcciones y en la carpeta, y los correos «sin contrastar» crecen con lo que se escribe.
+- En modo live el acierto mide cuánto corrige el equipo, no cuánto ha revisado: si nadie mira los
+  correos escritos, sale alto. Por eso «Referencia» distingue lo que viene del servicio sin
+  corregir de lo que confirmó una persona.
