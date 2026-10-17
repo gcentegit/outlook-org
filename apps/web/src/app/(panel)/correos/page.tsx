@@ -24,6 +24,7 @@ import {
   getMessageList,
   MESSAGE_STATES,
   type MessageState,
+  type TeamSource,
 } from '@/server/metrics';
 
 export const metadata: Metadata = { title: 'Correos' };
@@ -40,6 +41,30 @@ const STATES: Record<
   reprocess: { label: 'Pendiente de reprocesar', tone: 'warning' },
   queued: { label: 'En cola', tone: 'neutral' },
 };
+
+const TEAM_SOURCE_LABELS: Record<TeamSource, string> = {
+  people: 'el equipo',
+  service: 'el servicio',
+  cif: 'CIF',
+  folder: 'la carpeta',
+};
+
+/** De dónde sale la referencia; en verde solo si toda la puso una persona. */
+function ReferenceSource({ sources, reviewed }: { sources: TeamSource[]; reviewed: boolean }) {
+  if (sources.length === 0) {
+    return (
+      <p className="mt-1 text-xs text-muted">
+        {reviewed ? 'El equipo no puso ninguna' : 'Sin contrastar'}
+      </p>
+    );
+  }
+  const byPeople = sources.length === 1 && sources[0] === 'people';
+  return (
+    <p className={`mt-1 text-xs font-medium ${byPeople ? 'text-success' : 'text-warning'}`}>
+      Por {sources.map((s) => TEAM_SOURCE_LABELS[s]).join(' y ')}
+    </p>
+  );
+}
 
 function parseState(params: SearchParams): MessageState | null {
   const raw = Array.isArray(params.estado) ? params.estado[0] : params.estado;
@@ -92,7 +117,7 @@ export default async function MessagesPage({
     <>
       <PageHeader
         title="Correos"
-        description="Cada correo del periodo con lo que propone el clasificador y por qué. En modo sombra no se escribe nada en el buzón: esto es lo que habría etiquetado. «Equipo» es lo que hizo el equipo: la carpeta donde lo archivó (Foodbox → FOOD BOX, Lateral → LATERAL) y las categorías que le puso."
+        description="Cada correo del periodo con lo que propone el clasificador y por qué. En modo sombra no se escribe nada en el buzón: esto es lo que habría etiquetado. «Equipo» son solo las categorías que puso una persona en Outlook y la carpeta donde está. «Referencia» es con lo que se mide el acierto: lo del equipo y, si no puso ninguna, lo que se deduce del CIF o de la carpeta (Foodbox → FOOD BOX, Lateral → LATERAL); en modo real incluye lo que escribió el servicio."
       />
       <FiltersForm filter={filter} action="/correos">
         <div>
@@ -135,12 +160,13 @@ export default async function MessagesPage({
             caption="Correos y decisión del clasificador"
             // Anchos fijos, pensados con «Ver motivo» abierto: así la tabla no salta al abrirlo.
             headers={[
-              { label: 'Recibido', width: '12%' },
-              { label: 'Correo', width: '21%' },
-              { label: 'Estado', width: '15%' },
-              { label: 'Propuesto', width: '12%' },
-              { label: 'Equipo', width: '17%' },
-              { label: 'Por qué', width: '23%' },
+              { label: 'Recibido', width: '10%' },
+              { label: 'Correo', width: '19%' },
+              { label: 'Estado', width: '12%' },
+              { label: 'Propuesto', width: '13%' },
+              { label: 'Equipo', width: '13%' },
+              { label: 'Referencia', width: '13%' },
+              { label: 'Por qué', width: '20%' },
             ]}
           >
             {result.items.map((item) => (
@@ -170,10 +196,18 @@ export default async function MessagesPage({
                   )}
                 </td>
                 <td className={cellClass}>
-                  <Categories names={item.team} />
+                  {item.byPeople.length > 0 || item.changedByTeam ? (
+                    <Categories names={item.byPeople} />
+                  ) : (
+                    <span className="text-muted">Sin poner</span>
+                  )}
                   <p className="mt-1 break-words text-xs text-muted">
                     {folderLabel(item.folder, item.folderPath)}
                   </p>
+                </td>
+                <td className={cellClass}>
+                  <Categories names={item.team} />
+                  <ReferenceSource sources={item.teamSources} reviewed={item.reviewed} />
                 </td>
                 <td className={`${cellClass} text-muted`}>
                   {item.decision?.reason ? (

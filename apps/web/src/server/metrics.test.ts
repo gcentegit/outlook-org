@@ -52,6 +52,7 @@ function message(over: Partial<LoadedMessage> = {}): LoadedMessage {
     folderPath: null,
     decisions: [],
     corrections: [],
+    appliedCategories: [],
     ...over,
   };
 }
@@ -409,6 +410,39 @@ describe('verdad por carpeta', () => {
     const differs = lateral(['FOOD BOX']);
     expect(listDiscrepancies([agrees, differs], null).map((d) => d.id)).toEqual([differs.id]);
     expect(listDiscrepancies([agrees], 'ARCOBETA')).toEqual([]);
+  });
+
+  it('separa lo que puso una persona de lo que se deduce para la referencia', () => {
+    const at = new Date('2026-09-12T00:00:00Z');
+    const byCif = message({
+      decisions: [
+        decision({
+          categories: ['LATERAL'],
+          decision: { source: 'rule', reason: 'LATERAL por CIF B12345678', confidence: 1 },
+        }),
+      ],
+    });
+    const [cif, folder, outlook, mixed, service, removed, nothing] = evaluateMessages([
+      byCif,
+      message({ folder: 'lateral' }),
+      message({ seenCategories: ['FOOD BOX'] }),
+      message({ folder: 'foodbox', seenCategories: ['LATERAL'] }),
+      message({ seenCategories: ['LATERAL', 'FOOD BOX'], appliedCategories: ['LATERAL'] }),
+      message({ seenCategories: ['FOOD BOX'], corrections: [{ final: [], createdAt: at }] }),
+      message(),
+    ]);
+    expect(cif).toMatchObject({ team: ['LATERAL'], teamSources: ['cif'], byPeople: [] });
+    expect(folder).toMatchObject({ team: ['LATERAL'], teamSources: ['folder'], byPeople: [] });
+    expect(outlook).toMatchObject({ teamSources: ['people'], byPeople: ['FOOD BOX'] });
+    expect(mixed).toMatchObject({ teamSources: ['people', 'folder'], byPeople: ['LATERAL'] });
+    // En modo real, lo que escribió el servicio no cuenta como del equipo.
+    expect(service).toMatchObject({
+      team: ['FOOD BOX', 'LATERAL'],
+      teamSources: ['people', 'service'],
+      byPeople: ['FOOD BOX'],
+    });
+    expect(removed).toMatchObject({ team: [], byPeople: [], changedByTeam: true });
+    expect(nothing).toMatchObject({ team: [], teamSources: [], changedByTeam: false });
   });
 
   it('las categorías puestas en la carpeta se suman a la de la carpeta', () => {
