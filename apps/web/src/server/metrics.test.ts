@@ -437,39 +437,33 @@ describe('verdad por carpeta', () => {
     expect(mixed).toMatchObject({ teamSources: ['people', 'folder'], byPeople: ['LATERAL'] });
     // En modo real, lo que escribió el servicio no cuenta como del equipo.
     expect(service).toMatchObject({
-      team: ['FOOD BOX'],
-      teamSources: ['people'],
+      team: ['FOOD BOX', 'LATERAL'],
+      teamSources: ['people', 'service'],
       byPeople: ['FOOD BOX'],
     });
     expect(removed).toMatchObject({ team: [], byPeople: [], changedByTeam: true });
     expect(nothing).toMatchObject({ team: [], teamSources: [], changedByTeam: false });
   });
 
-  it('en modo real, lo que escribió el servicio y nadie tocó no es la verdad', () => {
+  it('en modo real, lo escrito por el servicio es acierto hasta que el equipo lo cambia', () => {
     const at = new Date('2026-09-12T00:00:00Z');
     const written = (over: Partial<LoadedMessage> = {}) =>
       message({
-        seenCategories: ['LATERAL', 'Pagado'],
+        seenCategories: ['LATERAL'],
         appliedCategories: ['LATERAL'],
         decisions: [decision({ categories: ['LATERAL'], mode: 'live' })],
         ...over,
       });
-    const [untouched, archived, kept, removed] = evaluateMessages([
-      written({ seenCategories: ['LATERAL'] }),
-      written({ folder: 'lateral' }),
-      written({
-        seenCategories: ['LATERAL', 'FOOD BOX'],
-        corrections: [{ final: ['FOOD BOX', 'LATERAL'], createdAt: at }],
-      }),
-      written({ seenCategories: [], corrections: [{ final: [], createdAt: at }] }),
-    ]);
-    // Sin tocar ni archivar: sin contrastar, no un acierto contra sí mismo.
-    expect(untouched).toMatchObject({ team: [], compared: [], reviewed: false });
-    // Archivado: la carpeta es del equipo y sí cuenta.
-    expect(archived).toMatchObject({ team: ['LATERAL'], teamSources: ['folder'], reviewed: true });
-    // Con corrección, lo que el equipo dejó es suyo aunque lo escribiera el servicio.
-    expect(kept).toMatchObject({ team: ['FOOD BOX', 'LATERAL'], teamSources: ['people'] });
-    expect(removed).toMatchObject({ team: [], reviewed: true });
+    const untouched = written();
+    const changed = written({
+      seenCategories: ['FOOD BOX'],
+      corrections: [{ final: ['FOOD BOX'], createdAt: at }],
+    });
+    const [kept, corrected] = evaluateMessages([untouched, changed]);
+    expect(kept).toMatchObject({ team: ['LATERAL'], teamSources: ['service'], reviewed: true });
+    expect(corrected).toMatchObject({ team: ['FOOD BOX'], teamSources: ['people'] });
+    // Sin tocar no es discrepancia; en cuanto el equipo lo cambia, sí.
+    expect(listDiscrepancies([untouched, changed], null).map((d) => d.id)).toEqual([changed.id]);
   });
 
   it('las categorías puestas en la carpeta se suman a la de la carpeta', () => {
