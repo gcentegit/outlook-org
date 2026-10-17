@@ -187,10 +187,15 @@ export function ReviewInbox({
   const [state, action, pending] = useActionState<ActionState, FormData>(reviewInboxAction, IDLE);
   const [confirming, setConfirming] = useState(confirmed);
 
-  if (state.status === 'ok') return <ActionFeedback state={state} />;
+  // En la fila de la tabla el botón va junto a «Desactivar»; la confirmación y el resultado ocupan
+  // todo el ancho de la celda (`basis-full`).
+  if (state.status === 'ok') return <ActionFeedback state={state} className="basis-full" />;
 
   return (
-    <form action={action} className="space-y-2">
+    <form
+      action={action}
+      className={confirming || state.status === 'error' ? 'basis-full space-y-2' : undefined}
+    >
       <input type="hidden" name="ruleId" value={ruleId} />
       {confirming ? (
         <>
@@ -254,7 +259,9 @@ export function RuleActions({
   const asking = active && askedAt === state;
 
   return (
-    <div className="space-y-2">
+    // Ancho mínimo para que «Desactivar» y «Revisar Bandeja» quepan en una línea con la tabla en ancho
+    // automático; la confirmación baja debajo.
+    <div className="flex min-w-[16rem] flex-wrap items-start gap-2">
       <form action={action}>
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="active" value={active ? 'false' : 'true'} />
@@ -266,11 +273,11 @@ export function RuleActions({
         >
           {pending ? 'Guardando...' : active ? 'Desactivar' : 'Activar'}
         </button>
-        {state.status === 'error' && <ActionFeedback state={state} className="mt-1" />}
+        {state.status === 'error' && <ActionFeedback state={state} className="mt-1 max-w-xs" />}
       </form>
       {active &&
         (asking ? (
-          <div className="space-y-2">
+          <div className="basis-full space-y-2">
             <p className="text-sm font-medium">¿Revisar ahora la Bandeja de entrada con ella?</p>
             <ReviewInbox
               ruleId={id}
