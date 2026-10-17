@@ -43,5 +43,5 @@ buzón hay que medir el acierto con datos reales.
   ([versiones y releases](../operacion/versiones-y-releases.md)).
 - El interruptor del panel solo escribe si además el worker está en `MODE=live`; volver una
   categoría a sombra deja de escribirla en el siguiente correo, sin redesplegar.
-- En modo live el acierto medido es más optimista: las categorías del servicio se mezclan con las
-  del equipo, y lo fiable son las correcciones ([0008](0008-correcciones-y-metrica-de-acierto.md)).
+- En modo live, lo que escribe el servicio no cuenta como verdad del equipo hasta que este lo
+  corrige o archiva el correo ([0008](0008-correcciones-y-metrica-de-acierto.md)).
