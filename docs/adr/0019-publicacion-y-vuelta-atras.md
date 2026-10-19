@@ -34,3 +34,9 @@ despliegue.
 - Las migraciones solo avanzan: una imagen anterior con un esquema posterior debe ser compatible,
   o se restaura la copia de seguridad ([0020](0020-copias-de-seguridad-y-restauracion.md)).
 - Antes de cualquier migración hay que tener una copia de seguridad reciente.
+- Construir en cada push a `main` gasta minutos de runner arm64 también en los commits que no se
+  publican. Hoy no cuesta nada porque el repositorio es público. **Si pasa a privado**, conviene
+  construir solo cuando release-please crea una Release, sobre el commit de la Release y con la
+  etiqueta `X.Y.Z` directamente, sin el paso de promover. A cambio, un Dockerfile roto (el de la web
+  no lo construye la CI de los PR) se descubriría al publicar y no al fusionar, y la publicación
+  tardaría algo más porque el build ya no iría en paralelo con release-please.
