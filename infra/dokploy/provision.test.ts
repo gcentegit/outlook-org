@@ -249,6 +249,11 @@ describe('variables de entorno', () => {
     expect(env).not.toHaveProperty('APP_COMMIT');
   });
 
+  it('docling responde en cuanto termina, con la comprobación cada segundo', () => {
+    const env = Object.fromEntries(buildEnv('docling', hosts, baseConfig()).map((e) => [e.key, e.value]));
+    expect(env).toEqual({ TZ: 'Europe/Madrid', DOCLING_SERVE_SYNC_POLL_INTERVAL: '1' });
+  });
+
   it('la web no recibe ninguna credencial de Graph ni el buzón; el worker sí', () => {
     const processEnv = {
       GRAPH_TENANT_ID: 't',

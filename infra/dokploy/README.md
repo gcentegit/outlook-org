@@ -72,7 +72,7 @@ El panel puede ir ganando variables; la lista autoritativa es `apps/web/src/lib/
 
 ### `clasificador-docling`
 
-Solo `TZ`. No lleva más configuración ni puertos publicados.
+`TZ` y `DOCLING_SERVE_SYNC_POLL_INTERVAL=1`: docling-serve comprueba cada N segundos (2 por defecto) si terminó la conversión, y cada respuesta espera un múltiplo de N ([medición](../../plans/reports/validacion-261019-1345-tiempos-extraccion-produccion.md)). No lleva más configuración ni puertos publicados.
 
 ### Certificado de Graph
 

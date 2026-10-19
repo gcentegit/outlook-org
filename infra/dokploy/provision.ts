@@ -226,6 +226,12 @@ export function buildEnv(
   const plain = (k: string, value: string): EnvEntry => ({ key: k, value, secret: false });
   const entries: EnvEntry[] = [plain('TZ', 'Europe/Madrid')];
 
+  if (key === 'docling') {
+    // docling-serve comprueba cada N s (2 por defecto) si terminó la conversión: cada respuesta
+    // espera un múltiplo de N. Con 0 la comprobación no descansa y frena la conversión.
+    entries.push(plain('DOCLING_SERVE_SYNC_POLL_INTERVAL', '1'));
+  }
+
   if (key !== 'docling') {
     if (config.dbPassword) {
       const url = `postgresql://${DB_USER}:${encodeURIComponent(config.dbPassword)}@${hosts.db}:5432/${DB_NAME}`;

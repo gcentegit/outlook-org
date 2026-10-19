@@ -40,6 +40,7 @@ services:
     mem_limit: 4g
     environment:
       TZ: Europe/Madrid
+      DOCLING_SERVE_SYNC_POLL_INTERVAL: 1
     # Solo para pruebas desde el host; el worker lo alcanza por la red de compose (docling:5001).
     ports:
       - "127.0.0.1:${DOCLING_HOST_PORT:-5101}:5001"
