@@ -243,6 +243,7 @@ describe('variables de entorno', () => {
     expect(env.DOCLING_URL).toBe('http://clasificador-docling-x7k2:5001');
     expect(env.DATABASE_URL).toBe(`postgresql://clasificador:${PASSWORD}@clasificador-db-q9z1:5432/clasificador`);
     expect(env.MODE).toBe('shadow');
+    expect(env.POLL_INTERVAL_SECONDS).toBe('60');
     expect(env.GRAPH_CERT_PATH).toBe(CERT_MOUNT_PATH);
     expect(env.ANTHROPIC_API_KEY).toBe('sk-ant-secreta');
     expect(env).not.toHaveProperty('APP_VERSION');

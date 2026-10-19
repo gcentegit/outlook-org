@@ -37,7 +37,7 @@ Todo lo que se describe aquí lo crea y comprueba [`provision.ts`](provision.ts)
 | `INTERNAL_EMAIL_DOMAINS` | dominios de correo del grupo, separados por comas, del entorno del script si está definida (sin valor por defecto: sin ella no hay remitentes internos) |
 | `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENAI_COMPATIBLE_BASE_URL`, `OPENAI_COMPATIBLE_API_KEY` | secretos del entorno del script, solo los que uses; el proveedor y el modelo activos se eligen en el panel |
 | `UPTIME_KUMA_PUSH_URL` | URL de push del monitor de Uptime Kuma (heartbeat tras cada sincronización correcta) |
-| `POLL_INTERVAL_SECONDS` | `90` (recomendado 60-120) |
+| `POLL_INTERVAL_SECONDS` | `60` (recomendado 60-120; sin la variable, 90) |
 | `WORKER_CONCURRENCY` | `2` |
 | `CLASSIFY_CONFIDENCE_THRESHOLD` | `0.8` |
 | `HEALTH_PORT`, `SYNC_STALE_SECONDS` | `8080`, `300` |
