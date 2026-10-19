@@ -7,6 +7,12 @@
 
 * **web:** 📱 el icono del panel también se ve en Safari del iPhone ([#118](https://github.com/gcentegit/outlook-org/issues/118)) ([1633c70](https://github.com/gcentegit/outlook-org/commit/1633c70ba2ca50338d587f2fb2cce8d13536a836))
 
+### 🧹 Mantenimiento
+
+* **infra:** docling responde en cuanto termina la conversión ([#121](https://github.com/gcentegit/outlook-org/issues/121)) ([23ab9cb](https://github.com/gcentegit/outlook-org/commit/23ab9cb0482fbf60ada6130014486cb4d3ae878d))
+* **infra:** el worker sincroniza el buzón cada 60 s ([#122](https://github.com/gcentegit/outlook-org/issues/122)) ([6fb2eef](https://github.com/gcentegit/outlook-org/commit/6fb2eef373a3cfc535e5b672f9595f767d2e7bd2))
+* **infra:** la provisión no devuelve a sombra un worker en live ([#124](https://github.com/gcentegit/outlook-org/issues/124)) ([9c6f9ac](https://github.com/gcentegit/outlook-org/commit/9c6f9ac0afa9e454d4928f0d5225f46a76b119e3))
+
 ## [1.3.1](https://github.com/gcentegit/outlook-org/compare/v1.3.0...v1.3.1) (2026-10-17)
 
 
