@@ -50,6 +50,7 @@ equipo. Nada se despliega sin autorización del usuario.
 - [x] Registro DNS, dominio y HTTPS del panel
 - [x] Métricas del servidor activadas (Beszel, por contenedor)
 - [ ] Límites de memoria revisados tras la primera semana
+- [ ] `DOCLING_SERVE_SYNC_POLL_INTERVAL=1` en docling (provisión y compose local) y redespliegue autorizado: por defecto docling-serve hace esperar cada conversión a múltiplos de 2 s; con 1, medio segundo menos de media por adjunto que pasa por docling; 0 satura la CPU ([medición](../reports/validacion-261019-1345-tiempos-extraccion-produccion.md))
 - [x] Despliegue del worker y la web en sombra; comprobaciones de salud en verde
 - [x] Persona responsable de los avisos de Uptime Kuma: el administrador
 - [x] Monitor de Uptime Kuma y heartbeat
