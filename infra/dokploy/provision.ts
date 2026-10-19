@@ -192,6 +192,8 @@ export interface EnvEntry {
   key: string;
   value: string;
   secret: boolean;
+  /** Solo se escribe si la variable no existe: el valor de después lo decide el usuario. */
+  initialOnly?: boolean;
 }
 
 export interface ServiceHosts {
@@ -249,7 +251,8 @@ export function buildEnv(
       plain('GRAPH_CERT_PATH', CERT_MOUNT_PATH),
     );
     entries.push(
-      plain('MODE', 'shadow'),
+      // Se da de alta en sombra; pasar a live lo autoriza el usuario y la provisión no lo deshace.
+      { key: 'MODE', value: 'shadow', secret: false, initialOnly: true },
       plain('DOCLING_URL', `http://${hosts.docling}:${DOCLING_PORT}`),
       plain('HEALTH_PORT', '8080'),
       plain('POLL_INTERVAL_SECONDS', '60'),
@@ -322,7 +325,7 @@ export function mergeEnv(current: string | null | undefined, entries: EnvEntry[]
     if (index === -1) {
       lines.push(line);
       changed.push({ key: entry.key, kind: 'add', secret: entry.secret });
-    } else if (lines[index] !== line) {
+    } else if (lines[index] !== line && !entry.initialOnly) {
       lines[index] = line;
       changed.push({ key: entry.key, kind: 'change', secret: entry.secret });
     }

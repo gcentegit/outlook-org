@@ -29,7 +29,7 @@ Todo lo que se describe aquí lo crea y comprueba [`provision.ts`](provision.ts)
 | --- | --- |
 | `DATABASE_URL` | `postgresql://clasificador:<contraseña>@<appName de clasificador-db>:5432/clasificador` (secreto; solo si defines `CLASIFICADOR_DB_PASSWORD`) |
 | `DOCLING_URL` | `http://<appName de clasificador-docling>:5001` |
-| `MODE` | `shadow` al dar de alta. Con `live` el worker escribe las categorías que el panel tenga en live ([ADR 0004](../../docs/adr/0004-modo-sombra-y-activacion-por-categoria.md)) |
+| `MODE` | `shadow` solo al dar de alta: si ya existe, la provisión no la toca, porque pasar a `live` lo decide el usuario. Con `live` el worker escribe las categorías que el panel tenga en live ([ADR 0004](../../docs/adr/0004-modo-sombra-y-activacion-por-categoria.md)) |
 | `MAILBOX` | `<MAILBOX>`: el valor de `MAILBOX` del entorno del script (obligatoria, sin valor por defecto) |
 | `GRAPH_CERT_PATH` | `/run/secrets/graph-cert.pem` (el certificado se monta como fichero, ver abajo) |
 | `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID` | del entorno del script, si están definidas |
