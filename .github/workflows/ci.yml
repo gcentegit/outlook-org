@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # En las ramas basta con `pull_request`: si también se lanzara con el push, cada push a un PR
+  # correría la CI dos veces.
   push:
-    branches: [main, 'feat/**', 'fix/**']
+    branches: [main]
   pull_request:
     branches: [main]
   # El PR de versión lo crea release-please con GITHUB_TOKEN y GitHub no lanza la CI en esos PR;
