@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/gcentegit/outlook-org/compare/v1.3.1...v1.3.2) (2026-10-19)
+
+
+### 🔧 Correcciones
+
+* **web:** 📱 el icono del panel también se ve en Safari del iPhone ([#118](https://github.com/gcentegit/outlook-org/issues/118)) ([1633c70](https://github.com/gcentegit/outlook-org/commit/1633c70ba2ca50338d587f2fb2cce8d13536a836))
+
 ## [1.3.1](https://github.com/gcentegit/outlook-org/compare/v1.3.0...v1.3.1) (2026-10-17)
 
 
