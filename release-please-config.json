@@ -11,12 +11,12 @@
     { "type": "fix", "section": "🔧 Correcciones" },
     { "type": "perf", "section": "⚡ Rendimiento" },
     { "type": "revert", "section": "↩️ Reversiones" },
+    { "type": "chore", "section": "🧹 Mantenimiento" },
     { "type": "refactor", "section": "Refactorizaciones", "hidden": true },
     { "type": "docs", "section": "Documentación", "hidden": true },
     { "type": "test", "section": "Pruebas", "hidden": true },
     { "type": "build", "section": "Compilación y dependencias", "hidden": true },
-    { "type": "ci", "section": "Integración continua", "hidden": true },
-    { "type": "chore", "section": "Mantenimiento", "hidden": true }
+    { "type": "ci", "section": "Integración continua", "hidden": true }
   ],
   "packages": {
     ".": {}

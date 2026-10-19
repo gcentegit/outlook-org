@@ -22,9 +22,10 @@ ficheros que cambiar en cada release sin que nada los lea. Si algún día se pub
 | Cambio | Sube |
 | --- | --- |
 | `fix`, `perf` | PATCH |
+| `chore` | PATCH: sale en las notas, en «🧹 Mantenimiento» |
 | `feat` | MINOR |
 | Incompatible (título con `!`, p. ej. `feat!: ...`) | MAJOR; mientras la versión sea `0.x`, MINOR (`bump-minor-pre-major`) |
-| `refactor`, `docs`, `test`, `build`, `ci`, `chore` | Nada: no provocan versión ni aparecen en el changelog |
+| `refactor`, `docs`, `test`, `build`, `ci` | Nada: no provocan versión ni aparecen en el changelog |
 
 **Qué es incompatible en esta aplicación**, y por tanto lleva `!` en el título:
 
@@ -57,8 +58,10 @@ Como el cuerpo queda en blanco, un cambio incompatible solo se marca con `!` tra
 qué hay que hacer al desplegar.
 
 El `CHANGELOG.md` de la raíz muestra **🚀 Novedades** (`feat`), **🔧 Correcciones** (`fix`),
-**⚡ Rendimiento** (`perf`) y **↩️ Reversiones** (`revert`). Los demás tipos quedan ocultos: son
-mantenimiento que no cambia lo que hace el servicio. El encabezado de los cambios incompatibles lo
+**⚡ Rendimiento** (`perf`), **↩️ Reversiones** (`revert`) y **🧹 Mantenimiento** (`chore`), para que
+consten los cambios de infraestructura y operación que entran en cada versión. Los demás tipos quedan
+ocultos: no cambian lo que hace el servicio. Como un `chore` cuenta para el changelog, también basta
+para que release-please abra el PR de versión (sube PATCH). El encabezado de los cambios incompatibles lo
 escribe release-please y sale en inglés (`BREAKING CHANGES`); no es configurable.
 
 ### Notas de la release legibles
@@ -77,7 +80,7 @@ de la descripción del PR. Las dos partes se escriben en origen, pensando en qui
 - **Negrita para lo importante** de cada punto, no para frases enteras.
 
 En `feat`, `fix`, `perf` y `revert`, el check «Título del PR» exige el icono del título y la sección
-con al menos un punto, cada uno con icono. Los demás tipos no salen en las notas y no la necesitan.
+con al menos un punto, cada uno con icono. Los demás tipos no la necesitan: un `chore` sale en las notas solo con su título.
 
 Al crearse la Release, el job «Notas de la Release» de [`release.yml`](../../.github/workflows/release.yml)
 copia esos puntos **tal cual** debajo de su línea y añade un pie con la comparación entre versiones y
