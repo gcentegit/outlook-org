@@ -252,7 +252,7 @@ export function buildEnv(
       plain('MODE', 'shadow'),
       plain('DOCLING_URL', `http://${hosts.docling}:${DOCLING_PORT}`),
       plain('HEALTH_PORT', '8080'),
-      plain('POLL_INTERVAL_SECONDS', '90'),
+      plain('POLL_INTERVAL_SECONDS', '60'),
       plain('WORKER_CONCURRENCY', '2'),
       plain('CLASSIFY_CONFIDENCE_THRESHOLD', '0.8'),
     );
