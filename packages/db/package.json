@@ -21,10 +21,10 @@
   },
   "dependencies": {
     "@clasificador/shared": "workspace:*",
-    "@prisma/adapter-pg": "7.10.0",
-    "@prisma/client": "7.10.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "pg": "^8.16.3",
-    "prisma": "7.10.0"
+    "prisma": "7.10.1"
   },
   "devDependencies": {
     "@types/pg": "^8.16.0",
