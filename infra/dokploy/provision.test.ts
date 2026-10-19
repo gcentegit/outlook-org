@@ -484,13 +484,23 @@ describe('reconcile', () => {
     const api = new FakeDokploy();
     await run(api, true);
     const worker = appByName(api, 'clasificador-worker');
-    worker.env = `${String(worker.env)}OTRA_VARIABLE=conservar\nMODE=live\n`.replace('MODE=shadow\n', '');
+    worker.env = `${String(worker.env)}OTRA_VARIABLE=conservar\n`.replace('WORKER_CONCURRENCY=2', 'WORKER_CONCURRENCY=9');
     api.writes.length = 0;
     await run(api, true);
     expect(api.writes.map((w) => w.endpoint)).toEqual(['application.saveEnvironment']);
     expect(String(worker.env)).toContain('OTRA_VARIABLE=conservar');
-    expect(String(worker.env)).toContain('MODE=shadow');
-    expect(String(worker.env)).not.toContain('MODE=live');
+    expect(String(worker.env)).toContain('WORKER_CONCURRENCY=2');
+  });
+
+  it('--apply no devuelve a sombra un worker que el usuario pasó a live', async () => {
+    const api = new FakeDokploy();
+    await run(api, true);
+    const worker = appByName(api, 'clasificador-worker');
+    worker.env = String(worker.env).replace('MODE=shadow', 'MODE=live');
+    api.writes.length = 0;
+    await run(api, true);
+    expect(api.writes).toEqual([]);
+    expect(String(worker.env)).toContain('MODE=live');
   });
 
   it('no imprime contraseñas, certificados ni claves de API', async () => {

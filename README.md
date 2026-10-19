@@ -6,9 +6,8 @@ Servicio y panel que detectan los correos del buzón configurado en `MAILBOX` qu
 
 ## Estado actual
 
-- **Construido:** sincronización con el buzón, extracción de adjuntos, clasificador, panel y scripts de despliegue.
-- **Sin validar con datos reales:** todo se ha probado con datos simulados. Falta el acceso al buzón real (pendiente del usuario).
-- **Nada desplegado.** El servicio solo funciona en **modo sombra**: propone categorías y guarda las decisiones, pero no escribe en los correos de Outlook.
+- **En producción** con el buzón real desde la versión 1.0.0: sincronización, extracción de adjuntos, clasificador y panel.
+- **Escribe en Outlook solo lo que está en live:** con el worker en `MODE=live`, pone en los correos las categorías que el panel tenga en live; las demás siguen en **modo sombra** (se proponen y se guardan, sin escribir) ([ADR 0004](docs/adr/0004-modo-sombra-y-activacion-por-categoria.md)).
 
 El plan, con lo hecho y lo pendiente, está en [plans/261001-2123-clasificador-foodbox-lateral/plan.md](plans/261001-2123-clasificador-foodbox-lateral/plan.md).
 

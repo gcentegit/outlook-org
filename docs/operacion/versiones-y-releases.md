@@ -32,9 +32,8 @@ ficheros que cambiar en cada release sin que nada los lea. Si algún día se pub
 - una variable de entorno nueva y obligatoria;
 - un cambio en lo que el servicio hace en el buzón.
 
-**La serie `0.x` dura mientras el servicio solo funcione en sombra. La `1.0.0` será la primera versión
-que escriba categorías en el buzón** (`MODE=live`). Cuando llegue, se fuerza con `release-as: "1.0.0"`
-en `release-please-config.json` en el PR que active la escritura, y se quita en cuanto se publique.
+**La serie `0.x` fue la del servicio solo en sombra. La `1.0.0` es la primera versión que escribe
+categorías en el buzón** (`MODE=live`).
 
 La primera versión publicada es la `v0.1.0`: el manifiesto parte de `0.0.0` y `initial-version` fija la
 primera en `0.1.0`.
