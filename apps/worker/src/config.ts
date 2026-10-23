@@ -62,6 +62,11 @@ const configSchema = z.object({
    * autorizado. Sin valor y con la lista vacía no se crea ningún administrador.
    */
   ADMIN_EMAIL: z.email().optional(),
+  /**
+   * Categoría del buzón que se añade a cada correo al que el servicio escribe sus categorías (modo
+   * real). Tiene que existir en la lista maestra: si no está, no se escribe. Sin valor, no se añade.
+   */
+  BOT_CATEGORY: z.string().trim().min(1).optional(),
   /** Dominios de correo del grupo (separados por comas, sin valor por defecto): sus remitentes son internos. */
   INTERNAL_EMAIL_DOMAINS: csv,
   /**

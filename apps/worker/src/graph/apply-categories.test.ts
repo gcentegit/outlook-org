@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { applyCategories, categoriesToApply, type AppliedCategoryStore } from './apply-categories';
+import {
+  applyCategories,
+  categoriesToApply,
+  markerCategory,
+  type AppliedCategoryStore,
+} from './apply-categories';
 import { GraphClient } from './client';
 
 const MESSAGE_PATH = '/users/buzon%40ejemplo.com/messages/m1';
@@ -206,6 +211,75 @@ describe('applyCategories', () => {
     expect(result.added).toEqual(['LATERAL']);
     expect(patches).toEqual([{ categories: ['Pagado', 'LATERAL'], ifMatch: 'W/"1"' }]);
     expect(store.applied).toEqual(['LATERAL']);
+  });
+});
+
+describe('applyCategories con la categoría del servicio', () => {
+  const BOT = '🤖 Clasificador';
+  const withMarker = (graph: GraphClient, store: AppliedCategoryStore) => ({
+    ...deps(graph, store),
+    marker: BOT,
+  });
+
+  it('la añade junto a la categoría que escribe, en el mismo PATCH', async () => {
+    const message = { categories: ['Pagado'], etag: 1 };
+    const { graph, patches } = fakeMailbox(message);
+    const store = memoryStore();
+    const result = await applyCategories('m1', ['FOOD BOX'], withMarker(graph, store));
+    expect(result.added).toEqual(['FOOD BOX', BOT]);
+    expect(patches).toEqual([{ categories: ['Pagado', 'FOOD BOX', BOT], ifMatch: 'W/"1"' }]);
+    expect(store.applied).toEqual(['FOOD BOX', BOT]);
+  });
+
+  it('no la añade si el servicio no escribe ninguna categoría', async () => {
+    const { graph, patches } = fakeMailbox({ categories: ['Food Box'], etag: 1 });
+    const result = await applyCategories('m1', ['FOOD BOX'], withMarker(graph, memoryStore()));
+    expect(result).toEqual({ added: [], alreadyPresent: ['FOOD BOX'], removedByTeam: [] });
+    expect(patches).toEqual([]);
+  });
+
+  it('no la duplica si el correo ya la tiene', async () => {
+    const { graph, patches } = fakeMailbox({ categories: [BOT], etag: 1 });
+    const result = await applyCategories('m1', ['LATERAL'], withMarker(graph, memoryStore()));
+    expect(result).toEqual({ added: ['LATERAL'], alreadyPresent: [BOT], removedByTeam: [] });
+    expect(patches[0]?.categories).toEqual([BOT, 'LATERAL']);
+  });
+
+  it('no la vuelve a poner si el equipo la quitó', async () => {
+    const { graph, patches } = fakeMailbox({ categories: ['FOOD BOX'], etag: 1 });
+    const result = await applyCategories(
+      'm1',
+      ['FOOD BOX', 'LATERAL'],
+      withMarker(graph, memoryStore(['FOOD BOX', BOT])),
+    );
+    expect(result).toEqual({
+      added: ['LATERAL'],
+      alreadyPresent: ['FOOD BOX'],
+      removedByTeam: [BOT],
+    });
+    expect(patches[0]?.categories).toEqual(['FOOD BOX', 'LATERAL']);
+  });
+
+  it('si Graph rechaza la escritura, tampoco queda anotada', async () => {
+    const { graph } = fakeMailbox({ categories: [], etag: 1, patchStatus: 403 });
+    const store = memoryStore();
+    await expect(applyCategories('m1', ['LATERAL'], withMarker(graph, store))).rejects.toThrow(
+      '403',
+    );
+    expect(store.applied).toEqual([]);
+  });
+});
+
+describe('markerCategory', () => {
+  const master = ['Pagado', 'FOOD BOX', '🤖 Clasificador'];
+
+  it('devuelve el nombre exacto de la lista maestra (sin distinguir mayúsculas ni espacios)', () => {
+    expect(markerCategory(' 🤖 clasificador ', master)).toBe('🤖 Clasificador');
+  });
+
+  it('sin configurar o si no está en la lista maestra, no hay categoría', () => {
+    expect(markerCategory(undefined, master)).toBeNull();
+    expect(markerCategory('🤖 Otra', master)).toBeNull();
   });
 });
 

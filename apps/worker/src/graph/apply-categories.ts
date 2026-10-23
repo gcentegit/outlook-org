@@ -14,6 +14,12 @@ export interface ApplyCategoriesDeps {
   graph: GraphClient;
   mailbox: string;
   store: AppliedCategoryStore;
+  /**
+   * Categoría que marca los correos que categoriza el servicio (`BOT_CATEGORY`), con el nombre de la
+   * lista maestra. Acompaña a las de la decisión: se añade solo cuando el servicio escribe al menos
+   * una de ellas, y sigue las mismas reglas (no se duplica ni se vuelve a poner si el equipo la quitó).
+   */
+  marker?: string;
   /** Lecturas y escrituras como máximo si otro cambia el correo entre medias (por defecto 3). */
   maxAttempts?: number;
 }
@@ -53,6 +59,18 @@ export function categoriesToApply(
   return names;
 }
 
+/**
+ * Nombre exacto en la lista maestra de la categoría que marca lo que escribe el servicio, o `null`
+ * si no está configurada o no existe en el buzón (no se crea nunca).
+ */
+export function markerCategory(
+  wanted: string | undefined,
+  masterNames: readonly string[],
+): string | null {
+  if (!wanted) return null;
+  return masterNames.find((n) => sameName(n, wanted)) ?? null;
+}
+
 /** Respuestas de Graph cuando el correo cambió desde que se leyó: se vuelve a leer. */
 const CONFLICT_STATUS = new Set([409, 412]);
 
@@ -88,6 +106,12 @@ export async function applyCategories(
       else result.added.push(name);
     }
     if (result.added.length === 0) return result;
+    const marker = deps.marker;
+    if (marker && !categories.some((c) => sameName(c, marker))) {
+      if (current.some((c) => sameName(c, marker))) result.alreadyPresent.push(marker);
+      else if (applied.some((c) => sameName(c, marker))) result.removedByTeam.push(marker);
+      else result.added.push(marker);
+    }
     const etag = message['@odata.etag'];
     if (!etag) throw new Error(`Graph no devolvió el etag del correo ${messageId}: no se escribe`);
 

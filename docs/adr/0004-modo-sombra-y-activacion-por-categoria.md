@@ -25,6 +25,11 @@ buzón hay que medir el acierto con datos reales.
   válida:
   - Solo se escriben las categorías de la decisión que el panel tiene en live, con el nombre de la
     lista maestra del buzón; una que no esté en ella no se escribe.
+  - Con `BOT_CATEGORY` configurada, esa categoría acompaña a cada escritura: se añade en el mismo
+    `PATCH` solo cuando el servicio escribe al menos una categoría de la decisión, para que el equipo
+    distinga en Outlook lo que puso el clasificador. Sigue las mismas reglas: tiene que estar en la
+    lista maestra, no se duplica y no se vuelve a poner si el equipo la quita. Como no es FOOD BOX,
+    LATERAL ni ARCOBETA, no cuenta para correcciones ni métricas.
   - El `PATCH` de `categories` **reemplaza** la lista entera: se leen las categorías actuales justo
     antes y se escribe con `If-Match`. Si el correo cambió entre medias (412 o 409), se vuelve a
     leer, hasta tres veces. Sin etag no se escribe. Nunca se quita ninguna.
