@@ -19,7 +19,7 @@ import {
 } from './classify';
 import { ConfigError, loadConfig, resolveGraphSettings, type Config } from './config';
 import { extractEmail } from './extract/extract-email';
-import { applyCategories, categoriesToApply } from './graph/apply-categories';
+import { applyCategories, categoriesToApply, markerCategory } from './graph/apply-categories';
 import { createGraphClient, type GraphClient } from './graph/client';
 import { recordCertificateExpiry } from './cert-expiry';
 import { createHealthServer, evaluateLoopLiveness } from './health';
@@ -184,6 +184,13 @@ export async function startWorker(
     const rules = createPrismaRuleRepository(db);
     const threads = createPrismaThreadRepository(db);
     const warnLiveCategories = createLiveModeWarner();
+    // Avisa una vez si BOT_CATEGORY no está en la lista maestra: no se crea, así que no se escribe.
+    let missingMarkerWarned = false;
+    const warnMissingMarker = (name: string) => {
+      if (missingMarkerWarned) return;
+      missingMarkerWarned = true;
+      console.warn(`BOT_CATEGORY «${name}» no está en la lista maestra del buzón: no se escribe.`);
+    };
     const appliedStore = createPrismaAppliedCategoryStore(db);
 
     const extract = (messageId: string) =>
@@ -233,10 +240,13 @@ export async function startWorker(
                 const live = liveCategories(await readCategoryModes(db));
                 const names = categoriesToApply(result.decision.categories, live, masterNames);
                 if (names.length === 0) return;
+                const marker = markerCategory(config.BOT_CATEGORY, masterNames);
+                if (config.BOT_CATEGORY && !marker) warnMissingMarker(config.BOT_CATEGORY);
                 const applied = await applyCategories(email.messageId, names, {
                   graph,
                   mailbox,
                   store: appliedStore,
+                  ...(marker ? { marker } : {}),
                 });
                 if (applied.added.length > 0) {
                   console.log(`correo ${email.messageId}: escritas ${applied.added.join(', ')}`);
