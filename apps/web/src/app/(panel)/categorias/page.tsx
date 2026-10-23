@@ -1,11 +1,14 @@
 import { prisma } from '@clasificador/db';
+import { canonicalCategory, CATEGORIES } from '@clasificador/shared';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { CategoryForm, ServiceCategoryForm } from '@/components/category-form';
-import { Card, cellClass, DataTable, Notice, PageHeader } from '@/components/ui';
+import { Badge, Card, cellClass, DataTable, Notice, PageHeader } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { colorHex, colorName } from '@/lib/outlook-colors';
 import { requireUser } from '@/lib/session';
+import { getCategoryModes } from '@/server/category-modes';
 import { missingCategories } from '@/server/master-categories';
 import { readMasterCategories } from '@/server/master-categories-service';
 import { getServiceCategory } from '@/server/service-category';
@@ -28,13 +31,19 @@ function Swatch({ preset }: { preset: string }) {
 
 export default async function CategoriesPage() {
   await requireUser();
-  const [listing, audit, service] = await Promise.all([
+  const [listing, audit, service, modes] = await Promise.all([
     readMasterCategories(),
     prisma().categoryAudit.findMany({ orderBy: { createdAt: 'desc' }, take: 20 }),
     getServiceCategory(prisma()),
+    getCategoryModes(prisma()),
   ]);
   const current = service?.name ?? null;
   const masterNames = listing.status === 'ok' ? listing.categories.map((c) => c.displayName) : [];
+  // Las categorías del clasificador no sirven de marca: FOOD BOX acabaría en los correos de LATERAL.
+  const markerOptions = masterNames.filter((name) => !canonicalCategory(name));
+  const currentIsClassifier = current !== null && canonicalCategory(current) !== null;
+  const activeMarker =
+    current && !currentIsClassifier && masterNames.includes(current) ? current : null;
   const connected = listing.status === 'ok';
   const missing = listing.status === 'ok' ? missingCategories(listing.categories) : [];
 
@@ -75,6 +84,11 @@ export default async function CategoriesPage() {
                   <tr key={category.id}>
                     <th scope="row" className={`${cellClass} font-medium`}>
                       {category.displayName}
+                      {category.displayName === activeMarker && (
+                        <span className="ml-2">
+                          <Badge tone="success">Marca del clasificador</Badge>
+                        </span>
+                      )}
                     </th>
                     <td className={cellClass}>
                       <Swatch preset={category.color} />
@@ -87,21 +101,68 @@ export default async function CategoriesPage() {
         )}
 
         <Card
-          title="Categoría del clasificador"
-          description="El clasificador la añade, junto a FOOD BOX, LATERAL o ARCOBETA, a los correos en los que escribe, para distinguir en Outlook lo que puso él. Solo cuando escribe alguna (worker en modo real y categoría en live); si alguien del equipo la quita de un correo, no se vuelve a poner. No cambia los correos ya categorizados."
+          title="Marca del clasificador"
+          description="Elige la categoría del buzón que sirve de marca, por ejemplo 🤖. No eliges a qué correos se pone: el clasificador la añade a todos los correos en los que escribe FOOD BOX, LATERAL o ARCOBETA, para distinguir en Outlook lo que puso él de lo que pone el equipo. Si alguien del equipo la quita de un correo, no se vuelve a poner. No cambia los correos ya categorizados."
         >
-          {current && listing.status === 'ok' && !masterNames.includes(current) && (
+          {currentIsClassifier && (
             <div className="mb-4">
-              <Notice tone="warning" title="La categoría ya no está en el buzón">
-                «{current}» no está en la lista maestra: el clasificador no la escribe. Elige otra o
-                créala de nuevo.
+              <Notice tone="warning" title={`${current} no puede ser la marca`}>
+                «{current}» es una de las categorías que pone el clasificador: si fuera la marca,
+                acabaría en los correos de las otras. Por eso no se está añadiendo ninguna marca.
+                Elige otra, por ejemplo 🤖, y guarda.
               </Notice>
             </div>
           )}
-          <ServiceCategoryForm options={masterNames} current={current} disabled={!connected} />
+          {current &&
+            !currentIsClassifier &&
+            listing.status === 'ok' &&
+            !masterNames.includes(current) && (
+              <div className="mb-4">
+                <Notice tone="warning" title="La categoría ya no está en el buzón">
+                  «{current}» no está en la lista maestra: el clasificador no la escribe. Elige otra
+                  o créala de nuevo.
+                </Notice>
+              </div>
+            )}
+          <ServiceCategoryForm options={markerOptions} current={current} disabled={!connected} />
           {service?.updatedBy && (
             <p className="mt-3 text-xs text-muted">
               Último cambio: {service.updatedBy}, {formatDateTime(service.updatedAt)}.
+            </p>
+          )}
+
+          <h3 className="mt-6 text-sm font-semibold">A qué correos se añade</h3>
+          <p className="mt-1 text-sm text-muted">
+            Solo a los que el clasificador categoriza en el buzón, que dependen del modo de cada
+            categoría. Se cambia en{' '}
+            <Link href="/configuracion" className="underline">
+              Configuración
+            </Link>
+            .
+          </p>
+          {modes.available ? (
+            <ul className="mt-3 space-y-2">
+              {CATEGORIES.map((category) => (
+                <li key={category} className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-medium">{category}</span>
+                  {modes.modes[category] === 'live' ? (
+                    <Badge tone="danger">Live</Badge>
+                  ) : (
+                    <Badge tone="success">Sombra</Badge>
+                  )}
+                  <span className="text-muted">
+                    {modes.modes[category] === 'live'
+                      ? activeMarker
+                        ? `sí: lleva también «${activeMarker}».`
+                        : 'sí, cuando haya una marca elegida.'
+                      : 'no: en sombra el clasificador no escribe en el correo.'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-muted">
+              No se pudo leer el modo de las categorías: todas están en sombra.
             </p>
           )}
         </Card>

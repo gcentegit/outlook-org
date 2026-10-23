@@ -42,4 +42,14 @@ describe('setServiceCategory', () => {
     expect(result.ok).toBe(false);
     expect(upsert).not.toHaveBeenCalled();
   });
+
+  it('rechaza una categoría del clasificador como marca y no guarda nada', async () => {
+    const { db, upsert } = fakeDb();
+    const result = await setServiceCategory(db, 'FOOD BOX', master, 'admin@ejemplo.com');
+    expect(result).toMatchObject({
+      ok: false,
+      message: expect.stringMatching(/no puede ser la marca/),
+    });
+    expect(upsert).not.toHaveBeenCalled();
+  });
 });

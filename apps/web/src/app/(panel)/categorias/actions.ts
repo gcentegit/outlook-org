@@ -57,9 +57,9 @@ export async function createCategoryAction(
 }
 
 /**
- * Elige la categoría del buzón que el worker añade a los correos en los que escribe, o ninguna
- * (valor vacío). Se comprueba contra la lista maestra leída en ese momento: el servicio no crea
- * categorías.
+ * Elige la categoría del buzón que el worker añade como marca a los correos en los que escribe, o
+ * ninguna (valor vacío). Se comprueba contra la lista maestra leída en ese momento (el servicio no
+ * crea categorías) y no puede ser una de las del clasificador.
  */
 export async function setServiceCategoryAction(
   _prev: ActionState,
@@ -86,7 +86,7 @@ export async function setServiceCategoryAction(
     const result = await setServiceCategory(prisma(), name, masterNames, user.email);
     if (!result.ok) return { status: 'error', message: result.message };
   } catch (error) {
-    console.error('No se pudo guardar la categoría del clasificador', error);
+    console.error('No se pudo guardar la marca del clasificador', error);
     return { status: 'error', message: 'No se pudo guardar el cambio. Inténtalo de nuevo.' };
   }
   revalidatePath('/categorias');
@@ -94,7 +94,7 @@ export async function setServiceCategoryAction(
     status: 'ok',
     message:
       name === null
-        ? 'El clasificador deja de añadir una categoría propia.'
+        ? 'El clasificador deja de añadir una marca.'
         : `El clasificador añadirá «${name}» a los correos en los que escriba a partir de ahora.`,
   };
 }

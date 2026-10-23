@@ -25,13 +25,14 @@ buzón hay que medir el acierto con datos reales.
   válida:
   - Solo se escriben las categorías de la decisión que el panel tiene en live, con el nombre de la
     lista maestra del buzón; una que no esté en ella no se escribe.
-  - La «categoría del clasificador» que se elige en la página Categorías del panel (tabla
+  - La «marca del clasificador» que se elige en la página Categorías del panel (tabla
     `ServiceCategorySetting`, con quién la cambió) acompaña a cada escritura: se añade en el mismo
     `PATCH` solo cuando el servicio escribe al menos una categoría de la decisión, para que el equipo
     distinga en Outlook lo que puso el clasificador. Va en el panel y no en una variable de entorno
     para poder cambiarla o quitarla sin desplegar; el worker la lee en cada escritura. Sigue las mismas reglas: tiene que estar en la
-    lista maestra, no se duplica y no se vuelve a poner si el equipo la quita. Como no es FOOD BOX,
-    LATERAL ni ARCOBETA, no cuenta para correcciones ni métricas.
+    lista maestra, no se duplica y no se vuelve a poner si el equipo la quita. No puede ser FOOD BOX,
+    LATERAL ni ARCOBETA (el panel no lo permite y el worker la ignora): como marca acabaría en los
+    correos de las otras dos. Por eso tampoco cuenta para correcciones ni métricas.
   - El `PATCH` de `categories` **reemplaza** la lista entera: se leen las categorías actuales justo
     antes y se escribe con `If-Match`. Si el correo cambió entre medias (412 o 409), se vuelve a
     leer, hasta tres veces. Sin etag no se escribe. Nunca se quita ninguna.

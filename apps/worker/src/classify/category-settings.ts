@@ -65,8 +65,9 @@ export async function readServiceCategory(
 }
 
 /**
- * Avisa de que la categoría elegida en el panel ya no está en la lista maestra del buzón (no se
- * crea, así que no se escribe). Solo una vez por nombre, para no inundar el log con cada correo.
+ * Avisa de que la categoría elegida en el panel no se escribe: ya no está en la lista maestra del
+ * buzón (no se crea) o es una de las del clasificador, que no sirven de marca. Solo una vez por
+ * nombre, para no inundar el log con cada correo.
  */
 export function createMissingServiceCategoryWarner(
   warn: (message: string) => void = console.warn,
@@ -76,7 +77,10 @@ export function createMissingServiceCategoryWarner(
     if (name === last) return;
     last = name;
     warn(
-      `La categoría del servicio «${name}» no está en la lista maestra del buzón: no se escribe.`,
+      canonicalCategory(name)
+        ? `La categoría del servicio «${name}» es una de las del clasificador y no sirve de marca: ` +
+            'no se escribe. Elige otra en la página Categorías del panel.'
+        : `La categoría del servicio «${name}» no está en la lista maestra del buzón: no se escribe.`,
     );
   };
 }

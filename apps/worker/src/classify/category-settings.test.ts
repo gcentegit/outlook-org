@@ -68,4 +68,10 @@ describe('createMissingServiceCategoryWarner', () => {
     check('Otra');
     expect(warn).toHaveBeenCalledTimes(2);
   });
+
+  it('explica que una categoría del clasificador no sirve de marca', () => {
+    const warn = vi.fn();
+    createMissingServiceCategoryWarner(warn)('FOOD BOX');
+    expect(warn.mock.calls[0]?.[0]).toMatch(/una de las del clasificador/);
+  });
 });

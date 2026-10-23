@@ -61,13 +61,14 @@ export function categoriesToApply(
 
 /**
  * Nombre exacto en la lista maestra de la categoría que marca lo que escribe el servicio, o `null`
- * si no hay ninguna elegida o ya no existe en el buzón (no se crea nunca).
+ * si no hay ninguna elegida, ya no existe en el buzón (no se crea nunca) o es una de las del
+ * clasificador: FOOD BOX como marca acabaría en los correos de LATERAL o ARCOBETA.
  */
 export function markerCategory(
   wanted: string | undefined,
   masterNames: readonly string[],
 ): string | null {
-  if (!wanted) return null;
+  if (!wanted || canonicalCategory(wanted)) return null;
   return masterNames.find((n) => sameName(n, wanted)) ?? null;
 }
 
