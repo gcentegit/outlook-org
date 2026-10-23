@@ -144,8 +144,9 @@ export function CategoryForm({ disabled }: { disabled: boolean }) {
 }
 
 /**
- * Categoría que el clasificador añade a los correos en los que escribe. Solo ofrece las de la lista
- * maestra del buzón; si la guardada ya no está, se muestra igualmente para poder cambiarla.
+ * Marca que el clasificador añade a los correos en los que escribe. Ofrece las categorías de la
+ * lista maestra que pueden serlo (`options`); si la guardada no está entre ellas, se muestra
+ * igualmente para poder cambiarla.
  */
 export function ServiceCategoryForm({
   options,
@@ -167,7 +168,7 @@ export function ServiceCategoryForm({
     <form action={action} className="space-y-4">
       <div className="max-w-sm">
         <label htmlFor="service-category" className={labelClass}>
-          Categoría del clasificador
+          Marca del clasificador
         </label>
         <select
           id="service-category"

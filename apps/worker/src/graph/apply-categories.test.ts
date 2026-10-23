@@ -281,6 +281,11 @@ describe('markerCategory', () => {
     expect(markerCategory(undefined, master)).toBeNull();
     expect(markerCategory('🤖 Otra', master)).toBeNull();
   });
+
+  it('una categoría del clasificador no puede ser la marca, aunque esté en la lista maestra', () => {
+    expect(markerCategory('FOOD BOX', master)).toBeNull();
+    expect(markerCategory(' food box ', master)).toBeNull();
+  });
 });
 
 describe('categoriesToApply', () => {

@@ -25,7 +25,7 @@ solo se recogen las decisiones de forma que el esquema no puede explicar por sí
   categoría está en sombra. El panel accede con SQL directo (tolera que la tabla no exista) y el
   worker la lee con Prisma solo para exponerla.
 - `ServiceCategorySetting` (una sola fila, `id` «service») guarda la categoría del buzón que el
-  servicio añade a los correos en los que escribe. Sin fila o sin nombre no añade ninguna.
+  servicio añade como marca a los correos en los que escribe. Sin fila o sin nombre no añade ninguna.
 - `AppliedCategory` (única por correo y categoría) guarda lo que el servicio escribió en el buzón en
   modo real, para no volver a poner lo que el equipo quite
   ([0004](0004-modo-sombra-y-activacion-por-categoria.md)). Se borra con el correo.
