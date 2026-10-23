@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createLiveModeWarner,
+  createMissingServiceCategoryWarner,
   liveCategories,
   readCategoryModes,
+  readServiceCategory,
   type CategoryModes,
 } from './category-settings';
 
@@ -34,6 +36,36 @@ describe('createLiveModeWarner', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0]?.[0]).toContain('LATERAL');
     check({ ...shadow, LATERAL: 'live', ARCOBETA: 'live' });
+    expect(warn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('readServiceCategory', () => {
+  it('devuelve la categoría elegida en el panel', async () => {
+    const findUnique = vi.fn().mockResolvedValue({ name: '🤖' });
+    const name = await readServiceCategory({ serviceCategorySetting: { findUnique } } as never);
+    expect(name).toBe('🤖');
+    expect(findUnique.mock.calls[0]?.[0]).toMatchObject({ where: { id: 'service' } });
+  });
+
+  it('sin fila o sin nombre no hay ninguna', async () => {
+    for (const row of [null, { name: null }]) {
+      const findUnique = vi.fn().mockResolvedValue(row);
+      expect(
+        await readServiceCategory({ serviceCategorySetting: { findUnique } } as never),
+      ).toBeNull();
+    }
+  });
+});
+
+describe('createMissingServiceCategoryWarner', () => {
+  it('avisa una vez por nombre', () => {
+    const warn = vi.fn();
+    const check = createMissingServiceCategoryWarner(warn);
+    check('🤖');
+    check('🤖');
+    expect(warn).toHaveBeenCalledTimes(1);
+    check('Otra');
     expect(warn).toHaveBeenCalledTimes(2);
   });
 });

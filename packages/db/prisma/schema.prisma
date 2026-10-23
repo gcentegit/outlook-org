@@ -210,6 +210,16 @@ model CategorySetting {
   updatedBy String?
 }
 
+/// Categoría del buzón que el servicio añade a los correos en los que escribe, para distinguir lo que
+/// puso el clasificador. Una sola fila (`id` = «service»); sin fila o sin nombre no añade ninguna.
+model ServiceCategorySetting {
+  id        String   @id @default("service")
+  /// Nombre tal como está en la lista maestra del buzón.
+  name      String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
 model AllowedUser {
   id        String   @id @default(cuid())
   /// En minúsculas. El alta se hace por email.

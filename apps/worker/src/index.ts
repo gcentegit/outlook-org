@@ -13,9 +13,11 @@ import {
   createPrismaLlmSettingRepository,
   createPrismaRuleRepository,
   createLiveModeWarner,
+  createMissingServiceCategoryWarner,
   createPrismaThreadRepository,
   liveCategories,
   readCategoryModes,
+  readServiceCategory,
 } from './classify';
 import { ConfigError, loadConfig, resolveGraphSettings, type Config } from './config';
 import { extractEmail } from './extract/extract-email';
@@ -184,13 +186,7 @@ export async function startWorker(
     const rules = createPrismaRuleRepository(db);
     const threads = createPrismaThreadRepository(db);
     const warnLiveCategories = createLiveModeWarner();
-    // Avisa una vez si BOT_CATEGORY no está en la lista maestra: no se crea, así que no se escribe.
-    let missingMarkerWarned = false;
-    const warnMissingMarker = (name: string) => {
-      if (missingMarkerWarned) return;
-      missingMarkerWarned = true;
-      console.warn(`BOT_CATEGORY «${name}» no está en la lista maestra del buzón: no se escribe.`);
-    };
+    const warnMissingServiceCategory = createMissingServiceCategoryWarner();
     const appliedStore = createPrismaAppliedCategoryStore(db);
 
     const extract = (messageId: string) =>
@@ -240,8 +236,9 @@ export async function startWorker(
                 const live = liveCategories(await readCategoryModes(db));
                 const names = categoriesToApply(result.decision.categories, live, masterNames);
                 if (names.length === 0) return;
-                const marker = markerCategory(config.BOT_CATEGORY, masterNames);
-                if (config.BOT_CATEGORY && !marker) warnMissingMarker(config.BOT_CATEGORY);
+                const wanted = await readServiceCategory(db);
+                const marker = markerCategory(wanted ?? undefined, masterNames);
+                if (wanted && !marker) warnMissingServiceCategory(wanted);
                 const applied = await applyCategories(email.messageId, names, {
                   graph,
                   mailbox,

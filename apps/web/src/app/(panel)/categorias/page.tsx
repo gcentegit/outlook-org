@@ -1,13 +1,14 @@
 import { prisma } from '@clasificador/db';
 import type { Metadata } from 'next';
 
-import { CategoryForm } from '@/components/category-form';
+import { CategoryForm, ServiceCategoryForm } from '@/components/category-form';
 import { Card, cellClass, DataTable, Notice, PageHeader } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { colorHex, colorName } from '@/lib/outlook-colors';
 import { requireUser } from '@/lib/session';
 import { missingCategories } from '@/server/master-categories';
 import { readMasterCategories } from '@/server/master-categories-service';
+import { getServiceCategory } from '@/server/service-category';
 
 export const metadata: Metadata = { title: 'Categorías' };
 
@@ -27,10 +28,13 @@ function Swatch({ preset }: { preset: string }) {
 
 export default async function CategoriesPage() {
   await requireUser();
-  const [listing, audit] = await Promise.all([
+  const [listing, audit, service] = await Promise.all([
     readMasterCategories(),
     prisma().categoryAudit.findMany({ orderBy: { createdAt: 'desc' }, take: 20 }),
+    getServiceCategory(prisma()),
   ]);
+  const current = service?.name ?? null;
+  const masterNames = listing.status === 'ok' ? listing.categories.map((c) => c.displayName) : [];
   const connected = listing.status === 'ok';
   const missing = listing.status === 'ok' ? missingCategories(listing.categories) : [];
 
@@ -81,6 +85,26 @@ export default async function CategoriesPage() {
             )}
           </Card>
         )}
+
+        <Card
+          title="Categoría del clasificador"
+          description="El clasificador la añade, junto a FOOD BOX, LATERAL o ARCOBETA, a los correos en los que escribe, para distinguir en Outlook lo que puso él. Solo cuando escribe alguna (worker en modo real y categoría en live); si alguien del equipo la quita de un correo, no se vuelve a poner. No cambia los correos ya categorizados."
+        >
+          {current && listing.status === 'ok' && !masterNames.includes(current) && (
+            <div className="mb-4">
+              <Notice tone="warning" title="La categoría ya no está en el buzón">
+                «{current}» no está en la lista maestra: el clasificador no la escribe. Elige otra o
+                créala de nuevo.
+              </Notice>
+            </div>
+          )}
+          <ServiceCategoryForm options={masterNames} current={current} disabled={!connected} />
+          {service?.updatedBy && (
+            <p className="mt-3 text-xs text-muted">
+              Último cambio: {service.updatedBy}, {formatDateTime(service.updatedAt)}.
+            </p>
+          )}
+        </Card>
 
         <Card
           title="Crear una categoría"

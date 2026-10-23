@@ -105,8 +105,8 @@ caracteres) sale hacia el proveedor elegido. [ADR 0003](adr/0003-llm-configurabl
   el latido. No toca ningún correo.
 - **Real** (`MODE=live` y la categoría en live en el panel): además, al decidir un correo añade en
   Outlook las categorías en live, sin quitar ninguna y sin volver a poner las que el equipo quitó
-  (`apps/worker/src/graph/apply-categories.ts`). Con `BOT_CATEGORY`, añade también esa categoría
-  a los correos en los que escribe. Volver una categoría a sombra en el panel deja de escribirla en
+  (`apps/worker/src/graph/apply-categories.ts`). Si el panel tiene elegida una «categoría del
+  clasificador» (página Categorías), la añade también a los correos en los que escribe. Volver una categoría a sombra en el panel deja de escribirla en
   el siguiente correo.
 - **Otra escritura en el buzón:** crear una categoría en la lista maestra cuando un usuario
   autorizado lo pide y confirma en el panel; no toca ningún correo. El worker la ejecuta; la web

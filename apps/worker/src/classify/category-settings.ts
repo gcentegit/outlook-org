@@ -49,3 +49,34 @@ export function createLiveModeWarner(
     }
   };
 }
+
+/**
+ * Categoría del buzón que el panel ha elegido para marcar los correos en los que escribe el
+ * servicio, o `null` si no hay ninguna.
+ */
+export async function readServiceCategory(
+  db: Pick<PrismaClient, 'serviceCategorySetting'>,
+): Promise<string | null> {
+  const row = await db.serviceCategorySetting.findUnique({
+    where: { id: 'service' },
+    select: { name: true },
+  });
+  return row?.name ?? null;
+}
+
+/**
+ * Avisa de que la categoría elegida en el panel ya no está en la lista maestra del buzón (no se
+ * crea, así que no se escribe). Solo una vez por nombre, para no inundar el log con cada correo.
+ */
+export function createMissingServiceCategoryWarner(
+  warn: (message: string) => void = console.warn,
+): (name: string) => void {
+  let last = '';
+  return (name) => {
+    if (name === last) return;
+    last = name;
+    warn(
+      `La categoría del servicio «${name}» no está en la lista maestra del buzón: no se escribe.`,
+    );
+  };
+}
