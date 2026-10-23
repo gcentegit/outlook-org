@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/gcentegit/outlook-org/compare/v1.4.0...v1.4.1) (2026-10-23)
+
+
+### 🔧 Correcciones
+
+* **web:** 🏷️ la marca del clasificador no puede ser una de sus categorías y la pantalla muestra a qué correos se añade ([#131](https://github.com/gcentegit/outlook-org/issues/131)) ([75ceecb](https://github.com/gcentegit/outlook-org/commit/75ceecb029cfe38dbe2f3128721d14556aa88eb3))
+
 ## [1.4.0](https://github.com/gcentegit/outlook-org/compare/v1.3.2...v1.4.0) (2026-10-23)
 
 
