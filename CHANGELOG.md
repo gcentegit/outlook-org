@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/gcentegit/outlook-org/compare/v1.3.2...v1.4.0) (2026-10-23)
+
+
+### 🚀 Novedades
+
+* **web:** 🗂️ la categoría del clasificador se elige en el panel ([#130](https://github.com/gcentegit/outlook-org/issues/130)) ([74ff917](https://github.com/gcentegit/outlook-org/commit/74ff917cabd061e4fb9675351ebd0f42b150677d))
+* **worker:** 🏷️ marca con la categoría del servicio los correos que categoriza ([#128](https://github.com/gcentegit/outlook-org/issues/128)) ([e67f863](https://github.com/gcentegit/outlook-org/commit/e67f863f979269f07570d0e1156ee3f6b9cc05a6))
+
 ## [1.3.2](https://github.com/gcentegit/outlook-org/compare/v1.3.1...v1.3.2) (2026-10-19)
 
 
