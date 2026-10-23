@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 
-import { createCategoryAction } from '@/app/(panel)/categorias/actions';
+import { createCategoryAction, setServiceCategoryAction } from '@/app/(panel)/categorias/actions';
 import { IDLE, type ActionState } from '@/lib/action-state';
 import { OUTLOOK_COLORS, newCategorySchema } from '@/lib/outlook-colors';
 
@@ -138,6 +138,60 @@ export function CategoryForm({ disabled }: { disabled: boolean }) {
         </button>
       )}
 
+      <ActionFeedback state={state} />
+    </form>
+  );
+}
+
+/**
+ * Categoría que el clasificador añade a los correos en los que escribe. Solo ofrece las de la lista
+ * maestra del buzón; si la guardada ya no está, se muestra igualmente para poder cambiarla.
+ */
+export function ServiceCategoryForm({
+  options,
+  current,
+  disabled,
+}: {
+  options: readonly string[];
+  current: string | null;
+  disabled: boolean;
+}) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(
+    setServiceCategoryAction,
+    IDLE,
+  );
+  const [name, setName] = useState(current ?? '');
+  const choices = current && !options.includes(current) ? [current, ...options] : options;
+
+  return (
+    <form action={action} className="space-y-4">
+      <div className="max-w-sm">
+        <label htmlFor="service-category" className={labelClass}>
+          Categoría del clasificador
+        </label>
+        <select
+          id="service-category"
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={disabled}
+          className={inputClass}
+        >
+          <option value="">Ninguna</option>
+          {choices.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        type="submit"
+        disabled={disabled || pending || name === (current ?? '')}
+        className={buttonClass.primary}
+      >
+        {pending ? 'Guardando...' : 'Guardar'}
+      </button>
       <ActionFeedback state={state} />
     </form>
   );

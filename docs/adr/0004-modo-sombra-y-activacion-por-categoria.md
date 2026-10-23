@@ -25,9 +25,11 @@ buzón hay que medir el acierto con datos reales.
   válida:
   - Solo se escriben las categorías de la decisión que el panel tiene en live, con el nombre de la
     lista maestra del buzón; una que no esté en ella no se escribe.
-  - Con `BOT_CATEGORY` configurada, esa categoría acompaña a cada escritura: se añade en el mismo
+  - La «categoría del clasificador» que se elige en la página Categorías del panel (tabla
+    `ServiceCategorySetting`, con quién la cambió) acompaña a cada escritura: se añade en el mismo
     `PATCH` solo cuando el servicio escribe al menos una categoría de la decisión, para que el equipo
-    distinga en Outlook lo que puso el clasificador. Sigue las mismas reglas: tiene que estar en la
+    distinga en Outlook lo que puso el clasificador. Va en el panel y no en una variable de entorno
+    para poder cambiarla o quitarla sin desplegar; el worker la lee en cada escritura. Sigue las mismas reglas: tiene que estar en la
     lista maestra, no se duplica y no se vuelve a poner si el equipo la quita. Como no es FOOD BOX,
     LATERAL ni ARCOBETA, no cuenta para correcciones ni métricas.
   - El `PATCH` de `categories` **reemplaza** la lista entera: se leen las categorías actuales justo

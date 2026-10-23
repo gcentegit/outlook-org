@@ -178,8 +178,6 @@ const PASSTHROUGH: Record<ServiceKey, { key: string; secret: boolean }[]> = {
     // Dominios de correo del grupo (sin valor por defecto: sin ellos no hay remitentes internos).
     { key: 'INTERNAL_EMAIL_DOMAINS', secret: false },
     { key: 'LLM_DAILY_BUDGET_USD', secret: false },
-    // Opcional: categoría del buzón que se añade a los correos en los que escribe el servicio.
-    { key: 'BOT_CATEGORY', secret: false },
     // Opcionales: sin ellas el worker usa sus valores por defecto.
     { key: 'ATTACHMENT_MAX_BYTES', secret: false },
     { key: 'ATTACHMENT_MAX_PAGES', secret: false },

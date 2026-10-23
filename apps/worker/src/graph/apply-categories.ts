@@ -15,8 +15,8 @@ export interface ApplyCategoriesDeps {
   mailbox: string;
   store: AppliedCategoryStore;
   /**
-   * Categoría que marca los correos que categoriza el servicio (`BOT_CATEGORY`), con el nombre de la
-   * lista maestra. Acompaña a las de la decisión: se añade solo cuando el servicio escribe al menos
+   * Categoría que marca los correos que categoriza el servicio (la que elige el panel), con el nombre
+   * de la lista maestra. Acompaña a las de la decisión: se añade solo cuando el servicio escribe al menos
    * una de ellas, y sigue las mismas reglas (no se duplica ni se vuelve a poner si el equipo la quitó).
    */
   marker?: string;
@@ -61,7 +61,7 @@ export function categoriesToApply(
 
 /**
  * Nombre exacto en la lista maestra de la categoría que marca lo que escribe el servicio, o `null`
- * si no está configurada o no existe en el buzón (no se crea nunca).
+ * si no hay ninguna elegida o ya no existe en el buzón (no se crea nunca).
  */
 export function markerCategory(
   wanted: string | undefined,
