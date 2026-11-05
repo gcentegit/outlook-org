@@ -43,7 +43,7 @@ export function describeMailboxCheck(result: CheckMailboxResult): MailboxCheckOu
         ok: false,
         message:
           'El worker no pudo autenticarse en Microsoft Graph: revisa el certificado y los datos de ' +
-          `la app del buzón (GRAPH_TENANT_ID, GRAPH_CLIENT_ID). Detalle: ${result.message}`,
+          `la app del buzón (tenant e id de la app). Detalle: ${result.message}`,
       };
     case 'unconfigured':
       return { ok: false, message: result.message };
