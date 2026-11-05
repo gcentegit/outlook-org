@@ -57,9 +57,14 @@ export interface ProcessMessageDeps {
   classify: (email: ExtractedEmail, availableCategories: string[]) => Promise<ClassifyResult>;
   /**
    * Escribe en el buzón las categorías de una decisión válida (solo en modo real; en sombra no se
-   * pasa). Recibe la lista maestra con la que se clasificó.
+   * pasa). Recibe el id con el que conocemos el correo, el que tiene hoy en el buzón (distinto si se
+   * movió) y la lista maestra con la que se clasificó.
    */
-  apply?: (email: ExtractedEmail, result: ClassifyResult, masterNames: string[]) => Promise<void>;
+  apply?: (
+    message: { id: string; currentId: string },
+    result: ClassifyResult,
+    masterNames: string[],
+  ) => Promise<void>;
   log?: (message: string) => void;
 }
 
@@ -140,7 +145,7 @@ export async function processMessage(
       // La decisión ya está guardada: un fallo al escribir no la pierde. El correo queda marcado
       // y «Reprocesar» lo vuelve a decidir y a escribir (escribir es idempotente).
       try {
-        await deps.apply(mailboxEmail, result, masterNames);
+        await deps.apply({ id: messageId, currentId: mailboxEmail.messageId }, result, masterNames);
       } catch (err) {
         log(`no se pudieron escribir las categorías de ${messageId}: ${String(err)}`);
         await deps.store

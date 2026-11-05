@@ -232,21 +232,22 @@ export async function startWorker(
         // live.
         ...(config.MODE === 'live'
           ? {
-              apply: async (email, result, masterNames) => {
+              apply: async (message, result, masterNames) => {
                 const live = liveCategories(await readCategoryModes(db));
                 const names = categoriesToApply(result.decision.categories, live, masterNames);
                 if (names.length === 0) return;
                 const wanted = await readServiceCategory(db);
                 const marker = markerCategory(wanted ?? undefined, masterNames);
                 if (wanted && !marker) warnMissingServiceCategory(wanted);
-                const applied = await applyCategories(email.messageId, names, {
+                const applied = await applyCategories(message.id, names, {
                   graph,
                   mailbox,
                   store: appliedStore,
+                  currentId: message.currentId,
                   ...(marker ? { marker } : {}),
                 });
                 if (applied.added.length > 0) {
-                  console.log(`correo ${email.messageId}: escritas ${applied.added.join(', ')}`);
+                  console.log(`correo ${message.id}: escritas ${applied.added.join(', ')}`);
                 }
               },
             }
