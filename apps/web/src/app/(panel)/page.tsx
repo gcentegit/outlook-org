@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { FiltersForm } from '@/components/filters-form';
 import { FolderCheckButton } from '@/components/folder-check-button';
+import { MailboxCheckButton } from '@/components/mailbox-check-button';
 import { ReprocessButton } from '@/components/reprocess-button';
 import {
   Badge,
@@ -110,6 +111,9 @@ function ServiceCard({
           <dd className="mt-1 font-medium tabular-nums">{formatInt(status.needsReprocess)}</dd>
         </div>
       </dl>
+      <div className="mt-4">
+        <MailboxCheckButton />
+      </div>
       {status.needsReprocess > 0 && (
         <div className="mt-4">
           <Notice

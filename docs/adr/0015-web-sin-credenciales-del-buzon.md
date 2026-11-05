@@ -20,6 +20,9 @@ de los LLM. Aun así el panel necesita listar y crear categorías, probar modelo
     tokens, coste y latencia; si falta la clave, el resultado es `unavailable` con el nombre de la
     variable. La cola no tiene reintentos y caduca a los 120 s.
   - `reprocess-flagged`: ([0007](0007-fallos-tecnicos-y-reproceso.md)).
+  - `check-mailbox` (botón «Comprobar conexión con el buzón» del Resumen): el worker lee la Bandeja
+    de entrada con su certificado y devuelve la causa probable si falla (sin permiso, buzón no
+    encontrado, autenticación), para no tener que mirar los logs.
 - El panel usa un cliente de pg-boss que no migra, no supervisa ni programa: eso es del worker, así
   que las colas existen cuando el worker ha arrancado al menos una vez. El worker registra los
   atendedores aunque no tenga credenciales de Graph; sin ellas, `/categorias` muestra el motivo en

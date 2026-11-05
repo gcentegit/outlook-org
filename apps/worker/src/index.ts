@@ -160,11 +160,13 @@ export async function startWorker(
     'missing' in graphSettings
       ? null
       : (overrides.graph ?? createGraphClient(graphSettings.settings));
+  const mailboxAccess =
+    'missing' in graphSettings
+      ? { missing: graphSettings.missing }
+      : { graph: graph as GraphClient, mailbox: graphSettings.settings.mailbox };
   await registerPanelWorkers(boss, {
-    categories:
-      'missing' in graphSettings
-        ? { missing: graphSettings.missing }
-        : { graph: graph as GraphClient, mailbox: graphSettings.settings.mailbox },
+    categories: mailboxAccess,
+    mailbox: mailboxAccess,
     reprocess: createPrismaReprocessStore(db),
     enqueue: (messageId) => enqueueMessage(boss, messageId),
   });
