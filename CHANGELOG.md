@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/gcentegit/outlook-org/compare/v1.4.1...v1.5.0) (2026-11-05)
+
+
+### 🚀 Novedades
+
+* **web:** 📥 botón para comprobar la conexión con el buzón ([#138](https://github.com/gcentegit/outlook-org/issues/138)) ([fc3ae0d](https://github.com/gcentegit/outlook-org/commit/fc3ae0def938f158ab4514fb0ce7ddec2b9ff2e2))
+
+
+### 🔧 Correcciones
+
+* **worker:** 🐛 escribe las categorías de los correos que se movieron antes de procesarlos ([#136](https://github.com/gcentegit/outlook-org/issues/136)) ([fb54c58](https://github.com/gcentegit/outlook-org/commit/fb54c58e2c4286c0e41281e6e689ea0ae47b78d8))
+* **worker:** 📥 la sincronización sigue con la dirección actual del buzón si cambia ([#137](https://github.com/gcentegit/outlook-org/issues/137)) ([4e13e44](https://github.com/gcentegit/outlook-org/commit/4e13e444f7cd8c03cce77aec5cbedbee475ce3be))
+
 ## [1.4.1](https://github.com/gcentegit/outlook-org/compare/v1.4.0...v1.4.1) (2026-10-23)
 
 
