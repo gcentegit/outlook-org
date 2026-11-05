@@ -22,6 +22,8 @@ poca carga sobre Microsoft Graph. Código: `apps/worker/src/sync/`.
   los mismos cambios. Un 410 olvida el `deltaLink` y resincroniza desde la fecha de recepción del
   correo registrado más antiguo (o la última sincronización si no hay ninguno), para seguir viendo
   las correcciones de los correos ya conocidos; un segundo 410 seguido se propaga.
+  Un `deltaLink` guardado con otra dirección del buzón (cambió su dirección y `MAILBOX`) se
+  descarta y se resincroniza igual: Graph lo devuelve con la dirección con la que se pidió.
 - **Recuperación tras una parada:** la delta de la Bandeja no devuelve un correo que llegó y salió
   de ella entre dos rondas. Si la última ronda correcta es de hace más de dos intervalos, después
   de la delta se buscan en todo el buzón los recibidos desde entonces (con un minuto de margen) y se

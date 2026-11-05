@@ -2,7 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { KnownMessage } from '../corrections';
 import { GraphError } from '../graph/client';
-import { inboxDeltaUrl, syncInbox, type SyncState, type SyncStore } from './delta';
+import {
+  deltaLinkTargets,
+  inboxDeltaUrl,
+  syncInbox,
+  type SyncState,
+  type SyncStore,
+} from './delta';
 
 const NOW = new Date('2026-10-02T10:00:00Z');
 const BASE = 'https://graph.microsoft.com/v1.0/users/p%40x.com/mailFolders/inbox/messages/delta';
@@ -75,6 +81,26 @@ describe('inboxDeltaUrl', () => {
     expect(inboxDeltaUrl('p@x.com', NOW)).toBe(
       '/users/p%40x.com/mailFolders/inbox/messages/delta?$select=id,receivedDateTime,conversationId,categories&$filter=receivedDateTime+ge+2026-10-02T10:00:00.000Z',
     );
+  });
+});
+
+describe('deltaLinkTargets', () => {
+  it('reconoce la dirección del buzón en las dos formas de ruta, sin distinguir mayúsculas', () => {
+    expect(deltaLinkTargets(`${BASE}?$deltatoken=T`, 'P@x.com')).toBe(true);
+    expect(
+      deltaLinkTargets(
+        "https://graph.microsoft.com/v1.0/users/p@x.com/mailFolders('inbox')/messages/delta?$deltatoken=T",
+        'p@x.com',
+      ),
+    ).toBe(true);
+    expect(
+      deltaLinkTargets("https://graph.test/v1.0/users('p%40x.com')/messages/delta", 'p@x.com'),
+    ).toBe(true);
+  });
+
+  it('detecta un enlace de otra dirección y da por bueno uno sin dirección', () => {
+    expect(deltaLinkTargets(`${BASE}?$deltatoken=T`, 'p@nuevo.com')).toBe(false);
+    expect(deltaLinkTargets('https://graph.test/v1.0/me/messages/delta', 'p@x.com')).toBe(true);
   });
 });
 
@@ -327,6 +353,27 @@ describe('syncInbox', () => {
     expect(store.clearDeltaLink).toHaveBeenCalledOnce();
     expect(enqueued).toEqual(['x']);
     expect(result.resynced).toBe(true);
+    expect(store.saveState).toHaveBeenCalledWith(`${BASE}?$deltatoken=NEW`, NOW);
+  });
+
+  it('un deltaLink de otra dirección se descarta y se resincroniza con la actual', async () => {
+    const link =
+      'https://graph.test/v1.0/users/p@antiguo.com/mailFolders/inbox/messages/delta?$deltatoken=OLD';
+    const earliest = new Date('2026-09-14T07:15:00Z');
+    const lastSyncAt = new Date('2026-10-01T10:00:00Z');
+    const store = fakeStore({ deltaLink: link, lastSyncAt }, [], earliest);
+    const resync = inboxDeltaUrl('p@x.com', earliest);
+    const { deps, urls } = setup(
+      { [resync]: { value: [], '@odata.deltaLink': `${BASE}?$deltatoken=NEW` } },
+      store,
+    );
+    const catchUp = vi.fn(async () => 2);
+    const result = await syncInbox({ ...deps, catchUp: { afterMs: 60_000, run: catchUp } });
+    expect(urls).toEqual([resync]);
+    expect(store.clearDeltaLink).toHaveBeenCalledOnce();
+    // La parada se sigue recuperando desde la última sincronización correcta.
+    expect(catchUp).toHaveBeenCalledWith(lastSyncAt);
+    expect(result).toMatchObject({ resynced: true, recovered: 2 });
     expect(store.saveState).toHaveBeenCalledWith(`${BASE}?$deltatoken=NEW`, NOW);
   });
 

@@ -90,6 +90,24 @@ export function inboxDeltaUrl(mailbox: string, since: Date): string {
 }
 
 /**
+ * Si el `deltaLink` guardado apunta al buzón `mailbox`. Graph lo devuelve con la dirección con la que
+ * se pidió, así que tras cambiar la dirección del buzón (y `MAILBOX`) seguiría usando la antigua. Un
+ * enlace sin dirección reconocible se da por bueno.
+ */
+export function deltaLinkTargets(deltaLink: string, mailbox: string): boolean {
+  const match = /\/users(?:\/([^/?(]+)|\('([^']+)'\))/i.exec(deltaLink);
+  const segment = match?.[1] ?? match?.[2];
+  if (!segment) return true;
+  let user: string;
+  try {
+    user = decodeURIComponent(segment);
+  } catch {
+    return true;
+  }
+  return user.toLowerCase() === mailbox.toLowerCase();
+}
+
+/**
  * Una ronda de sincronización de la Bandeja de entrada con delta query de Graph.
  *
  * - Sin estado previo, la primera ronda pide solo lo recibido desde ahora: el histórico no se
@@ -108,6 +126,9 @@ export function inboxDeltaUrl(mailbox: string, since: Date): string {
  * - Tras una parada, la delta no devuelve los correos que el equipo ya sacó de la Bandeja: de esos
  *   se ocupa `catchUp`, después de la delta (que ya registró los que siguen en ella) y antes de
  *   guardar el `deltaLink`, para que un fallo lo repita en la siguiente ronda.
+ * - Si el `deltaLink` guardado es de otra dirección (cambió la del buzón), se descarta y se
+ *   resincroniza como tras un 410; la fecha de la última sincronización se conserva, así que la
+ *   recuperación de la parada sigue funcionando.
  */
 export async function syncInbox(deps: SyncDeps): Promise<SyncResult> {
   const now = deps.now ?? (() => new Date());
@@ -121,7 +142,13 @@ export async function syncInbox(deps: SyncDeps): Promise<SyncResult> {
     resynced: false,
   };
 
-  const state = await deps.store.getState();
+  let state = await deps.store.getState();
+  if (state?.deltaLink && !deltaLinkTargets(state.deltaLink, deps.mailbox)) {
+    log('el deltaLink guardado es de otra dirección del buzón: se resincroniza con la actual');
+    await deps.store.clearDeltaLink();
+    state = { ...state, deltaLink: null };
+    result.resynced = true;
+  }
   let url =
     state?.deltaLink ??
     inboxDeltaUrl(

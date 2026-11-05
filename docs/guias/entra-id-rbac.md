@@ -111,6 +111,21 @@ Los cambios de permisos pasan por una caché que se renueva **entre 30 minutos y
 
 ---
 
+### B6. Si cambia la dirección del buzón
+
+El ámbito filtra por la dirección principal (`PrimarySmtpAddress`). Si la dirección del buzón cambia (por ejemplo, un cambio de dominio), el buzón queda fuera del ámbito: Graph responde 403 `ErrorAccessDenied` y el panel marca la sincronización como parada. Para seguir:
+
+1. Apunta el ámbito a la dirección nueva y verifica con el paso B4:
+
+   ```powershell
+   Set-ManagementScope -Identity "Buzon-Proveedores" -RecipientRestrictionFilter "PrimarySmtpAddress -eq '<MAILBOX>'"
+   ```
+
+2. Cambia `MAILBOX` del worker a la dirección nueva y reinícialo.
+3. Espera a la propagación (B5): el Resumen del panel vuelve a «Al día» con la primera ronda correcta.
+
+El worker descarta la sincronización guardada con la dirección antigua y sigue desde donde se quedó: recupera lo que llegó durante la parada, también lo que el equipo ya archivó.
+
 ## Parte C. App de login del panel
 
 1. **Registros de aplicaciones > Nuevo registro**. Nombre: `Clasificador Proveedores - Panel`.
