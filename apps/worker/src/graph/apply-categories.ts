@@ -15,6 +15,11 @@ export interface ApplyCategoriesDeps {
   mailbox: string;
   store: AppliedCategoryStore;
   /**
+   * Id con el que está hoy el correo en el buzón, si cambió al moverlo de carpeta. Se escribe en ese;
+   * lo anotado va siempre con `messageId`, el id con el que lo conoce la base de datos.
+   */
+  currentId?: string;
+  /**
    * Categoría que marca los correos que categoriza el servicio (la que elige el panel), con el nombre
    * de la lista maestra. Acompaña a las de la decisión: se añade solo cuando el servicio escribe al menos
    * una de ellas, y sigue las mismas reglas (no se duplica ni se vuelve a poner si el equipo la quitó).
@@ -93,7 +98,8 @@ export async function applyCategories(
   categories: readonly string[],
   deps: ApplyCategoriesDeps,
 ): Promise<ApplyCategoriesResult> {
-  const path = `/users/${encodeURIComponent(deps.mailbox)}/messages/${encodeURIComponent(messageId)}`;
+  const graphId = deps.currentId ?? messageId;
+  const path = `/users/${encodeURIComponent(deps.mailbox)}/messages/${encodeURIComponent(graphId)}`;
   const applied = await deps.store.listApplied(messageId);
   const maxAttempts = deps.maxAttempts ?? 3;
 

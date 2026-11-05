@@ -131,7 +131,7 @@ describe('processMessage', () => {
       { degradedReason: null },
     );
     expect(apply).toHaveBeenCalledWith(
-      expect.objectContaining({ messageId: 'm1-archivado' }),
+      { id: 'm1', currentId: 'm1-archivado' },
       expect.anything(),
       expect.anything(),
     );
@@ -251,11 +251,11 @@ describe('processMessage: fallos técnicos', () => {
     const apply = vi.fn(async () => {});
     const d = deps({ apply });
     expect(await processMessage('m1', d)).toBe('processed');
-    expect(apply).toHaveBeenCalledWith(
-      expect.objectContaining({ messageId: 'm1' }),
-      expect.anything(),
-      ['FOOD BOX', 'LATERAL', 'ARCOBETA'],
-    );
+    expect(apply).toHaveBeenCalledWith({ id: 'm1', currentId: 'm1' }, expect.anything(), [
+      'FOOD BOX',
+      'LATERAL',
+      'ARCOBETA',
+    ]);
     expect(d.store.markApplyFailed).not.toHaveBeenCalled();
   });
 

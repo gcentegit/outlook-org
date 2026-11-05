@@ -96,6 +96,21 @@ describe('applyCategories', () => {
     expect(store.applied).toEqual(['FOOD BOX']);
   });
 
+  it('un correo movido se escribe con su id actual y se anota con el que conocemos', async () => {
+    const { graph, patches } = fakeMailbox({ categories: [], etag: 1 });
+    const ids: string[] = [];
+    const store = memoryStore();
+    const recordApplied = store.recordApplied;
+    store.recordApplied = async (id, categories) => {
+      ids.push(id);
+      await recordApplied(id, categories);
+    };
+    // El doble del buzón solo responde en la ruta de `m1`: `m0` es el id antiguo.
+    await applyCategories('m0', ['LATERAL'], { ...deps(graph, store), currentId: 'm1' });
+    expect(patches).toHaveLength(1);
+    expect(ids).toEqual(['m0']);
+  });
+
   it('no escribe si el correo ya tiene la categoría (sin distinguir mayúsculas)', async () => {
     const { graph, patches } = fakeMailbox({ categories: ['Food Box'], etag: 1 });
     const result = await applyCategories('m1', ['FOOD BOX'], deps(graph, memoryStore()));
