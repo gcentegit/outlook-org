@@ -1,5 +1,6 @@
 import {
   CHECK_FOLDERS_QUEUE,
+  CHECK_MAILBOX_QUEUE,
   CREATE_MASTER_CATEGORY_QUEUE,
   LIST_MASTER_CATEGORIES_QUEUE,
   REPROCESS_FLAGGED_QUEUE,
@@ -7,6 +8,7 @@ import {
   reviewInboxWithRuleSchema,
   TEST_CLASSIFY_QUEUE,
   type CheckFoldersResult,
+  type CheckMailboxResult,
   type CreateMasterCategoryResult,
   type ListMasterCategoriesResult,
   type ReviewInboxWithRuleResult,
@@ -20,6 +22,7 @@ import {
   type AttachmentTextStore,
   type MessageRetentionStore,
 } from '../cleanup';
+import { runCheckMailbox, type MailboxAccess } from './check-mailbox';
 import {
   runCreateMasterCategory,
   runListMasterCategories,
@@ -85,6 +88,7 @@ export async function setupQueues(boss: PgBoss): Promise<void> {
   await boss.createQueue(LIST_MASTER_CATEGORIES_QUEUE, PANEL_QUEUE_OPTIONS);
   await boss.createQueue(CREATE_MASTER_CATEGORY_QUEUE, PANEL_QUEUE_OPTIONS);
   await boss.createQueue(REPROCESS_FLAGGED_QUEUE, PANEL_QUEUE_OPTIONS);
+  await boss.createQueue(CHECK_MAILBOX_QUEUE, PANEL_QUEUE_OPTIONS);
   // `stately`: como mucho una comprobación esperando y otra en marcha, pidan las que pidan el
   // panel y la programación. Una ronda que pasa de la caducidad queda fallida y la siguiente puede
   // empezar, pero pg-boss no para el código en marcha: la ronda vieja se detiene con la señal del
@@ -168,15 +172,16 @@ export async function registerTestClassifyWorker(
 }
 
 /**
- * Atiende lo que pide el panel sobre el buzón: leer y crear categorías maestras (con el
- * certificado de Graph, que solo tiene el worker) y reprocesar los correos marcados. Se registra
- * aunque no haya credenciales de Graph: entonces las categorías responden `unconfigured` con el
- * motivo y el panel lo muestra.
+ * Atiende lo que pide el panel sobre el buzón: comprobar que se llega a él, leer y crear categorías
+ * maestras (con el certificado de Graph, que solo tiene el worker) y reprocesar los correos
+ * marcados. Se registra aunque no haya credenciales de Graph: entonces la comprobación y las
+ * categorías responden `unconfigured` con el motivo y el panel lo muestra.
  */
 export async function registerPanelWorkers(
   boss: PgBoss,
   deps: {
     categories: MasterCategoriesAccess;
+    mailbox: MailboxAccess;
     reprocess: ReprocessStore;
     enqueue: (messageId: string) => Promise<void>;
   },
@@ -197,6 +202,15 @@ export async function registerPanelWorkers(
       if (!job) throw new Error('trabajo vacío');
       const result = await runCreateMasterCategory(job.data, deps.categories);
       log(`categoría del buzón: ${result.status}`);
+      return result;
+    },
+  );
+  await boss.work<unknown, CheckMailboxResult>(
+    CHECK_MAILBOX_QUEUE,
+    { localConcurrency: 1, batchSize: 1 },
+    async () => {
+      const result = await runCheckMailbox(deps.mailbox);
+      log(`comprobación de la conexión con el buzón: ${result.status}`);
       return result;
     },
   );

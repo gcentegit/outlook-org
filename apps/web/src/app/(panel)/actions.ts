@@ -7,6 +7,7 @@ import type { ActionState } from '@/lib/action-state';
 import { requireUser } from '@/lib/session';
 import { getJobQueue } from '@/server/boss';
 import { requestFolderCheck } from '@/server/folder-check';
+import { requestMailboxCheck } from '@/server/mailbox-check';
 import { requestReprocess } from '@/server/reprocess';
 
 /**
@@ -64,6 +65,28 @@ export async function checkFoldersAction(
       status: 'error',
       message:
         'No se pudo pedir la comparación. Comprueba que el worker ha arrancado y que la base de datos responde.',
+    };
+  }
+}
+
+/**
+ * Pide al worker que compruebe ya que llega al buzón (lee la Bandeja de entrada con su certificado,
+ * como la sincronización) y devuelve el resultado explicado: si falla, qué revisar.
+ */
+export async function checkMailboxAction(
+  _prev: ActionState,
+  _form: FormData,
+): Promise<ActionState> {
+  await requireUser();
+  try {
+    const outcome = await requestMailboxCheck(await getJobQueue());
+    return { status: outcome.ok ? 'ok' : 'error', message: outcome.message };
+  } catch (error) {
+    console.error('No se pudo pedir la comprobación de la conexión con el buzón', error);
+    return {
+      status: 'error',
+      message:
+        'No se pudo pedir la comprobación. Comprueba que el worker ha arrancado y que la base de datos responde.',
     };
   }
 }
